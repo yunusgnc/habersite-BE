@@ -1,0 +1,919 @@
+import { PrismaService } from '../prisma/prisma.service';
+import { ArticleStatus, Prisma } from '@prisma/client';
+import { CreateArticleDto } from './dto/create-article.dto';
+import { UpdateArticleDto } from './dto/update-article.dto';
+import { QueryArticlesDto } from './dto/query-articles.dto';
+import { AuditService } from '../common/audit/audit.service';
+export declare class ArticlesService {
+    private readonly prisma;
+    private readonly audit;
+    private readonly logger;
+    constructor(prisma: PrismaService, audit: AuditService);
+    publishScheduled(): Promise<void>;
+    findAll(tenantId: string, query: QueryArticlesDto): Promise<{
+        items: ({
+            categories: ({
+                category: {
+                    id: string;
+                    slug: string;
+                    name: string;
+                    active: boolean;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    description: string | null;
+                    tenantId: string;
+                    parentId: string | null;
+                    image: string | null;
+                    color: string | null;
+                    sortOrder: number;
+                    seoTitle: string | null;
+                    seoDesc: string | null;
+                };
+            } & {
+                primary: boolean;
+                categoryId: string;
+                articleId: string;
+            })[];
+            tags: ({
+                tag: {
+                    id: string;
+                    slug: string;
+                    name: string;
+                    tenantId: string;
+                };
+            } & {
+                articleId: string;
+                tagId: string;
+            })[];
+            author: {
+                id: string;
+                slug: string;
+                name: string;
+                active: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+                tenantId: string;
+                email: string | null;
+                avatar: string | null;
+                sortOrder: number;
+                bio: string | null;
+                social: Prisma.JsonValue;
+            } | null;
+            createdBy: {
+                id: string;
+                name: string;
+                email: string;
+            };
+            approvedBy: {
+                id: string;
+                name: string;
+            } | null;
+        } & {
+            id: string;
+            slug: string;
+            createdAt: Date;
+            updatedAt: Date;
+            tenantId: string;
+            seoTitle: string | null;
+            seoDesc: string | null;
+            type: import("@prisma/client").$Enums.ArticleType;
+            title: string;
+            spot: string | null;
+            content: Prisma.JsonValue;
+            featuredImage: string | null;
+            status: import("@prisma/client").$Enums.ArticleStatus;
+            publishedAt: Date | null;
+            scheduledAt: Date | null;
+            authorId: string | null;
+            createdById: string;
+            approvedById: string | null;
+            viewCount: number;
+            commentCount: number;
+            readingTime: number | null;
+            featured: boolean;
+            breakingLabel: string | null;
+            canonicalUrl: string | null;
+            ogImage: string | null;
+            source: string | null;
+            sourceUrl: string | null;
+            headlineTitle: string | null;
+            headlineImage: string | null;
+            headlineFontSize: number | null;
+            headlineFontFamily: string | null;
+            nationalFeatured: boolean;
+        })[];
+        nextCursor: string | undefined;
+        total: number;
+    }>;
+    findBySlug(tenantId: string, slug: string): Promise<{
+        relatedArticles: ({
+            categories: ({
+                category: {
+                    id: string;
+                    slug: string;
+                    name: string;
+                    active: boolean;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    description: string | null;
+                    tenantId: string;
+                    parentId: string | null;
+                    image: string | null;
+                    color: string | null;
+                    sortOrder: number;
+                    seoTitle: string | null;
+                    seoDesc: string | null;
+                };
+            } & {
+                primary: boolean;
+                categoryId: string;
+                articleId: string;
+            })[];
+            author: {
+                id: string;
+                slug: string;
+                name: string;
+                active: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+                tenantId: string;
+                email: string | null;
+                avatar: string | null;
+                sortOrder: number;
+                bio: string | null;
+                social: Prisma.JsonValue;
+            } | null;
+        } & {
+            id: string;
+            slug: string;
+            createdAt: Date;
+            updatedAt: Date;
+            tenantId: string;
+            seoTitle: string | null;
+            seoDesc: string | null;
+            type: import("@prisma/client").$Enums.ArticleType;
+            title: string;
+            spot: string | null;
+            content: Prisma.JsonValue;
+            featuredImage: string | null;
+            status: import("@prisma/client").$Enums.ArticleStatus;
+            publishedAt: Date | null;
+            scheduledAt: Date | null;
+            authorId: string | null;
+            createdById: string;
+            approvedById: string | null;
+            viewCount: number;
+            commentCount: number;
+            readingTime: number | null;
+            featured: boolean;
+            breakingLabel: string | null;
+            canonicalUrl: string | null;
+            ogImage: string | null;
+            source: string | null;
+            sourceUrl: string | null;
+            headlineTitle: string | null;
+            headlineImage: string | null;
+            headlineFontSize: number | null;
+            headlineFontFamily: string | null;
+            nationalFeatured: boolean;
+        })[];
+        categories: ({
+            category: {
+                id: string;
+                slug: string;
+                name: string;
+                active: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+                description: string | null;
+                tenantId: string;
+                parentId: string | null;
+                image: string | null;
+                color: string | null;
+                sortOrder: number;
+                seoTitle: string | null;
+                seoDesc: string | null;
+            };
+        } & {
+            primary: boolean;
+            categoryId: string;
+            articleId: string;
+        })[];
+        tags: ({
+            tag: {
+                id: string;
+                slug: string;
+                name: string;
+                tenantId: string;
+            };
+        } & {
+            articleId: string;
+            tagId: string;
+        })[];
+        author: {
+            id: string;
+            slug: string;
+            name: string;
+            active: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+            tenantId: string;
+            email: string | null;
+            avatar: string | null;
+            sortOrder: number;
+            bio: string | null;
+            social: Prisma.JsonValue;
+        } | null;
+        createdBy: {
+            id: string;
+            name: string;
+            email: string;
+        };
+        approvedBy: {
+            id: string;
+            name: string;
+        } | null;
+        id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
+        type: import("@prisma/client").$Enums.ArticleType;
+        title: string;
+        spot: string | null;
+        content: Prisma.JsonValue;
+        featuredImage: string | null;
+        status: import("@prisma/client").$Enums.ArticleStatus;
+        publishedAt: Date | null;
+        scheduledAt: Date | null;
+        authorId: string | null;
+        createdById: string;
+        approvedById: string | null;
+        viewCount: number;
+        commentCount: number;
+        readingTime: number | null;
+        featured: boolean;
+        breakingLabel: string | null;
+        canonicalUrl: string | null;
+        ogImage: string | null;
+        source: string | null;
+        sourceUrl: string | null;
+        headlineTitle: string | null;
+        headlineImage: string | null;
+        headlineFontSize: number | null;
+        headlineFontFamily: string | null;
+        nationalFeatured: boolean;
+    }>;
+    findById(tenantId: string, id: string): Promise<{
+        categories: ({
+            category: {
+                id: string;
+                slug: string;
+                name: string;
+                active: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+                description: string | null;
+                tenantId: string;
+                parentId: string | null;
+                image: string | null;
+                color: string | null;
+                sortOrder: number;
+                seoTitle: string | null;
+                seoDesc: string | null;
+            };
+        } & {
+            primary: boolean;
+            categoryId: string;
+            articleId: string;
+        })[];
+        tags: ({
+            tag: {
+                id: string;
+                slug: string;
+                name: string;
+                tenantId: string;
+            };
+        } & {
+            articleId: string;
+            tagId: string;
+        })[];
+        author: {
+            id: string;
+            slug: string;
+            name: string;
+            active: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+            tenantId: string;
+            email: string | null;
+            avatar: string | null;
+            sortOrder: number;
+            bio: string | null;
+            social: Prisma.JsonValue;
+        } | null;
+        createdBy: {
+            id: string;
+            name: string;
+            email: string;
+        };
+        approvedBy: {
+            id: string;
+            name: string;
+        } | null;
+    } & {
+        id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
+        type: import("@prisma/client").$Enums.ArticleType;
+        title: string;
+        spot: string | null;
+        content: Prisma.JsonValue;
+        featuredImage: string | null;
+        status: import("@prisma/client").$Enums.ArticleStatus;
+        publishedAt: Date | null;
+        scheduledAt: Date | null;
+        authorId: string | null;
+        createdById: string;
+        approvedById: string | null;
+        viewCount: number;
+        commentCount: number;
+        readingTime: number | null;
+        featured: boolean;
+        breakingLabel: string | null;
+        canonicalUrl: string | null;
+        ogImage: string | null;
+        source: string | null;
+        sourceUrl: string | null;
+        headlineTitle: string | null;
+        headlineImage: string | null;
+        headlineFontSize: number | null;
+        headlineFontFamily: string | null;
+        nationalFeatured: boolean;
+    }>;
+    create(tenantId: string, userId: string, dto: CreateArticleDto, userRole?: string): Promise<{
+        categories: ({
+            category: {
+                id: string;
+                slug: string;
+                name: string;
+                active: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+                description: string | null;
+                tenantId: string;
+                parentId: string | null;
+                image: string | null;
+                color: string | null;
+                sortOrder: number;
+                seoTitle: string | null;
+                seoDesc: string | null;
+            };
+        } & {
+            primary: boolean;
+            categoryId: string;
+            articleId: string;
+        })[];
+        tags: ({
+            tag: {
+                id: string;
+                slug: string;
+                name: string;
+                tenantId: string;
+            };
+        } & {
+            articleId: string;
+            tagId: string;
+        })[];
+        author: {
+            id: string;
+            slug: string;
+            name: string;
+            active: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+            tenantId: string;
+            email: string | null;
+            avatar: string | null;
+            sortOrder: number;
+            bio: string | null;
+            social: Prisma.JsonValue;
+        } | null;
+    } & {
+        id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
+        type: import("@prisma/client").$Enums.ArticleType;
+        title: string;
+        spot: string | null;
+        content: Prisma.JsonValue;
+        featuredImage: string | null;
+        status: import("@prisma/client").$Enums.ArticleStatus;
+        publishedAt: Date | null;
+        scheduledAt: Date | null;
+        authorId: string | null;
+        createdById: string;
+        approvedById: string | null;
+        viewCount: number;
+        commentCount: number;
+        readingTime: number | null;
+        featured: boolean;
+        breakingLabel: string | null;
+        canonicalUrl: string | null;
+        ogImage: string | null;
+        source: string | null;
+        sourceUrl: string | null;
+        headlineTitle: string | null;
+        headlineImage: string | null;
+        headlineFontSize: number | null;
+        headlineFontFamily: string | null;
+        nationalFeatured: boolean;
+    }>;
+    update(tenantId: string, id: string, dto: UpdateArticleDto, userId?: string, userRole?: string): Promise<{
+        categories: ({
+            category: {
+                id: string;
+                slug: string;
+                name: string;
+                active: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+                description: string | null;
+                tenantId: string;
+                parentId: string | null;
+                image: string | null;
+                color: string | null;
+                sortOrder: number;
+                seoTitle: string | null;
+                seoDesc: string | null;
+            };
+        } & {
+            primary: boolean;
+            categoryId: string;
+            articleId: string;
+        })[];
+        tags: ({
+            tag: {
+                id: string;
+                slug: string;
+                name: string;
+                tenantId: string;
+            };
+        } & {
+            articleId: string;
+            tagId: string;
+        })[];
+        author: {
+            id: string;
+            slug: string;
+            name: string;
+            active: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+            tenantId: string;
+            email: string | null;
+            avatar: string | null;
+            sortOrder: number;
+            bio: string | null;
+            social: Prisma.JsonValue;
+        } | null;
+    } & {
+        id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
+        type: import("@prisma/client").$Enums.ArticleType;
+        title: string;
+        spot: string | null;
+        content: Prisma.JsonValue;
+        featuredImage: string | null;
+        status: import("@prisma/client").$Enums.ArticleStatus;
+        publishedAt: Date | null;
+        scheduledAt: Date | null;
+        authorId: string | null;
+        createdById: string;
+        approvedById: string | null;
+        viewCount: number;
+        commentCount: number;
+        readingTime: number | null;
+        featured: boolean;
+        breakingLabel: string | null;
+        canonicalUrl: string | null;
+        ogImage: string | null;
+        source: string | null;
+        sourceUrl: string | null;
+        headlineTitle: string | null;
+        headlineImage: string | null;
+        headlineFontSize: number | null;
+        headlineFontFamily: string | null;
+        nationalFeatured: boolean;
+    }>;
+    remove(tenantId: string, id: string, userId?: string): Promise<{
+        id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
+        type: import("@prisma/client").$Enums.ArticleType;
+        title: string;
+        spot: string | null;
+        content: Prisma.JsonValue;
+        featuredImage: string | null;
+        status: import("@prisma/client").$Enums.ArticleStatus;
+        publishedAt: Date | null;
+        scheduledAt: Date | null;
+        authorId: string | null;
+        createdById: string;
+        approvedById: string | null;
+        viewCount: number;
+        commentCount: number;
+        readingTime: number | null;
+        featured: boolean;
+        breakingLabel: string | null;
+        canonicalUrl: string | null;
+        ogImage: string | null;
+        source: string | null;
+        sourceUrl: string | null;
+        headlineTitle: string | null;
+        headlineImage: string | null;
+        headlineFontSize: number | null;
+        headlineFontFamily: string | null;
+        nationalFeatured: boolean;
+    }>;
+    listRevisions(tenantId: string, id: string): Promise<({
+        editedBy: {
+            id: string;
+            name: string;
+            email: string;
+        } | null;
+    } & {
+        id: string;
+        slug: string;
+        createdAt: Date;
+        tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
+        title: string;
+        spot: string | null;
+        content: Prisma.JsonValue;
+        featuredImage: string | null;
+        articleId: string;
+        editedById: string | null;
+    })[]>;
+    restoreRevision(tenantId: string, articleId: string, revisionId: string, userId?: string): Promise<{
+        categories: ({
+            category: {
+                id: string;
+                slug: string;
+                name: string;
+                active: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+                description: string | null;
+                tenantId: string;
+                parentId: string | null;
+                image: string | null;
+                color: string | null;
+                sortOrder: number;
+                seoTitle: string | null;
+                seoDesc: string | null;
+            };
+        } & {
+            primary: boolean;
+            categoryId: string;
+            articleId: string;
+        })[];
+        tags: ({
+            tag: {
+                id: string;
+                slug: string;
+                name: string;
+                tenantId: string;
+            };
+        } & {
+            articleId: string;
+            tagId: string;
+        })[];
+        author: {
+            id: string;
+            slug: string;
+            name: string;
+            active: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+            tenantId: string;
+            email: string | null;
+            avatar: string | null;
+            sortOrder: number;
+            bio: string | null;
+            social: Prisma.JsonValue;
+        } | null;
+    } & {
+        id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
+        type: import("@prisma/client").$Enums.ArticleType;
+        title: string;
+        spot: string | null;
+        content: Prisma.JsonValue;
+        featuredImage: string | null;
+        status: import("@prisma/client").$Enums.ArticleStatus;
+        publishedAt: Date | null;
+        scheduledAt: Date | null;
+        authorId: string | null;
+        createdById: string;
+        approvedById: string | null;
+        viewCount: number;
+        commentCount: number;
+        readingTime: number | null;
+        featured: boolean;
+        breakingLabel: string | null;
+        canonicalUrl: string | null;
+        ogImage: string | null;
+        source: string | null;
+        sourceUrl: string | null;
+        headlineTitle: string | null;
+        headlineImage: string | null;
+        headlineFontSize: number | null;
+        headlineFontFamily: string | null;
+        nationalFeatured: boolean;
+    }>;
+    incrementViewCount(tenantId: string, id: string): Promise<{
+        id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
+        type: import("@prisma/client").$Enums.ArticleType;
+        title: string;
+        spot: string | null;
+        content: Prisma.JsonValue;
+        featuredImage: string | null;
+        status: import("@prisma/client").$Enums.ArticleStatus;
+        publishedAt: Date | null;
+        scheduledAt: Date | null;
+        authorId: string | null;
+        createdById: string;
+        approvedById: string | null;
+        viewCount: number;
+        commentCount: number;
+        readingTime: number | null;
+        featured: boolean;
+        breakingLabel: string | null;
+        canonicalUrl: string | null;
+        ogImage: string | null;
+        source: string | null;
+        sourceUrl: string | null;
+        headlineTitle: string | null;
+        headlineImage: string | null;
+        headlineFontSize: number | null;
+        headlineFontFamily: string | null;
+        nationalFeatured: boolean;
+    }>;
+    getRelated(tenantId: string, articleId: string, limit?: number): Promise<({
+        categories: ({
+            category: {
+                id: string;
+                slug: string;
+                name: string;
+                active: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+                description: string | null;
+                tenantId: string;
+                parentId: string | null;
+                image: string | null;
+                color: string | null;
+                sortOrder: number;
+                seoTitle: string | null;
+                seoDesc: string | null;
+            };
+        } & {
+            primary: boolean;
+            categoryId: string;
+            articleId: string;
+        })[];
+        author: {
+            id: string;
+            slug: string;
+            name: string;
+            avatar: string | null;
+        } | null;
+    } & {
+        id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
+        type: import("@prisma/client").$Enums.ArticleType;
+        title: string;
+        spot: string | null;
+        content: Prisma.JsonValue;
+        featuredImage: string | null;
+        status: import("@prisma/client").$Enums.ArticleStatus;
+        publishedAt: Date | null;
+        scheduledAt: Date | null;
+        authorId: string | null;
+        createdById: string;
+        approvedById: string | null;
+        viewCount: number;
+        commentCount: number;
+        readingTime: number | null;
+        featured: boolean;
+        breakingLabel: string | null;
+        canonicalUrl: string | null;
+        ogImage: string | null;
+        source: string | null;
+        sourceUrl: string | null;
+        headlineTitle: string | null;
+        headlineImage: string | null;
+        headlineFontSize: number | null;
+        headlineFontFamily: string | null;
+        nationalFeatured: boolean;
+    })[]>;
+    getMostRead(tenantId: string, limit?: number): Promise<({
+        categories: ({
+            category: {
+                id: string;
+                slug: string;
+                name: string;
+                active: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+                description: string | null;
+                tenantId: string;
+                parentId: string | null;
+                image: string | null;
+                color: string | null;
+                sortOrder: number;
+                seoTitle: string | null;
+                seoDesc: string | null;
+            };
+        } & {
+            primary: boolean;
+            categoryId: string;
+            articleId: string;
+        })[];
+        author: {
+            id: string;
+            slug: string;
+            name: string;
+            active: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+            tenantId: string;
+            email: string | null;
+            avatar: string | null;
+            sortOrder: number;
+            bio: string | null;
+            social: Prisma.JsonValue;
+        } | null;
+    } & {
+        id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
+        type: import("@prisma/client").$Enums.ArticleType;
+        title: string;
+        spot: string | null;
+        content: Prisma.JsonValue;
+        featuredImage: string | null;
+        status: import("@prisma/client").$Enums.ArticleStatus;
+        publishedAt: Date | null;
+        scheduledAt: Date | null;
+        authorId: string | null;
+        createdById: string;
+        approvedById: string | null;
+        viewCount: number;
+        commentCount: number;
+        readingTime: number | null;
+        featured: boolean;
+        breakingLabel: string | null;
+        canonicalUrl: string | null;
+        ogImage: string | null;
+        source: string | null;
+        sourceUrl: string | null;
+        headlineTitle: string | null;
+        headlineImage: string | null;
+        headlineFontSize: number | null;
+        headlineFontFamily: string | null;
+        nationalFeatured: boolean;
+    })[]>;
+    getByCategory(tenantId: string, categorySlug: string, cursor?: string, limit?: number): Promise<{
+        items: ({
+            categories: ({
+                category: {
+                    id: string;
+                    slug: string;
+                    name: string;
+                    active: boolean;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    description: string | null;
+                    tenantId: string;
+                    parentId: string | null;
+                    image: string | null;
+                    color: string | null;
+                    sortOrder: number;
+                    seoTitle: string | null;
+                    seoDesc: string | null;
+                };
+            } & {
+                primary: boolean;
+                categoryId: string;
+                articleId: string;
+            })[];
+            tags: ({
+                tag: {
+                    id: string;
+                    slug: string;
+                    name: string;
+                    tenantId: string;
+                };
+            } & {
+                articleId: string;
+                tagId: string;
+            })[];
+            author: {
+                id: string;
+                slug: string;
+                name: string;
+                active: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+                tenantId: string;
+                email: string | null;
+                avatar: string | null;
+                sortOrder: number;
+                bio: string | null;
+                social: Prisma.JsonValue;
+            } | null;
+        } & {
+            id: string;
+            slug: string;
+            createdAt: Date;
+            updatedAt: Date;
+            tenantId: string;
+            seoTitle: string | null;
+            seoDesc: string | null;
+            type: import("@prisma/client").$Enums.ArticleType;
+            title: string;
+            spot: string | null;
+            content: Prisma.JsonValue;
+            featuredImage: string | null;
+            status: import("@prisma/client").$Enums.ArticleStatus;
+            publishedAt: Date | null;
+            scheduledAt: Date | null;
+            authorId: string | null;
+            createdById: string;
+            approvedById: string | null;
+            viewCount: number;
+            commentCount: number;
+            readingTime: number | null;
+            featured: boolean;
+            breakingLabel: string | null;
+            canonicalUrl: string | null;
+            ogImage: string | null;
+            source: string | null;
+            sourceUrl: string | null;
+            headlineTitle: string | null;
+            headlineImage: string | null;
+            headlineFontSize: number | null;
+            headlineFontFamily: string | null;
+            nationalFeatured: boolean;
+        })[];
+        nextCursor: string | undefined;
+    }>;
+    bulkUpdateStatus(tenantId: string, ids: string[], status: ArticleStatus): Promise<Prisma.BatchPayload>;
+    bulkDelete(tenantId: string, ids: string[]): Promise<Prisma.BatchPayload>;
+    bulkUpdateCategory(tenantId: string, ids: string[], categoryId: string): Promise<Prisma.BatchPayload>;
+    private generateUniqueSlug;
+    private calculateReadingTime;
+    private extractTextFromContent;
+}
