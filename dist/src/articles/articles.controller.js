@@ -73,6 +73,24 @@ let ArticlesController = class ArticlesController {
     bulkDelete(tenantId, dto) {
         return this.articlesService.bulkDelete(tenantId, dto.ids);
     }
+    myTasks(tenantId, user) {
+        return this.articlesService.myTasks(tenantId, user.userId);
+    }
+    reviewQueue(tenantId) {
+        return this.articlesService.reviewQueue(tenantId);
+    }
+    submitForReview(tenantId, id, user) {
+        return this.articlesService.submitForReview(tenantId, id, user.userId);
+    }
+    approve(tenantId, id, user) {
+        return this.articlesService.approve(tenantId, id, user.userId, user.role);
+    }
+    reject(tenantId, id, body, user) {
+        return this.articlesService.reject(tenantId, id, user.userId, user.role, body.note);
+    }
+    assign(tenantId, id, body, user) {
+        return this.articlesService.assign(tenantId, id, user.userId, user.role, body);
+    }
 };
 exports.ArticlesController = ArticlesController;
 __decorate([
@@ -210,6 +228,71 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], ArticlesController.prototype, "bulkDelete", null);
+__decorate([
+    (0, common_1.Get)('workflow/my-tasks'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_guard_1.Roles)('COLUMNIST'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ArticlesController.prototype, "myTasks", null);
+__decorate([
+    (0, common_1.Get)('workflow/review-queue'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_guard_1.Roles)('EDITOR'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ArticlesController.prototype, "reviewQueue", null);
+__decorate([
+    (0, common_1.Post)(':id/submit'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_guard_1.Roles)('COLUMNIST'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", void 0)
+], ArticlesController.prototype, "submitForReview", null);
+__decorate([
+    (0, common_1.Post)(':id/approve'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_guard_1.Roles)('EDITOR'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", void 0)
+], ArticlesController.prototype, "approve", null);
+__decorate([
+    (0, common_1.Post)(':id/reject'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_guard_1.Roles)('EDITOR'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __param(3, (0, user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object, Object]),
+    __metadata("design:returntype", void 0)
+], ArticlesController.prototype, "reject", null);
+__decorate([
+    (0, common_1.Patch)(':id/assign'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_guard_1.Roles)('EDITOR'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __param(3, (0, user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object, Object]),
+    __metadata("design:returntype", void 0)
+], ArticlesController.prototype, "assign", null);
 exports.ArticlesController = ArticlesController = __decorate([
     (0, common_1.Controller)('api/articles'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),

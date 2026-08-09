@@ -22,13 +22,13 @@ export declare class VideosService {
             viewCount: number;
             source: string;
             categoryId: string | null;
-            coverImage: string | null;
+            duration: number | null;
             headline: string | null;
-            seoKeywords: string | null;
+            coverImage: string | null;
             videoUrl: string;
             embedCode: string | null;
-            duration: number | null;
             fileSize: number | null;
+            seoKeywords: string | null;
         }[];
         nextCursor: string | undefined;
     }>;
@@ -48,13 +48,13 @@ export declare class VideosService {
         viewCount: number;
         source: string;
         categoryId: string | null;
-        coverImage: string | null;
+        duration: number | null;
         headline: string | null;
-        seoKeywords: string | null;
+        coverImage: string | null;
         videoUrl: string;
         embedCode: string | null;
-        duration: number | null;
         fileSize: number | null;
+        seoKeywords: string | null;
     }>;
     findBySlug(tenantId: string, slug: string): Promise<{
         id: string;
@@ -72,13 +72,13 @@ export declare class VideosService {
         viewCount: number;
         source: string;
         categoryId: string | null;
-        coverImage: string | null;
+        duration: number | null;
         headline: string | null;
-        seoKeywords: string | null;
+        coverImage: string | null;
         videoUrl: string;
         embedCode: string | null;
-        duration: number | null;
         fileSize: number | null;
+        seoKeywords: string | null;
     }>;
     create(tenantId: string, dto: CreateVideoDto): Promise<{
         id: string;
@@ -96,13 +96,13 @@ export declare class VideosService {
         viewCount: number;
         source: string;
         categoryId: string | null;
-        coverImage: string | null;
+        duration: number | null;
         headline: string | null;
-        seoKeywords: string | null;
+        coverImage: string | null;
         videoUrl: string;
         embedCode: string | null;
-        duration: number | null;
         fileSize: number | null;
+        seoKeywords: string | null;
     }>;
     update(tenantId: string, id: string, dto: UpdateVideoDto): Promise<{
         id: string;
@@ -120,13 +120,13 @@ export declare class VideosService {
         viewCount: number;
         source: string;
         categoryId: string | null;
-        coverImage: string | null;
+        duration: number | null;
         headline: string | null;
-        seoKeywords: string | null;
+        coverImage: string | null;
         videoUrl: string;
         embedCode: string | null;
-        duration: number | null;
         fileSize: number | null;
+        seoKeywords: string | null;
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
@@ -144,13 +144,13 @@ export declare class VideosService {
         viewCount: number;
         source: string;
         categoryId: string | null;
-        coverImage: string | null;
+        duration: number | null;
         headline: string | null;
-        seoKeywords: string | null;
+        coverImage: string | null;
         videoUrl: string;
         embedCode: string | null;
-        duration: number | null;
         fileSize: number | null;
+        seoKeywords: string | null;
     }>;
     private generateUniqueSlug;
 }

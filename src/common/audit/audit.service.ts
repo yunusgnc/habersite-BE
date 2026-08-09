@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 export type AuditAction =
@@ -13,6 +14,19 @@ export type AuditAction =
   | 'REJECT'
   | 'LOGIN'
   | 'LOGOUT';
+
+export type ListParams = {
+  tenantId: string;
+  entity?: string;
+  entityId?: string;
+  userId?: string;
+  action?: string;
+  search?: string;
+  from?: string;
+  to?: string;
+  cursor?: string;
+  limit?: number;
+};
 
 /**
  * Fire-and-forget audit log writer. Called from services after successful
@@ -52,27 +66,89 @@ export class AuditService {
   }
 
   /**
-   * Fetch a tenant's recent audit log entries with optional entity filter.
+   * Cursor-paginated audit log listing with rich filters.
+   * Returns `{ items, nextCursor, total }`.
    */
-  async list(params: {
-    tenantId: string;
-    entity?: string;
-    entityId?: string;
-    userId?: string;
-    limit?: number;
-  }) {
-    return this.prisma.auditLog.findMany({
-      where: {
-        tenantId: params.tenantId,
-        ...(params.entity && { entity: params.entity }),
-        ...(params.entityId && { entityId: params.entityId }),
-        ...(params.userId && { userId: params.userId }),
-      },
+  async list(params: ListParams) {
+    const limit = Math.min(200, params.limit ?? 50);
+    const where = this.buildWhere(params);
+
+    const [items, total] = await Promise.all([
+      this.prisma.auditLog.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: limit + 1,
+        ...(params.cursor && { cursor: { id: params.cursor }, skip: 1 }),
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+        },
+      }),
+      this.prisma.auditLog.count({ where }),
+    ]);
+
+    let nextCursor: string | null = null;
+    if (items.length > limit) {
+      const last = items.pop();
+      nextCursor = last?.id ?? null;
+    }
+    return { items, nextCursor, total };
+  }
+
+  /**
+   * Aggregate counts per action — small footer stat for the audit page.
+   */
+  async summary(params: ListParams) {
+    const where = this.buildWhere(params);
+    const groups = await this.prisma.auditLog.groupBy({
+      by: ['action'],
+      where,
+      _count: { _all: true },
+    });
+    const total = groups.reduce((s, g) => s + g._count._all, 0);
+    return {
+      total,
+      byAction: Object.fromEntries(groups.map((g) => [g.action, g._count._all])),
+    };
+  }
+
+  /**
+   * Load rows suitable for CSV export — no limit cap beyond a safety ceiling.
+   */
+  async exportRows(params: ListParams) {
+    const where = this.buildWhere(params);
+    const items = await this.prisma.auditLog.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
-      take: params.limit ?? 50,
+      take: 10_000,
       include: {
-        user: { select: { id: true, name: true, email: true } },
+        user: { select: { name: true, email: true } },
       },
     });
+    return items;
+  }
+
+  private buildWhere(p: ListParams): Prisma.AuditLogWhereInput {
+    const where: Prisma.AuditLogWhereInput = { tenantId: p.tenantId };
+    if (p.entity) where.entity = p.entity;
+    if (p.entityId) where.entityId = p.entityId;
+    if (p.userId) where.userId = p.userId;
+    if (p.action) where.action = p.action;
+    if (p.from || p.to) {
+      where.createdAt = {};
+      if (p.from) (where.createdAt as any).gte = new Date(p.from);
+      if (p.to) {
+        const to = new Date(p.to);
+        to.setHours(23, 59, 59, 999);
+        (where.createdAt as any).lte = to;
+      }
+    }
+    if (p.search) {
+      const q = p.search;
+      where.OR = [
+        { entityId: { contains: q, mode: 'insensitive' } },
+        { entity: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+    return where;
   }
 }

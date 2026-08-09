@@ -37,6 +37,11 @@ export declare class DashboardController {
             authorId: string | null;
             createdById: string;
             approvedById: string | null;
+            assignedToId: string | null;
+            deadline: Date | null;
+            submittedAt: Date | null;
+            reviewedAt: Date | null;
+            reviewNote: string | null;
             viewCount: number;
             commentCount: number;
             readingTime: number | null;

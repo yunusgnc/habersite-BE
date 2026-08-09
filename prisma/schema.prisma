@@ -84,6 +84,7 @@ model User {
   tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   articles  Article[]  @relation("ArticleCreator")
   approved  Article[]  @relation("ArticleApprover")
+  assigned  Article[]  @relation("ArticleAssignee")
   revised   ArticleRevision[] @relation("ArticleReviser")
   auditLogs AuditLog[]
 
@@ -165,6 +166,7 @@ model Author {
 
 enum ArticleStatus {
   DRAFT
+  IN_REVIEW
   SCHEDULED
   PUBLISHED
   ARCHIVED
@@ -192,6 +194,12 @@ model Article {
   authorId       String?       @map("author_id")
   createdById    String        @map("created_by_id")
   approvedById   String?       @map("approved_by_id")
+  // Editoryal iş akışı — atama, deadline, inceleme
+  assignedToId   String?       @map("assigned_to_id")
+  deadline       DateTime?
+  submittedAt    DateTime?     @map("submitted_at")
+  reviewedAt     DateTime?     @map("reviewed_at")
+  reviewNote     String?       @map("review_note")
   viewCount      Int           @default(0) @map("view_count")
   commentCount   Int           @default(0) @map("comment_count")
   readingTime    Int?          @map("reading_time")
@@ -216,6 +224,7 @@ model Article {
   author     Author?           @relation(fields: [authorId], references: [id], onDelete: SetNull)
   createdBy  User              @relation("ArticleCreator", fields: [createdById], references: [id])
   approvedBy User?             @relation("ArticleApprover", fields: [approvedById], references: [id])
+  assignedTo User?             @relation("ArticleAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
   categories ArticleCategory[]
   tags       ArticleTag[]
   comments   Comment[]

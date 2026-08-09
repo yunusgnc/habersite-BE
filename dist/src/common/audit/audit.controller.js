@@ -24,14 +24,75 @@ let AuditController = class AuditController {
     constructor(audit) {
         this.audit = audit;
     }
-    list(tenantId, entity, entityId, userId, limit) {
+    list(tenantId, entity, entityId, userId, action, search, from, to, cursor, limit) {
         return this.audit.list({
             tenantId,
             entity,
             entityId,
             userId,
-            limit: limit ? Math.min(200, Number(limit)) : 50,
+            action,
+            search,
+            from,
+            to,
+            cursor,
+            limit: limit ? Number(limit) : 50,
         });
+    }
+    summary(tenantId, entity, userId, action, from, to, search) {
+        return this.audit.summary({
+            tenantId,
+            entity,
+            userId,
+            action,
+            from,
+            to,
+            search,
+        });
+    }
+    async exportCsv(tenantId, entity, userId, action, search, from, to, res) {
+        const rows = await this.audit.exportRows({
+            tenantId,
+            entity,
+            userId,
+            action,
+            search,
+            from,
+            to,
+        });
+        const headers = [
+            'Tarih',
+            'Kullanıcı',
+            'E-posta',
+            'İşlem',
+            'İçerik Tipi',
+            'ID',
+            'IP',
+            'Değişiklik Özeti',
+        ];
+        const body = '﻿' +
+            headers.map(csvEscape).join(',') +
+            '\n' +
+            rows
+                .map((r) => {
+                const summary = describeChanges(r.changes);
+                return [
+                    formatDate(r.createdAt),
+                    r.user?.name ?? 'Sistem',
+                    r.user?.email ?? '',
+                    r.action,
+                    r.entity,
+                    r.entityId ?? '',
+                    r.ipAddress ?? '',
+                    summary,
+                ]
+                    .map(csvEscape)
+                    .join(',');
+            })
+                .join('\n');
+        const stamp = new Date().toISOString().slice(0, 10);
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="audit-log-${stamp}.csv"`);
+        res.send(body);
     }
 };
 exports.AuditController = AuditController;
@@ -41,15 +102,79 @@ __decorate([
     __param(1, (0, common_1.Query)('entity')),
     __param(2, (0, common_1.Query)('entityId')),
     __param(3, (0, common_1.Query)('userId')),
-    __param(4, (0, common_1.Query)('limit')),
+    __param(4, (0, common_1.Query)('action')),
+    __param(5, (0, common_1.Query)('search')),
+    __param(6, (0, common_1.Query)('from')),
+    __param(7, (0, common_1.Query)('to')),
+    __param(8, (0, common_1.Query)('cursor')),
+    __param(9, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, String, String, String, String, String, String, String]),
     __metadata("design:returntype", void 0)
 ], AuditController.prototype, "list", null);
+__decorate([
+    (0, common_1.Get)('summary'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('entity')),
+    __param(2, (0, common_1.Query)('userId')),
+    __param(3, (0, common_1.Query)('action')),
+    __param(4, (0, common_1.Query)('from')),
+    __param(5, (0, common_1.Query)('to')),
+    __param(6, (0, common_1.Query)('search')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, String, String, String, String]),
+    __metadata("design:returntype", void 0)
+], AuditController.prototype, "summary", null);
+__decorate([
+    (0, common_1.Get)('export.csv'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('entity')),
+    __param(2, (0, common_1.Query)('userId')),
+    __param(3, (0, common_1.Query)('action')),
+    __param(4, (0, common_1.Query)('search')),
+    __param(5, (0, common_1.Query)('from')),
+    __param(6, (0, common_1.Query)('to')),
+    __param(7, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object, Object, Object, Object, Object, Object]),
+    __metadata("design:returntype", Promise)
+], AuditController.prototype, "exportCsv", null);
 exports.AuditController = AuditController = __decorate([
     (0, common_1.Controller)('api/audit-logs'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard, jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN'),
     __metadata("design:paramtypes", [audit_service_1.AuditService])
 ], AuditController);
+function formatDate(d) {
+    if (!d)
+        return '';
+    const date = new Date(d);
+    if (isNaN(date.getTime()))
+        return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+function csvEscape(value) {
+    if (value === null || value === undefined)
+        return '';
+    const s = String(value);
+    if (/[",\n]/.test(s))
+        return `"${s.replace(/"/g, '""')}"`;
+    return s;
+}
+function describeChanges(raw) {
+    if (!raw || typeof raw !== 'object')
+        return '';
+    const changes = raw;
+    const bits = [];
+    if (typeof changes.title === 'string')
+        bits.push(`title=${changes.title.slice(0, 80)}`);
+    if (typeof changes.status === 'string')
+        bits.push(`status=${changes.status}`);
+    if (typeof changes.slug === 'string')
+        bits.push(`slug=${changes.slug}`);
+    if (typeof changes.email === 'string')
+        bits.push(`email=${changes.email}`);
+    return bits.join(' · ');
+}
 //# sourceMappingURL=audit.controller.js.map

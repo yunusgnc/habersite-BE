@@ -163,4 +163,81 @@ export class ArticlesController {
   ) {
     return this.articlesService.bulkDelete(tenantId, dto.ids);
   }
+
+  // ---------- editorial workflow ----------
+
+  @Get('workflow/my-tasks')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('COLUMNIST')
+  myTasks(
+    @CurrentTenant() tenantId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.articlesService.myTasks(tenantId, user.userId);
+  }
+
+  @Get('workflow/review-queue')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('EDITOR')
+  reviewQueue(@CurrentTenant() tenantId: string) {
+    return this.articlesService.reviewQueue(tenantId);
+  }
+
+  @Post(':id/submit')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('COLUMNIST')
+  submitForReview(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.articlesService.submitForReview(tenantId, id, user.userId);
+  }
+
+  @Post(':id/approve')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('EDITOR')
+  approve(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.articlesService.approve(tenantId, id, user.userId, user.role);
+  }
+
+  @Post(':id/reject')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('EDITOR')
+  reject(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Body() body: { note: string },
+    @CurrentUser() user: any,
+  ) {
+    return this.articlesService.reject(
+      tenantId,
+      id,
+      user.userId,
+      user.role,
+      body.note,
+    );
+  }
+
+  @Patch(':id/assign')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('EDITOR')
+  assign(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Body() body: { assignedToId: string | null; deadline?: string | null },
+    @CurrentUser() user: any,
+  ) {
+    return this.articlesService.assign(
+      tenantId,
+      id,
+      user.userId,
+      user.role,
+      body,
+    );
+  }
 }

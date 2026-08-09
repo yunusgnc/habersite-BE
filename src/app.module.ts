@@ -23,6 +23,7 @@ import { PagesModule } from './pages/pages.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { HealthModule } from './health/health.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { GalleriesModule } from './galleries/galleries.module';
 import { VideosModule } from './videos/videos.module';
 import { SettingsModule } from './settings/settings.module';
@@ -66,6 +67,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     AuditLogModule,
     HealthModule,
     DashboardModule,
+    AnalyticsModule,
     GalleriesModule,
     VideosModule,
     SettingsModule,

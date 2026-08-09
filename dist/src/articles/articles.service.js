@@ -172,6 +172,7 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
                 author: true,
                 createdBy: { select: { id: true, name: true, email: true } },
                 approvedBy: { select: { id: true, name: true } },
+                assignedTo: { select: { id: true, name: true, email: true } },
             },
         });
         if (!article) {
@@ -366,6 +367,165 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
             entityId: id,
         });
         return article;
+    }
+    async submitForReview(tenantId, id, userId) {
+        const article = await this.findById(tenantId, id);
+        if (article.createdById !== userId) {
+            const user = await this.prisma.user.findUnique({
+                where: { id: userId },
+                select: { role: true },
+            });
+            if (!user || !canEditAnyArticle(user.role)) {
+                throw new common_1.ForbiddenException('Sadece taslağın sahibi gönderebilir.');
+            }
+        }
+        if (article.status !== client_1.ArticleStatus.DRAFT) {
+            throw new common_1.ForbiddenException('Yalnızca taslak durumundaki haberler incelemeye gönderilebilir.');
+        }
+        const updated = await this.prisma.article.update({
+            where: { id },
+            data: {
+                status: client_1.ArticleStatus.IN_REVIEW,
+                submittedAt: new Date(),
+                reviewNote: null,
+            },
+            include: {
+                author: true,
+                assignedTo: { select: { id: true, name: true, email: true } },
+            },
+        });
+        await this.audit.log({
+            tenantId,
+            userId,
+            action: 'UPDATE',
+            entity: 'article',
+            entityId: id,
+            changes: { workflow: 'submitted' },
+        });
+        return updated;
+    }
+    async approve(tenantId, id, userId, userRole) {
+        if (!canPublishArticle(userRole)) {
+            throw new common_1.ForbiddenException('Bu işlem için yetkiniz yok.');
+        }
+        const article = await this.findById(tenantId, id);
+        if (article.status !== client_1.ArticleStatus.IN_REVIEW && article.status !== client_1.ArticleStatus.DRAFT) {
+            throw new common_1.ForbiddenException('Sadece taslak / inceleme bekleyen haberler onaylanabilir.');
+        }
+        const now = new Date();
+        const willSchedule = !!article.scheduledAt && new Date(article.scheduledAt) > now;
+        const updated = await this.prisma.article.update({
+            where: { id },
+            data: {
+                status: willSchedule
+                    ? client_1.ArticleStatus.SCHEDULED
+                    : client_1.ArticleStatus.PUBLISHED,
+                publishedAt: article.publishedAt ?? (willSchedule ? null : now),
+                approvedById: userId,
+                reviewedAt: now,
+                reviewNote: null,
+            },
+        });
+        await this.audit.log({
+            tenantId,
+            userId,
+            action: willSchedule ? 'UPDATE' : 'PUBLISH',
+            entity: 'article',
+            entityId: id,
+            changes: { workflow: 'approved', status: updated.status },
+        });
+        return updated;
+    }
+    async reject(tenantId, id, userId, userRole, note) {
+        if (!canPublishArticle(userRole)) {
+            throw new common_1.ForbiddenException('Bu işlem için yetkiniz yok.');
+        }
+        if (!note?.trim()) {
+            throw new common_1.ForbiddenException('Reddederken bir sebep yazmalısınız.');
+        }
+        const article = await this.findById(tenantId, id);
+        if (article.status !== client_1.ArticleStatus.IN_REVIEW) {
+            throw new common_1.ForbiddenException('Sadece inceleme bekleyen haberler reddedilebilir.');
+        }
+        const updated = await this.prisma.article.update({
+            where: { id },
+            data: {
+                status: client_1.ArticleStatus.DRAFT,
+                reviewedAt: new Date(),
+                reviewNote: note.trim(),
+            },
+        });
+        await this.audit.log({
+            tenantId,
+            userId,
+            action: 'REJECT',
+            entity: 'article',
+            entityId: id,
+            changes: { workflow: 'rejected', note: note.trim() },
+        });
+        return updated;
+    }
+    async assign(tenantId, id, userId, userRole, payload) {
+        if (!canEditAnyArticle(userRole)) {
+            throw new common_1.ForbiddenException('Bu işlem için yetkiniz yok.');
+        }
+        await this.findById(tenantId, id);
+        const updated = await this.prisma.article.update({
+            where: { id },
+            data: {
+                assignedToId: payload.assignedToId,
+                deadline: payload.deadline === undefined
+                    ? undefined
+                    : payload.deadline
+                        ? new Date(payload.deadline)
+                        : null,
+            },
+            include: {
+                assignedTo: { select: { id: true, name: true, email: true } },
+            },
+        });
+        await this.audit.log({
+            tenantId,
+            userId,
+            action: 'UPDATE',
+            entity: 'article',
+            entityId: id,
+            changes: {
+                assignedToId: payload.assignedToId,
+                deadline: payload.deadline ?? null,
+            },
+        });
+        return updated;
+    }
+    async myTasks(tenantId, userId) {
+        return this.prisma.article.findMany({
+            where: {
+                tenantId,
+                status: { in: [client_1.ArticleStatus.DRAFT, client_1.ArticleStatus.IN_REVIEW] },
+                OR: [{ assignedToId: userId }, { createdById: userId }],
+            },
+            orderBy: [
+                { deadline: 'asc' },
+                { updatedAt: 'desc' },
+            ],
+            take: 100,
+            include: {
+                author: { select: { id: true, name: true } },
+                assignedTo: { select: { id: true, name: true } },
+            },
+        });
+    }
+    async reviewQueue(tenantId) {
+        return this.prisma.article.findMany({
+            where: { tenantId, status: client_1.ArticleStatus.IN_REVIEW },
+            orderBy: { submittedAt: 'asc' },
+            take: 100,
+            include: {
+                author: { select: { id: true, name: true } },
+                createdBy: { select: { id: true, name: true, email: true } },
+                assignedTo: { select: { id: true, name: true } },
+            },
+        });
     }
     async listRevisions(tenantId, id) {
         await this.findById(tenantId, id);

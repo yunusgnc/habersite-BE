@@ -109,4 +109,18 @@ export class CreateArticleDto {
   @IsString()
   @IsOptional()
   breakingLabel?: string | null;
+
+  // ---- editorial workflow ----
+
+  @IsString()
+  @IsOptional()
+  assignedToId?: string | null;
+
+  @IsDateString()
+  @IsOptional()
+  deadline?: string | null;
+
+  @IsString()
+  @IsOptional()
+  reviewNote?: string | null;
 }

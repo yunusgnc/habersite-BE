@@ -1,5 +1,18 @@
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'PUBLISH' | 'UNPUBLISH' | 'ARCHIVE' | 'RESTORE' | 'APPROVE' | 'REJECT' | 'LOGIN' | 'LOGOUT';
+export type ListParams = {
+    tenantId: string;
+    entity?: string;
+    entityId?: string;
+    userId?: string;
+    action?: string;
+    search?: string;
+    from?: string;
+    to?: string;
+    cursor?: string;
+    limit?: number;
+};
 export declare class AuditService {
     private readonly prisma;
     private readonly logger;
@@ -13,15 +26,35 @@ export declare class AuditService {
         changes?: Record<string, any>;
         ipAddress?: string;
     }): Promise<void>;
-    list(params: {
-        tenantId: string;
-        entity?: string;
-        entityId?: string;
-        userId?: string;
-        limit?: number;
-    }): Promise<({
-        user: {
+    list(params: ListParams): Promise<{
+        items: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+            } | null;
+        } & {
             id: string;
+            createdAt: Date;
+            tenantId: string;
+            ipAddress: string | null;
+            userId: string | null;
+            action: string;
+            entity: string;
+            entityId: string | null;
+            changes: Prisma.JsonValue | null;
+        })[];
+        nextCursor: string | null;
+        total: number;
+    }>;
+    summary(params: ListParams): Promise<{
+        total: number;
+        byAction: {
+            [k: string]: number;
+        };
+    }>;
+    exportRows(params: ListParams): Promise<({
+        user: {
             name: string;
             email: string;
         } | null;
@@ -34,6 +67,7 @@ export declare class AuditService {
         action: string;
         entity: string;
         entityId: string | null;
-        changes: import("@prisma/client/runtime/client").JsonValue | null;
+        changes: Prisma.JsonValue | null;
     })[]>;
+    private buildWhere;
 }

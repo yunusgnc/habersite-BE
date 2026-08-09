@@ -38,19 +38,80 @@ let AuditService = AuditService_1 = class AuditService {
         }
     }
     async list(params) {
-        return this.prisma.auditLog.findMany({
-            where: {
-                tenantId: params.tenantId,
-                ...(params.entity && { entity: params.entity }),
-                ...(params.entityId && { entityId: params.entityId }),
-                ...(params.userId && { userId: params.userId }),
-            },
+        const limit = Math.min(200, params.limit ?? 50);
+        const where = this.buildWhere(params);
+        const [items, total] = await Promise.all([
+            this.prisma.auditLog.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                take: limit + 1,
+                ...(params.cursor && { cursor: { id: params.cursor }, skip: 1 }),
+                include: {
+                    user: { select: { id: true, name: true, email: true } },
+                },
+            }),
+            this.prisma.auditLog.count({ where }),
+        ]);
+        let nextCursor = null;
+        if (items.length > limit) {
+            const last = items.pop();
+            nextCursor = last?.id ?? null;
+        }
+        return { items, nextCursor, total };
+    }
+    async summary(params) {
+        const where = this.buildWhere(params);
+        const groups = await this.prisma.auditLog.groupBy({
+            by: ['action'],
+            where,
+            _count: { _all: true },
+        });
+        const total = groups.reduce((s, g) => s + g._count._all, 0);
+        return {
+            total,
+            byAction: Object.fromEntries(groups.map((g) => [g.action, g._count._all])),
+        };
+    }
+    async exportRows(params) {
+        const where = this.buildWhere(params);
+        const items = await this.prisma.auditLog.findMany({
+            where,
             orderBy: { createdAt: 'desc' },
-            take: params.limit ?? 50,
+            take: 10_000,
             include: {
-                user: { select: { id: true, name: true, email: true } },
+                user: { select: { name: true, email: true } },
             },
         });
+        return items;
+    }
+    buildWhere(p) {
+        const where = { tenantId: p.tenantId };
+        if (p.entity)
+            where.entity = p.entity;
+        if (p.entityId)
+            where.entityId = p.entityId;
+        if (p.userId)
+            where.userId = p.userId;
+        if (p.action)
+            where.action = p.action;
+        if (p.from || p.to) {
+            where.createdAt = {};
+            if (p.from)
+                where.createdAt.gte = new Date(p.from);
+            if (p.to) {
+                const to = new Date(p.to);
+                to.setHours(23, 59, 59, 999);
+                where.createdAt.lte = to;
+            }
+        }
+        if (p.search) {
+            const q = p.search;
+            where.OR = [
+                { entityId: { contains: q, mode: 'insensitive' } },
+                { entity: { contains: q, mode: 'insensitive' } },
+            ];
+        }
+        return where;
     }
 };
 exports.AuditService = AuditService;

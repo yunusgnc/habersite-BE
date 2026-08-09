@@ -22,4 +22,7 @@ export declare class CreateArticleDto {
     publishedAt?: string;
     scheduledAt?: string;
     breakingLabel?: string | null;
+    assignedToId?: string | null;
+    deadline?: string | null;
+    reviewNote?: string | null;
 }

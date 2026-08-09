@@ -35,6 +35,9 @@ class CreateArticleDto {
     publishedAt;
     scheduledAt;
     breakingLabel;
+    assignedToId;
+    deadline;
+    reviewNote;
 }
 exports.CreateArticleDto = CreateArticleDto;
 __decorate([
@@ -150,4 +153,19 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Object)
 ], CreateArticleDto.prototype, "breakingLabel", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], CreateArticleDto.prototype, "assignedToId", void 0);
+__decorate([
+    (0, class_validator_1.IsDateString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], CreateArticleDto.prototype, "deadline", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], CreateArticleDto.prototype, "reviewNote", void 0);
 //# sourceMappingURL=create-article.dto.js.map

@@ -32,6 +32,7 @@ const pages_module_1 = require("./pages/pages.module");
 const audit_log_module_1 = require("./audit-log/audit-log.module");
 const health_module_1 = require("./health/health.module");
 const dashboard_module_1 = require("./dashboard/dashboard.module");
+const analytics_module_1 = require("./analytics/analytics.module");
 const galleries_module_1 = require("./galleries/galleries.module");
 const videos_module_1 = require("./videos/videos.module");
 const settings_module_1 = require("./settings/settings.module");
@@ -78,6 +79,7 @@ exports.AppModule = AppModule = __decorate([
             audit_log_module_1.AuditLogModule,
             health_module_1.HealthModule,
             dashboard_module_1.DashboardModule,
+            analytics_module_1.AnalyticsModule,
             galleries_module_1.GalleriesModule,
             videos_module_1.VideosModule,
             settings_module_1.SettingsModule,

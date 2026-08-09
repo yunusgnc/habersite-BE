@@ -22,10 +22,10 @@ export declare class ContactMessagesService {
             tenantId: string;
             email: string;
             ipAddress: string | null;
+            read: boolean;
             phone: string | null;
             subject: string | null;
             message: string;
-            read: boolean;
             userAgent: string | null;
         }[];
         nextCursor: string | null;
@@ -41,10 +41,10 @@ export declare class ContactMessagesService {
         tenantId: string;
         email: string;
         ipAddress: string | null;
+        read: boolean;
         phone: string | null;
         subject: string | null;
         message: string;
-        read: boolean;
         userAgent: string | null;
     }>;
     remove(tenantId: string, id: string): Promise<{
