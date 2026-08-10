@@ -9,17 +9,17 @@ export declare class PopupsService {
     findAll(tenantId: string, page?: number, limit?: number): Promise<{
         items: {
             id: string;
+            active: boolean;
+            createdAt: Date;
             tenantId: string;
             title: string;
             content: string | null;
             imageUrl: string | null;
             targetUrl: string | null;
-            trigger: string;
-            delayMs: number;
-            active: boolean;
             startsAt: Date | null;
             endsAt: Date | null;
-            createdAt: Date;
+            trigger: string;
+            delayMs: number;
         }[];
         total: number;
         page: number;
@@ -27,59 +27,59 @@ export declare class PopupsService {
     }>;
     findOne(tenantId: string, id: string): Promise<{
         id: string;
+        active: boolean;
+        createdAt: Date;
         tenantId: string;
         title: string;
         content: string | null;
         imageUrl: string | null;
         targetUrl: string | null;
-        trigger: string;
-        delayMs: number;
-        active: boolean;
         startsAt: Date | null;
         endsAt: Date | null;
-        createdAt: Date;
+        trigger: string;
+        delayMs: number;
     }>;
     findActive(tenantId: string): Promise<{
         id: string;
+        active: boolean;
+        createdAt: Date;
         tenantId: string;
         title: string;
         content: string | null;
         imageUrl: string | null;
         targetUrl: string | null;
-        trigger: string;
-        delayMs: number;
-        active: boolean;
         startsAt: Date | null;
         endsAt: Date | null;
-        createdAt: Date;
+        trigger: string;
+        delayMs: number;
     }[]>;
     create(tenantId: string, dto: CreatePopupDto): Promise<{
         id: string;
+        active: boolean;
+        createdAt: Date;
         tenantId: string;
         title: string;
         content: string | null;
         imageUrl: string | null;
         targetUrl: string | null;
-        trigger: string;
-        delayMs: number;
-        active: boolean;
         startsAt: Date | null;
         endsAt: Date | null;
-        createdAt: Date;
+        trigger: string;
+        delayMs: number;
     }>;
     update(tenantId: string, id: string, dto: UpdatePopupDto): Promise<{
         id: string;
+        active: boolean;
+        createdAt: Date;
         tenantId: string;
         title: string;
         content: string | null;
         imageUrl: string | null;
         targetUrl: string | null;
-        trigger: string;
-        delayMs: number;
-        active: boolean;
         startsAt: Date | null;
         endsAt: Date | null;
-        createdAt: Date;
+        trigger: string;
+        delayMs: number;
     }>;
     remove(tenantId: string, id: string): Promise<{
         deleted: boolean;

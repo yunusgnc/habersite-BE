@@ -158,26 +158,31 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
     }
     async fetchHoroscope(_config) {
         const signs = [
-            { name: 'Koç', symbol: '♈', slug: 'aries' },
-            { name: 'Boğa', symbol: '♉', slug: 'taurus' },
-            { name: 'İkizler', symbol: '♊', slug: 'gemini' },
-            { name: 'Yengeç', symbol: '♋', slug: 'cancer' },
-            { name: 'Aslan', symbol: '♌', slug: 'leo' },
-            { name: 'Başak', symbol: '♍', slug: 'virgo' },
-            { name: 'Terazi', symbol: '♎', slug: 'libra' },
-            { name: 'Akrep', symbol: '♏', slug: 'scorpio' },
-            { name: 'Yay', symbol: '♐', slug: 'sagittarius' },
-            { name: 'Oğlak', symbol: '♑', slug: 'capricorn' },
-            { name: 'Kova', symbol: '♒', slug: 'aquarius' },
-            { name: 'Balık', symbol: '♓', slug: 'pisces' },
+            { name: 'Koç', symbol: '♈', slug: 'koc', apiSlug: 'aries' },
+            { name: 'Boğa', symbol: '♉', slug: 'boga', apiSlug: 'taurus' },
+            { name: 'İkizler', symbol: '♊', slug: 'ikizler', apiSlug: 'gemini' },
+            { name: 'Yengeç', symbol: '♋', slug: 'yengec', apiSlug: 'cancer' },
+            { name: 'Aslan', symbol: '♌', slug: 'aslan', apiSlug: 'leo' },
+            { name: 'Başak', symbol: '♍', slug: 'basak', apiSlug: 'virgo' },
+            { name: 'Terazi', symbol: '♎', slug: 'terazi', apiSlug: 'libra' },
+            { name: 'Akrep', symbol: '♏', slug: 'akrep', apiSlug: 'scorpio' },
+            { name: 'Yay', symbol: '♐', slug: 'yay', apiSlug: 'sagittarius' },
+            { name: 'Oğlak', symbol: '♑', slug: 'oglak', apiSlug: 'capricorn' },
+            { name: 'Kova', symbol: '♒', slug: 'kova', apiSlug: 'aquarius' },
+            { name: 'Balık', symbol: '♓', slug: 'balik', apiSlug: 'pisces' },
         ];
         const results = await Promise.all(signs.map(async (s) => {
             try {
-                const { data } = await axios_1.default.get(`https://horoscope-app-api.vercel.app/api/v1/get-horoscope/daily?sign=${s.slug}&day=TODAY`, { timeout: 8000 });
-                return { ...s, text: data?.data?.horoscope_data ?? '' };
+                const { data } = await axios_1.default.get(`https://horoscope-app-api.vercel.app/api/v1/get-horoscope/daily?sign=${s.apiSlug}&day=TODAY`, { timeout: 8000 });
+                return {
+                    name: s.name,
+                    symbol: s.symbol,
+                    slug: s.slug,
+                    text: data?.data?.horoscope_data ?? '',
+                };
             }
             catch {
-                return { ...s, text: '' };
+                return { name: s.name, symbol: s.symbol, slug: s.slug, text: '' };
             }
         }));
         return { signs: results, date: new Date().toISOString().split('T')[0] };

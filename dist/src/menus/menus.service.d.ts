@@ -8,45 +8,45 @@ export declare class MenusService {
     constructor(prisma: PrismaService, revalidation: RevalidationService);
     findAll(tenantId: string): Promise<{
         id: string;
+        updatedAt: Date;
         tenantId: string;
         location: string;
         label: string | null;
         items: import("@prisma/client/runtime/client").JsonValue;
-        updatedAt: Date;
     }[]>;
     findByLocation(tenantId: string, location: string): Promise<{
         id: string;
+        updatedAt: Date;
         tenantId: string;
         location: string;
         label: string | null;
         items: import("@prisma/client/runtime/client").JsonValue;
-        updatedAt: Date;
     } | {
         location: string;
         items: never[];
     }>;
     upsert(tenantId: string, dto: CreateMenuDto): Promise<{
         id: string;
+        updatedAt: Date;
         tenantId: string;
         location: string;
         label: string | null;
         items: import("@prisma/client/runtime/client").JsonValue;
-        updatedAt: Date;
     }>;
     update(tenantId: string, location: string, dto: UpdateMenuDto): Promise<{
         id: string;
+        updatedAt: Date;
         tenantId: string;
         location: string;
         label: string | null;
         items: import("@prisma/client/runtime/client").JsonValue;
-        updatedAt: Date;
     }>;
     remove(tenantId: string, location: string): Promise<{
         id: string;
+        updatedAt: Date;
         tenantId: string;
         location: string;
         label: string | null;
         items: import("@prisma/client/runtime/client").JsonValue;
-        updatedAt: Date;
     }>;
 }

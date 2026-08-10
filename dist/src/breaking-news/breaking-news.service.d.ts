@@ -7,44 +7,44 @@ export declare class BreakingNewsService {
     private readonly revalidation;
     constructor(prisma: PrismaService, revalidation: RevalidationService);
     findActive(tenantId: string): Promise<{
-        id: string;
-        tenantId: string;
-        title: string;
         url: string | null;
+        id: string;
         active: boolean;
-        sortOrder: number;
-        expiresAt: Date | null;
         createdAt: Date;
+        tenantId: string;
+        sortOrder: number;
+        title: string;
+        expiresAt: Date | null;
     }[]>;
     findAll(tenantId: string): Promise<{
-        id: string;
-        tenantId: string;
-        title: string;
         url: string | null;
+        id: string;
         active: boolean;
-        sortOrder: number;
-        expiresAt: Date | null;
         createdAt: Date;
+        tenantId: string;
+        sortOrder: number;
+        title: string;
+        expiresAt: Date | null;
     }[]>;
     create(tenantId: string, dto: CreateBreakingNewsDto): Promise<{
-        id: string;
-        tenantId: string;
-        title: string;
         url: string | null;
+        id: string;
         active: boolean;
-        sortOrder: number;
-        expiresAt: Date | null;
         createdAt: Date;
+        tenantId: string;
+        sortOrder: number;
+        title: string;
+        expiresAt: Date | null;
     }>;
     update(tenantId: string, id: string, dto: UpdateBreakingNewsDto): Promise<{
-        id: string;
-        tenantId: string;
-        title: string;
         url: string | null;
+        id: string;
         active: boolean;
-        sortOrder: number;
-        expiresAt: Date | null;
         createdAt: Date;
+        tenantId: string;
+        sortOrder: number;
+        title: string;
+        expiresAt: Date | null;
     }>;
     reorder(tenantId: string, ids: string[]): Promise<{
         updated: number;
