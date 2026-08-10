@@ -20,6 +20,7 @@ const slugify_1 = __importDefault(require("slugify"));
 const prisma_service_1 = require("../prisma/prisma.service");
 const client_1 = require("@prisma/client");
 const audit_service_1 = require("../common/audit/audit.service");
+const revalidation_service_1 = require("../common/revalidation/revalidation.service");
 function canPublishArticle(role) {
     return ['SUPER_ADMIN', 'ADMIN', 'EDITOR'].includes(role);
 }
@@ -29,10 +30,12 @@ function canEditAnyArticle(role) {
 let ArticlesService = ArticlesService_1 = class ArticlesService {
     prisma;
     audit;
+    revalidation;
     logger = new common_1.Logger(ArticlesService_1.name);
-    constructor(prisma, audit) {
+    constructor(prisma, audit, revalidation) {
         this.prisma = prisma;
         this.audit = audit;
+        this.revalidation = revalidation;
     }
     async publishScheduled() {
         const now = new Date();
@@ -244,6 +247,7 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
             entityId: article.id,
             changes: { title: article.title, status: article.status },
         });
+        this.revalidation.revalidateTenant(tenantId, ['articles', 'breaking-news', 'most-read']);
         return article;
     }
     async update(tenantId, id, dto, userId, userRole) {
@@ -351,6 +355,12 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
             entityId: article.id,
             changes: { title: article.title, status: article.status },
         });
+        this.revalidation.revalidateTenant(tenantId, [
+            'articles',
+            `article-${article.slug}`,
+            'breaking-news',
+            'most-read',
+        ]);
         return article;
     }
     async remove(tenantId, id, userId) {
@@ -366,6 +376,7 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
             entity: 'article',
             entityId: id,
         });
+        this.revalidation.revalidateTenant(tenantId, ['articles', 'breaking-news', 'most-read']);
         return article;
     }
     async submitForReview(tenantId, id, userId) {
@@ -704,6 +715,7 @@ __decorate([
 exports.ArticlesService = ArticlesService = ArticlesService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        audit_service_1.AuditService])
+        audit_service_1.AuditService,
+        revalidation_service_1.RevalidationService])
 ], ArticlesService);
 //# sourceMappingURL=articles.service.js.map

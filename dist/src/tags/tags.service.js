@@ -12,10 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TagsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const revalidation_service_1 = require("../common/revalidation/revalidation.service");
 let TagsService = class TagsService {
     prisma;
-    constructor(prisma) {
+    revalidation;
+    constructor(prisma, revalidation) {
         this.prisma = prisma;
+        this.revalidation = revalidation;
     }
     async findAll(tenantId) {
         return this.prisma.tag.findMany({
@@ -39,9 +42,11 @@ let TagsService = class TagsService {
         });
         if (existing)
             throw new common_1.ConflictException('Bu slug zaten kullanılıyor');
-        return this.prisma.tag.create({
+        const result = await this.prisma.tag.create({
             data: { ...dto, tenantId },
         });
+        this.revalidation.revalidateTenant(tenantId, ['tags']);
+        return result;
     }
     async update(tenantId, id, dto) {
         await this.findOne(tenantId, id);
@@ -52,16 +57,20 @@ let TagsService = class TagsService {
             if (existing)
                 throw new common_1.ConflictException('Bu slug zaten kullanılıyor');
         }
-        return this.prisma.tag.update({ where: { id }, data: dto });
+        const result = await this.prisma.tag.update({ where: { id }, data: dto });
+        this.revalidation.revalidateTenant(tenantId, ['tags']);
+        return result;
     }
     async remove(tenantId, id) {
         await this.findOne(tenantId, id);
-        return this.prisma.tag.delete({ where: { id } });
+        const result = await this.prisma.tag.delete({ where: { id } });
+        this.revalidation.revalidateTenant(tenantId, ['tags']);
+        return result;
     }
 };
 exports.TagsService = TagsService;
 exports.TagsService = TagsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, revalidation_service_1.RevalidationService])
 ], TagsService);
 //# sourceMappingURL=tags.service.js.map

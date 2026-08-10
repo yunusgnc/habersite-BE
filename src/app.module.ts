@@ -6,6 +6,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { PrismaModule } from './prisma/prisma.module';
+import { RevalidationModule } from './common/revalidation/revalidation.module';
 import { AuthModule } from './auth/auth.module';
 import { TenantsModule } from './tenants/tenants.module';
 import { UsersModule } from './users/users.module';
@@ -50,6 +51,7 @@ import { NotificationsModule } from './notifications/notifications.module';
       serveStaticOptions: { index: false },
     }),
     PrismaModule,
+    RevalidationModule,
     AuthModule,
     TenantsModule,
     UsersModule,

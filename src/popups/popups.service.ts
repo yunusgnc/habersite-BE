@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RevalidationService } from '../common/revalidation/revalidation.service';
 import { CreatePopupDto } from './dto/create-popup.dto';
 import { UpdatePopupDto } from './dto/update-popup.dto';
 
 @Injectable()
 export class PopupsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly revalidation: RevalidationService) {}
 
   async findAll(tenantId: string, page = 1, limit = 20) {
     const skip = (page - 1) * limit;
@@ -65,7 +66,7 @@ export class PopupsService {
   }
 
   async create(tenantId: string, dto: CreatePopupDto) {
-    return this.prisma.popup.create({
+    const result = await this.prisma.popup.create({
       data: {
         tenantId,
         title: dto.title,
@@ -79,6 +80,8 @@ export class PopupsService {
         endsAt: dto.endsAt ? new Date(dto.endsAt) : null,
       },
     });
+    this.revalidation.revalidateTenant(tenantId, ['popups']);
+    return result;
   }
 
   async update(tenantId: string, id: string, dto: UpdatePopupDto) {
@@ -90,7 +93,7 @@ export class PopupsService {
       throw new NotFoundException('Popup not found');
     }
 
-    return this.prisma.popup.update({
+    const result = await this.prisma.popup.update({
       where: { id },
       data: {
         ...dto,
@@ -98,6 +101,8 @@ export class PopupsService {
         ...(dto.endsAt && { endsAt: new Date(dto.endsAt) }),
       },
     });
+    this.revalidation.revalidateTenant(tenantId, ['popups']);
+    return result;
   }
 
   async remove(tenantId: string, id: string) {
@@ -110,6 +115,7 @@ export class PopupsService {
     }
 
     await this.prisma.popup.delete({ where: { id } });
+    this.revalidation.revalidateTenant(tenantId, ['popups']);
     return { deleted: true };
   }
 }

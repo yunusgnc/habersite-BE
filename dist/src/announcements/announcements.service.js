@@ -12,10 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AnnouncementsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const revalidation_service_1 = require("../common/revalidation/revalidation.service");
 let AnnouncementsService = class AnnouncementsService {
     prisma;
-    constructor(prisma) {
+    revalidation;
+    constructor(prisma, revalidation) {
         this.prisma = prisma;
+        this.revalidation = revalidation;
     }
     async findAll(tenantId) {
         return this.prisma.announcement.findMany({
@@ -46,17 +49,19 @@ let AnnouncementsService = class AnnouncementsService {
         });
     }
     async create(tenantId, dto) {
-        return this.prisma.announcement.create({
+        const result = await this.prisma.announcement.create({
             data: {
                 ...dto,
                 tenantId,
                 expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
             },
         });
+        this.revalidation.revalidateTenant(tenantId, ['announcements']);
+        return result;
     }
     async update(tenantId, id, dto) {
         await this.findOne(tenantId, id);
-        return this.prisma.announcement.update({
+        const result = await this.prisma.announcement.update({
             where: { id },
             data: {
                 ...dto,
@@ -67,17 +72,21 @@ let AnnouncementsService = class AnnouncementsService {
                     : undefined,
             },
         });
+        this.revalidation.revalidateTenant(tenantId, ['announcements']);
+        return result;
     }
     async remove(tenantId, id) {
         await this.findOne(tenantId, id);
-        return this.prisma.announcement.delete({
+        const result = await this.prisma.announcement.delete({
             where: { id },
         });
+        this.revalidation.revalidateTenant(tenantId, ['announcements']);
+        return result;
     }
 };
 exports.AnnouncementsService = AnnouncementsService;
 exports.AnnouncementsService = AnnouncementsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, revalidation_service_1.RevalidationService])
 ], AnnouncementsService);
 //# sourceMappingURL=announcements.service.js.map

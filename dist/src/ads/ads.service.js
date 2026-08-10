@@ -12,10 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const revalidation_service_1 = require("../common/revalidation/revalidation.service");
 let AdsService = class AdsService {
     prisma;
-    constructor(prisma) {
+    revalidation;
+    constructor(prisma, revalidation) {
         this.prisma = prisma;
+        this.revalidation = revalidation;
     }
     async findByPosition(tenantId, position) {
         const now = new Date();
@@ -51,7 +54,7 @@ let AdsService = class AdsService {
         });
     }
     async create(tenantId, dto) {
-        return this.prisma.ad.create({
+        const result = await this.prisma.ad.create({
             data: {
                 tenantId,
                 name: dto.name,
@@ -66,6 +69,8 @@ let AdsService = class AdsService {
                 sortOrder: dto.sortOrder ?? 0,
             },
         });
+        this.revalidation.revalidateTenant(tenantId, ['ads']);
+        return result;
     }
     async update(tenantId, id, dto) {
         const ad = await this.prisma.ad.findFirst({
@@ -74,7 +79,7 @@ let AdsService = class AdsService {
         if (!ad) {
             throw new common_1.NotFoundException('Ad not found');
         }
-        return this.prisma.ad.update({
+        const result = await this.prisma.ad.update({
             where: { id },
             data: {
                 ...dto,
@@ -82,6 +87,8 @@ let AdsService = class AdsService {
                 ...(dto.endsAt && { endsAt: new Date(dto.endsAt) }),
             },
         });
+        this.revalidation.revalidateTenant(tenantId, ['ads']);
+        return result;
     }
     async remove(tenantId, id) {
         const ad = await this.prisma.ad.findFirst({
@@ -91,6 +98,7 @@ let AdsService = class AdsService {
             throw new common_1.NotFoundException('Ad not found');
         }
         await this.prisma.ad.delete({ where: { id } });
+        this.revalidation.revalidateTenant(tenantId, ['ads']);
         return { deleted: true };
     }
     async trackImpression(tenantId, id) {
@@ -121,6 +129,6 @@ let AdsService = class AdsService {
 exports.AdsService = AdsService;
 exports.AdsService = AdsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, revalidation_service_1.RevalidationService])
 ], AdsService);
 //# sourceMappingURL=ads.service.js.map

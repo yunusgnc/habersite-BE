@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import slugify from 'slugify';
 import { PrismaService } from '../prisma/prisma.service';
+import { RevalidationService } from '../common/revalidation/revalidation.service';
 import { CreateAuthorDto } from './dto/create-author.dto';
 import { UpdateAuthorDto } from './dto/update-author.dto';
 
 @Injectable()
 export class AuthorsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly revalidation: RevalidationService) {}
 
   async findAll(tenantId: string) {
     return this.prisma.author.findMany({
@@ -30,7 +31,7 @@ export class AuthorsService {
   async create(tenantId: string, dto: CreateAuthorDto) {
     const slug = await this.generateUniqueSlug(tenantId, dto.name);
 
-    return this.prisma.author.create({
+    const result = await this.prisma.author.create({
       data: {
         tenantId,
         slug,
@@ -43,6 +44,8 @@ export class AuthorsService {
         sortOrder: dto.sortOrder ?? 0,
       },
     });
+    this.revalidation.revalidateTenant(tenantId, ['authors']);
+    return result;
   }
 
   async update(tenantId: string, id: string, dto: UpdateAuthorDto) {
@@ -54,15 +57,19 @@ export class AuthorsService {
       data.slug = await this.generateUniqueSlug(tenantId, dto.name, id);
     }
 
-    return this.prisma.author.update({
+    const result = await this.prisma.author.update({
       where: { id },
       data,
     });
+    this.revalidation.revalidateTenant(tenantId, ['authors']);
+    return result;
   }
 
   async remove(tenantId: string, id: string) {
     await this.ensureExists(tenantId, id);
-    return this.prisma.author.delete({ where: { id } });
+    const result = await this.prisma.author.delete({ where: { id } });
+    this.revalidation.revalidateTenant(tenantId, ['authors']);
+    return result;
   }
 
   private async ensureExists(tenantId: string, id: string) {

@@ -6,23 +6,23 @@ export declare class BreakingNewsController {
     constructor(breakingNewsService: BreakingNewsService);
     findActive(tenantId: string): Promise<{
         id: string;
-        active: boolean;
-        createdAt: Date;
         tenantId: string;
-        sortOrder: number;
         title: string;
         url: string | null;
+        active: boolean;
+        sortOrder: number;
         expiresAt: Date | null;
+        createdAt: Date;
     }[]>;
     findAll(tenantId: string): Promise<{
         id: string;
-        active: boolean;
-        createdAt: Date;
         tenantId: string;
-        sortOrder: number;
         title: string;
         url: string | null;
+        active: boolean;
+        sortOrder: number;
         expiresAt: Date | null;
+        createdAt: Date;
     }[]>;
     reorder(tenantId: string, body: {
         ids: string[];
@@ -31,23 +31,23 @@ export declare class BreakingNewsController {
     }>;
     create(tenantId: string, dto: CreateBreakingNewsDto): Promise<{
         id: string;
-        active: boolean;
-        createdAt: Date;
         tenantId: string;
-        sortOrder: number;
         title: string;
         url: string | null;
+        active: boolean;
+        sortOrder: number;
         expiresAt: Date | null;
+        createdAt: Date;
     }>;
     update(tenantId: string, id: string, dto: UpdateBreakingNewsDto): Promise<{
         id: string;
-        active: boolean;
-        createdAt: Date;
         tenantId: string;
-        sortOrder: number;
         title: string;
         url: string | null;
+        active: boolean;
+        sortOrder: number;
         expiresAt: Date | null;
+        createdAt: Date;
     }>;
     remove(tenantId: string, id: string): Promise<{
         deleted: boolean;

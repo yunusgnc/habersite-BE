@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RevalidationService } from '../common/revalidation/revalidation.service';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 
 @Injectable()
 export class TagsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly revalidation: RevalidationService) {}
 
   async findAll(tenantId: string) {
     return this.prisma.tag.findMany({
@@ -29,9 +30,11 @@ export class TagsService {
       where: { tenantId_slug: { tenantId, slug: dto.slug } },
     });
     if (existing) throw new ConflictException('Bu slug zaten kullanılıyor');
-    return this.prisma.tag.create({
+    const result = await this.prisma.tag.create({
       data: { ...dto, tenantId },
     });
+    this.revalidation.revalidateTenant(tenantId, ['tags']);
+    return result;
   }
 
   async update(tenantId: string, id: string, dto: UpdateTagDto) {
@@ -42,11 +45,15 @@ export class TagsService {
       });
       if (existing) throw new ConflictException('Bu slug zaten kullanılıyor');
     }
-    return this.prisma.tag.update({ where: { id }, data: dto });
+    const result = await this.prisma.tag.update({ where: { id }, data: dto });
+    this.revalidation.revalidateTenant(tenantId, ['tags']);
+    return result;
   }
 
   async remove(tenantId: string, id: string) {
     await this.findOne(tenantId, id);
-    return this.prisma.tag.delete({ where: { id } });
+    const result = await this.prisma.tag.delete({ where: { id } });
+    this.revalidation.revalidateTenant(tenantId, ['tags']);
+    return result;
   }
 }

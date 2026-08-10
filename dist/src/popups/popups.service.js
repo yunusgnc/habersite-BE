@@ -12,10 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PopupsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const revalidation_service_1 = require("../common/revalidation/revalidation.service");
 let PopupsService = class PopupsService {
     prisma;
-    constructor(prisma) {
+    revalidation;
+    constructor(prisma, revalidation) {
         this.prisma = prisma;
+        this.revalidation = revalidation;
     }
     async findAll(tenantId, page = 1, limit = 20) {
         const skip = (page - 1) * limit;
@@ -67,7 +70,7 @@ let PopupsService = class PopupsService {
         });
     }
     async create(tenantId, dto) {
-        return this.prisma.popup.create({
+        const result = await this.prisma.popup.create({
             data: {
                 tenantId,
                 title: dto.title,
@@ -81,6 +84,8 @@ let PopupsService = class PopupsService {
                 endsAt: dto.endsAt ? new Date(dto.endsAt) : null,
             },
         });
+        this.revalidation.revalidateTenant(tenantId, ['popups']);
+        return result;
     }
     async update(tenantId, id, dto) {
         const popup = await this.prisma.popup.findFirst({
@@ -89,7 +94,7 @@ let PopupsService = class PopupsService {
         if (!popup) {
             throw new common_1.NotFoundException('Popup not found');
         }
-        return this.prisma.popup.update({
+        const result = await this.prisma.popup.update({
             where: { id },
             data: {
                 ...dto,
@@ -97,6 +102,8 @@ let PopupsService = class PopupsService {
                 ...(dto.endsAt && { endsAt: new Date(dto.endsAt) }),
             },
         });
+        this.revalidation.revalidateTenant(tenantId, ['popups']);
+        return result;
     }
     async remove(tenantId, id) {
         const popup = await this.prisma.popup.findFirst({
@@ -106,12 +113,13 @@ let PopupsService = class PopupsService {
             throw new common_1.NotFoundException('Popup not found');
         }
         await this.prisma.popup.delete({ where: { id } });
+        this.revalidation.revalidateTenant(tenantId, ['popups']);
         return { deleted: true };
     }
 };
 exports.PopupsService = PopupsService;
 exports.PopupsService = PopupsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, revalidation_service_1.RevalidationService])
 ], PopupsService);
 //# sourceMappingURL=popups.service.js.map

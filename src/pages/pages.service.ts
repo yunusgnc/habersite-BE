@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RevalidationService } from '../common/revalidation/revalidation.service';
 import { CreatePageDto, UpdatePageDto } from './dto/create-page.dto';
 import slugify from 'slugify';
 
 @Injectable()
 export class PagesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private readonly revalidation: RevalidationService) {}
 
   async findAll(tenantId: string) {
     return this.prisma.page.findMany({
@@ -35,7 +36,7 @@ export class PagesService {
       slugify(dto.title, { lower: true, strict: true, locale: 'tr' });
     const slug = await this.ensureUniqueSlug(tenantId, baseSlug);
     const content = this.normalizeContent(dto.content);
-    return this.prisma.page.create({
+    const result = await this.prisma.page.create({
       data: {
         tenantId,
         slug,
@@ -46,6 +47,8 @@ export class PagesService {
         published: dto.published ?? true,
       },
     });
+    this.revalidation.revalidateTenant(tenantId, ['pages']);
+    return result;
   }
 
   async update(tenantId: string, id: string, dto: UpdatePageDto) {
@@ -57,7 +60,9 @@ export class PagesService {
     if (dto.slug) {
       data.slug = await this.ensureUniqueSlug(tenantId, dto.slug, id);
     }
-    return this.prisma.page.update({ where: { id }, data });
+    const result = await this.prisma.page.update({ where: { id }, data });
+    this.revalidation.revalidateTenant(tenantId, ['pages']);
+    return result;
   }
 
   /**
@@ -98,6 +103,8 @@ export class PagesService {
   }
 
   async remove(tenantId: string, id: string) {
-    return this.prisma.page.delete({ where: { id } });
+    const result = await this.prisma.page.delete({ where: { id } });
+    this.revalidation.revalidateTenant(tenantId, ['pages']);
+    return result;
   }
 }

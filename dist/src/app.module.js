@@ -15,6 +15,7 @@ const throttler_1 = require("@nestjs/throttler");
 const serve_static_1 = require("@nestjs/serve-static");
 const path_1 = require("path");
 const prisma_module_1 = require("./prisma/prisma.module");
+const revalidation_module_1 = require("./common/revalidation/revalidation.module");
 const auth_module_1 = require("./auth/auth.module");
 const tenants_module_1 = require("./tenants/tenants.module");
 const users_module_1 = require("./users/users.module");
@@ -62,6 +63,7 @@ exports.AppModule = AppModule = __decorate([
                 serveStaticOptions: { index: false },
             }),
             prisma_module_1.PrismaModule,
+            revalidation_module_1.RevalidationModule,
             auth_module_1.AuthModule,
             tenants_module_1.TenantsModule,
             users_module_1.UsersModule,

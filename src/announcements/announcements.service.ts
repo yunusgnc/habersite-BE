@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RevalidationService } from '../common/revalidation/revalidation.service';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
 
 @Injectable()
 export class AnnouncementsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private readonly revalidation: RevalidationService) {}
 
   async findAll(tenantId: string) {
     return this.prisma.announcement.findMany({
@@ -41,19 +42,21 @@ export class AnnouncementsService {
   }
 
   async create(tenantId: string, dto: CreateAnnouncementDto) {
-    return this.prisma.announcement.create({
+    const result = await this.prisma.announcement.create({
       data: {
         ...dto,
         tenantId,
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
       },
     });
+    this.revalidation.revalidateTenant(tenantId, ['announcements']);
+    return result;
   }
 
   async update(tenantId: string, id: string, dto: UpdateAnnouncementDto) {
     await this.findOne(tenantId, id);
 
-    return this.prisma.announcement.update({
+    const result = await this.prisma.announcement.update({
       where: { id },
       data: {
         ...dto,
@@ -64,13 +67,17 @@ export class AnnouncementsService {
           : undefined,
       },
     });
+    this.revalidation.revalidateTenant(tenantId, ['announcements']);
+    return result;
   }
 
   async remove(tenantId: string, id: string) {
     await this.findOne(tenantId, id);
 
-    return this.prisma.announcement.delete({
+    const result = await this.prisma.announcement.delete({
       where: { id },
     });
+    this.revalidation.revalidateTenant(tenantId, ['announcements']);
+    return result;
   }
 }

@@ -12,10 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SettingsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const revalidation_service_1 = require("../common/revalidation/revalidation.service");
 let SettingsService = class SettingsService {
     prisma;
-    constructor(prisma) {
+    revalidation;
+    constructor(prisma, revalidation) {
         this.prisma = prisma;
+        this.revalidation = revalidation;
     }
     async getAll(tenantId) {
         const settings = await this.prisma.setting.findMany({
@@ -35,13 +38,15 @@ let SettingsService = class SettingsService {
         return setting?.value ?? null;
     }
     async upsert(tenantId, key, value) {
-        return this.prisma.setting.upsert({
+        const result = await this.prisma.setting.upsert({
             where: {
                 tenantId_key: { tenantId, key },
             },
             update: { value },
             create: { tenantId, key, value },
         });
+        this.revalidation.revalidateTenant(tenantId, ['settings']);
+        return result;
     }
     async bulkUpsert(tenantId, settings) {
         const operations = Object.entries(settings).map(([key, value]) => this.prisma.setting.upsert({
@@ -51,12 +56,14 @@ let SettingsService = class SettingsService {
             update: { value },
             create: { tenantId, key, value },
         }));
-        return this.prisma.$transaction(operations);
+        const result = await this.prisma.$transaction(operations);
+        this.revalidation.revalidateTenant(tenantId, ['settings']);
+        return result;
     }
 };
 exports.SettingsService = SettingsService;
 exports.SettingsService = SettingsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, revalidation_service_1.RevalidationService])
 ], SettingsService);
 //# sourceMappingURL=settings.service.js.map

@@ -12,10 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MenusService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const revalidation_service_1 = require("../common/revalidation/revalidation.service");
 let MenusService = class MenusService {
     prisma;
-    constructor(prisma) {
+    revalidation;
+    constructor(prisma, revalidation) {
         this.prisma = prisma;
+        this.revalidation = revalidation;
     }
     async findAll(tenantId) {
         return this.prisma.menu.findMany({
@@ -33,11 +36,13 @@ let MenusService = class MenusService {
     }
     async upsert(tenantId, dto) {
         const items = dto.items;
-        return this.prisma.menu.upsert({
+        const result = await this.prisma.menu.upsert({
             where: { tenantId_location: { tenantId, location: dto.location } },
             update: { items, label: dto.label ?? null },
             create: { tenantId, location: dto.location, items, label: dto.label ?? null },
         });
+        this.revalidation.revalidateTenant(tenantId, ['menus']);
+        return result;
     }
     async update(tenantId, location, dto) {
         const updateData = {};
@@ -45,7 +50,7 @@ let MenusService = class MenusService {
             updateData.items = dto.items;
         if (dto.label !== undefined)
             updateData.label = dto.label || null;
-        return this.prisma.menu.upsert({
+        const result = await this.prisma.menu.upsert({
             where: { tenantId_location: { tenantId, location } },
             update: updateData,
             create: {
@@ -55,6 +60,8 @@ let MenusService = class MenusService {
                 label: dto.label ?? null,
             },
         });
+        this.revalidation.revalidateTenant(tenantId, ['menus']);
+        return result;
     }
     async remove(tenantId, location) {
         const menu = await this.prisma.menu.findUnique({
@@ -62,14 +69,16 @@ let MenusService = class MenusService {
         });
         if (!menu)
             throw new common_1.NotFoundException('Menu not found');
-        return this.prisma.menu.delete({
+        const result = await this.prisma.menu.delete({
             where: { tenantId_location: { tenantId, location } },
         });
+        this.revalidation.revalidateTenant(tenantId, ['menus']);
+        return result;
     }
 };
 exports.MenusService = MenusService;
 exports.MenusService = MenusService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, revalidation_service_1.RevalidationService])
 ], MenusService);
 //# sourceMappingURL=menus.service.js.map

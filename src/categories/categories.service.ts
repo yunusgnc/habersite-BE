@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import slugify from 'slugify';
 import { PrismaService } from '../prisma/prisma.service';
+import { RevalidationService } from '../common/revalidation/revalidation.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Injectable()
 export class CategoriesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly revalidation: RevalidationService) {}
 
   async findAll(tenantId: string) {
     const categories = await this.prisma.category.findMany({
@@ -42,7 +43,7 @@ export class CategoriesService {
   async create(tenantId: string, dto: CreateCategoryDto) {
     const slug = await this.generateUniqueSlug(tenantId, dto.name);
 
-    return this.prisma.category.create({
+    const result = await this.prisma.category.create({
       data: {
         tenantId,
         slug,
@@ -57,6 +58,8 @@ export class CategoriesService {
       },
       include: { children: true },
     });
+    this.revalidation.revalidateTenant(tenantId, ['categories']);
+    return result;
   }
 
   async update(tenantId: string, id: string, dto: UpdateCategoryDto) {
@@ -68,16 +71,20 @@ export class CategoriesService {
       data.slug = await this.generateUniqueSlug(tenantId, dto.name, id);
     }
 
-    return this.prisma.category.update({
+    const result = await this.prisma.category.update({
       where: { id },
       data,
       include: { children: true },
     });
+    this.revalidation.revalidateTenant(tenantId, ['categories']);
+    return result;
   }
 
   async remove(tenantId: string, id: string) {
     await this.ensureExists(tenantId, id);
-    return this.prisma.category.delete({ where: { id } });
+    const result = await this.prisma.category.delete({ where: { id } });
+    this.revalidation.revalidateTenant(tenantId, ['categories']);
+    return result;
   }
 
   async reorder(tenantId: string, items: { id: string; sortOrder: number }[]) {
@@ -87,7 +94,9 @@ export class CategoriesService {
         data: { sortOrder: item.sortOrder },
       }),
     );
-    return this.prisma.$transaction(updates);
+    const result = await this.prisma.$transaction(updates);
+    this.revalidation.revalidateTenant(tenantId, ['categories']);
+    return result;
   }
 
   private async ensureExists(tenantId: string, id: string) {

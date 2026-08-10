@@ -16,10 +16,13 @@ exports.CategoriesService = void 0;
 const common_1 = require("@nestjs/common");
 const slugify_1 = __importDefault(require("slugify"));
 const prisma_service_1 = require("../prisma/prisma.service");
+const revalidation_service_1 = require("../common/revalidation/revalidation.service");
 let CategoriesService = class CategoriesService {
     prisma;
-    constructor(prisma) {
+    revalidation;
+    constructor(prisma, revalidation) {
         this.prisma = prisma;
+        this.revalidation = revalidation;
     }
     async findAll(tenantId) {
         const categories = await this.prisma.category.findMany({
@@ -47,7 +50,7 @@ let CategoriesService = class CategoriesService {
     }
     async create(tenantId, dto) {
         const slug = await this.generateUniqueSlug(tenantId, dto.name);
-        return this.prisma.category.create({
+        const result = await this.prisma.category.create({
             data: {
                 tenantId,
                 slug,
@@ -62,6 +65,8 @@ let CategoriesService = class CategoriesService {
             },
             include: { children: true },
         });
+        this.revalidation.revalidateTenant(tenantId, ['categories']);
+        return result;
     }
     async update(tenantId, id, dto) {
         await this.ensureExists(tenantId, id);
@@ -69,22 +74,28 @@ let CategoriesService = class CategoriesService {
         if (dto.name) {
             data.slug = await this.generateUniqueSlug(tenantId, dto.name, id);
         }
-        return this.prisma.category.update({
+        const result = await this.prisma.category.update({
             where: { id },
             data,
             include: { children: true },
         });
+        this.revalidation.revalidateTenant(tenantId, ['categories']);
+        return result;
     }
     async remove(tenantId, id) {
         await this.ensureExists(tenantId, id);
-        return this.prisma.category.delete({ where: { id } });
+        const result = await this.prisma.category.delete({ where: { id } });
+        this.revalidation.revalidateTenant(tenantId, ['categories']);
+        return result;
     }
     async reorder(tenantId, items) {
         const updates = items.map((item) => this.prisma.category.updateMany({
             where: { id: item.id, tenantId },
             data: { sortOrder: item.sortOrder },
         }));
-        return this.prisma.$transaction(updates);
+        const result = await this.prisma.$transaction(updates);
+        this.revalidation.revalidateTenant(tenantId, ['categories']);
+        return result;
     }
     async ensureExists(tenantId, id) {
         const category = await this.prisma.category.findFirst({
@@ -114,6 +125,6 @@ let CategoriesService = class CategoriesService {
 exports.CategoriesService = CategoriesService;
 exports.CategoriesService = CategoriesService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, revalidation_service_1.RevalidationService])
 ], CategoriesService);
 //# sourceMappingURL=categories.service.js.map

@@ -12,10 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BreakingNewsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const revalidation_service_1 = require("../common/revalidation/revalidation.service");
 let BreakingNewsService = class BreakingNewsService {
     prisma;
-    constructor(prisma) {
+    revalidation;
+    constructor(prisma, revalidation) {
         this.prisma = prisma;
+        this.revalidation = revalidation;
     }
     async findActive(tenantId) {
         return this.prisma.breakingNews.findMany({
@@ -46,7 +49,7 @@ let BreakingNewsService = class BreakingNewsService {
             });
             sortOrder = (last?.sortOrder ?? -1) + 1;
         }
-        return this.prisma.breakingNews.create({
+        const result = await this.prisma.breakingNews.create({
             data: {
                 tenantId,
                 title: dto.title,
@@ -55,6 +58,8 @@ let BreakingNewsService = class BreakingNewsService {
                 expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
             },
         });
+        this.revalidation.revalidateTenant(tenantId, ['breaking-news']);
+        return result;
     }
     async update(tenantId, id, dto) {
         const item = await this.prisma.breakingNews.findFirst({
@@ -63,13 +68,15 @@ let BreakingNewsService = class BreakingNewsService {
         if (!item) {
             throw new common_1.NotFoundException('Breaking news not found');
         }
-        return this.prisma.breakingNews.update({
+        const result = await this.prisma.breakingNews.update({
             where: { id },
             data: {
                 ...dto,
                 ...(dto.expiresAt && { expiresAt: new Date(dto.expiresAt) }),
             },
         });
+        this.revalidation.revalidateTenant(tenantId, ['breaking-news']);
+        return result;
     }
     async reorder(tenantId, ids) {
         const items = await this.prisma.breakingNews.findMany({
@@ -82,6 +89,7 @@ let BreakingNewsService = class BreakingNewsService {
             where: { id },
             data: { sortOrder: index },
         })));
+        this.revalidation.revalidateTenant(tenantId, ['breaking-news']);
         return { updated: clean.length };
     }
     async remove(tenantId, id) {
@@ -92,12 +100,13 @@ let BreakingNewsService = class BreakingNewsService {
             throw new common_1.NotFoundException('Breaking news not found');
         }
         await this.prisma.breakingNews.delete({ where: { id } });
+        this.revalidation.revalidateTenant(tenantId, ['breaking-news']);
         return { deleted: true };
     }
 };
 exports.BreakingNewsService = BreakingNewsService;
 exports.BreakingNewsService = BreakingNewsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, revalidation_service_1.RevalidationService])
 ], BreakingNewsService);
 //# sourceMappingURL=breaking-news.service.js.map

@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RevalidationService } from '../common/revalidation/revalidation.service';
 import { CreateBreakingNewsDto } from './dto/create-breaking-news.dto';
 import { UpdateBreakingNewsDto } from './dto/update-breaking-news.dto';
 
 @Injectable()
 export class BreakingNewsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly revalidation: RevalidationService) {}
 
   async findActive(tenantId: string) {
     return this.prisma.breakingNews.findMany({
@@ -39,7 +40,7 @@ export class BreakingNewsService {
       sortOrder = (last?.sortOrder ?? -1) + 1;
     }
 
-    return this.prisma.breakingNews.create({
+    const result = await this.prisma.breakingNews.create({
       data: {
         tenantId,
         title: dto.title,
@@ -48,6 +49,8 @@ export class BreakingNewsService {
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
       },
     });
+    this.revalidation.revalidateTenant(tenantId, ['breaking-news']);
+    return result;
   }
 
   async update(tenantId: string, id: string, dto: UpdateBreakingNewsDto) {
@@ -59,13 +62,15 @@ export class BreakingNewsService {
       throw new NotFoundException('Breaking news not found');
     }
 
-    return this.prisma.breakingNews.update({
+    const result = await this.prisma.breakingNews.update({
       where: { id },
       data: {
         ...dto,
         ...(dto.expiresAt && { expiresAt: new Date(dto.expiresAt) }),
       },
     });
+    this.revalidation.revalidateTenant(tenantId, ['breaking-news']);
+    return result;
   }
 
   async reorder(tenantId: string, ids: string[]) {
@@ -86,6 +91,7 @@ export class BreakingNewsService {
       ),
     );
 
+    this.revalidation.revalidateTenant(tenantId, ['breaking-news']);
     return { updated: clean.length };
   }
 
@@ -99,6 +105,7 @@ export class BreakingNewsService {
     }
 
     await this.prisma.breakingNews.delete({ where: { id } });
+    this.revalidation.revalidateTenant(tenantId, ['breaking-news']);
     return { deleted: true };
   }
 }

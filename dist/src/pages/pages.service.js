@@ -15,11 +15,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PagesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const revalidation_service_1 = require("../common/revalidation/revalidation.service");
 const slugify_1 = __importDefault(require("slugify"));
 let PagesService = class PagesService {
     prisma;
-    constructor(prisma) {
+    revalidation;
+    constructor(prisma, revalidation) {
         this.prisma = prisma;
+        this.revalidation = revalidation;
     }
     async findAll(tenantId) {
         return this.prisma.page.findMany({
@@ -46,7 +49,7 @@ let PagesService = class PagesService {
             (0, slugify_1.default)(dto.title, { lower: true, strict: true, locale: 'tr' });
         const slug = await this.ensureUniqueSlug(tenantId, baseSlug);
         const content = this.normalizeContent(dto.content);
-        return this.prisma.page.create({
+        const result = await this.prisma.page.create({
             data: {
                 tenantId,
                 slug,
@@ -57,6 +60,8 @@ let PagesService = class PagesService {
                 published: dto.published ?? true,
             },
         });
+        this.revalidation.revalidateTenant(tenantId, ['pages']);
+        return result;
     }
     async update(tenantId, id, dto) {
         const data = { ...dto };
@@ -66,7 +71,9 @@ let PagesService = class PagesService {
         if (dto.slug) {
             data.slug = await this.ensureUniqueSlug(tenantId, dto.slug, id);
         }
-        return this.prisma.page.update({ where: { id }, data });
+        const result = await this.prisma.page.update({ where: { id }, data });
+        this.revalidation.revalidateTenant(tenantId, ['pages']);
+        return result;
     }
     async ensureUniqueSlug(tenantId, baseSlug, ignoreId) {
         let candidate = baseSlug;
@@ -92,12 +99,14 @@ let PagesService = class PagesService {
         return content ?? {};
     }
     async remove(tenantId, id) {
-        return this.prisma.page.delete({ where: { id } });
+        const result = await this.prisma.page.delete({ where: { id } });
+        this.revalidation.revalidateTenant(tenantId, ['pages']);
+        return result;
     }
 };
 exports.PagesService = PagesService;
 exports.PagesService = PagesService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, revalidation_service_1.RevalidationService])
 ], PagesService);
 //# sourceMappingURL=pages.service.js.map

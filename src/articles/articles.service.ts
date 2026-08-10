@@ -7,6 +7,7 @@ import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { QueryArticlesDto } from './dto/query-articles.dto';
 import { AuditService } from '../common/audit/audit.service';
+import { RevalidationService } from '../common/revalidation/revalidation.service';
 
 // Yayınlama yetkisi olan roller — REPORTER/COLUMNIST DRAFT'a kilitlenir.
 function canPublishArticle(role: string): boolean {
@@ -25,6 +26,7 @@ export class ArticlesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly revalidation: RevalidationService,
   ) {}
 
   /**
@@ -287,6 +289,7 @@ export class ArticlesService {
       changes: { title: article.title, status: article.status },
     });
 
+    this.revalidation.revalidateTenant(tenantId, ['articles', 'breaking-news', 'most-read']);
     return article;
   }
 
@@ -423,6 +426,12 @@ export class ArticlesService {
       changes: { title: article.title, status: article.status },
     });
 
+    this.revalidation.revalidateTenant(tenantId, [
+      'articles',
+      `article-${article.slug}`,
+      'breaking-news',
+      'most-read',
+    ]);
     return article;
   }
 
@@ -442,6 +451,7 @@ export class ArticlesService {
       entityId: id,
     });
 
+    this.revalidation.revalidateTenant(tenantId, ['articles', 'breaking-news', 'most-read']);
     return article;
   }
 

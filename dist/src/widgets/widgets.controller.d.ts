@@ -10,31 +10,31 @@ export declare class WidgetsController {
     }>;
     findActive(tenantId: string): Promise<{
         id: string;
-        active: boolean;
         tenantId: string;
-        sortOrder: number;
         type: string;
         config: import("@prisma/client/runtime/client").JsonValue;
+        active: boolean;
+        sortOrder: number;
         cache: import("@prisma/client/runtime/client").JsonValue | null;
         cachedAt: Date | null;
     }[]>;
     findAll(tenantId: string): Promise<{
         id: string;
-        active: boolean;
         tenantId: string;
-        sortOrder: number;
         type: string;
         config: import("@prisma/client/runtime/client").JsonValue;
+        active: boolean;
+        sortOrder: number;
         cache: import("@prisma/client/runtime/client").JsonValue | null;
         cachedAt: Date | null;
     }[]>;
     findByType(tenantId: string, type: string): Promise<{
         id: string;
-        active: boolean;
         tenantId: string;
-        sortOrder: number;
         type: string;
         config: import("@prisma/client/runtime/client").JsonValue;
+        active: boolean;
+        sortOrder: number;
         cache: import("@prisma/client/runtime/client").JsonValue | null;
         cachedAt: Date | null;
     } | null>;
@@ -44,21 +44,21 @@ export declare class WidgetsController {
         sortOrder?: number;
     }): Promise<{
         id: string;
-        active: boolean;
         tenantId: string;
-        sortOrder: number;
         type: string;
         config: import("@prisma/client/runtime/client").JsonValue;
+        active: boolean;
+        sortOrder: number;
         cache: import("@prisma/client/runtime/client").JsonValue | null;
         cachedAt: Date | null;
     }>;
     remove(tenantId: string, type: string): Promise<{
         id: string;
-        active: boolean;
         tenantId: string;
-        sortOrder: number;
         type: string;
         config: import("@prisma/client/runtime/client").JsonValue;
+        active: boolean;
+        sortOrder: number;
         cache: import("@prisma/client/runtime/client").JsonValue | null;
         cachedAt: Date | null;
     }>;

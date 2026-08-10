@@ -16,10 +16,13 @@ exports.AuthorsService = void 0;
 const common_1 = require("@nestjs/common");
 const slugify_1 = __importDefault(require("slugify"));
 const prisma_service_1 = require("../prisma/prisma.service");
+const revalidation_service_1 = require("../common/revalidation/revalidation.service");
 let AuthorsService = class AuthorsService {
     prisma;
-    constructor(prisma) {
+    revalidation;
+    constructor(prisma, revalidation) {
         this.prisma = prisma;
+        this.revalidation = revalidation;
     }
     async findAll(tenantId) {
         return this.prisma.author.findMany({
@@ -38,7 +41,7 @@ let AuthorsService = class AuthorsService {
     }
     async create(tenantId, dto) {
         const slug = await this.generateUniqueSlug(tenantId, dto.name);
-        return this.prisma.author.create({
+        const result = await this.prisma.author.create({
             data: {
                 tenantId,
                 slug,
@@ -51,6 +54,8 @@ let AuthorsService = class AuthorsService {
                 sortOrder: dto.sortOrder ?? 0,
             },
         });
+        this.revalidation.revalidateTenant(tenantId, ['authors']);
+        return result;
     }
     async update(tenantId, id, dto) {
         await this.ensureExists(tenantId, id);
@@ -58,14 +63,18 @@ let AuthorsService = class AuthorsService {
         if (dto.name) {
             data.slug = await this.generateUniqueSlug(tenantId, dto.name, id);
         }
-        return this.prisma.author.update({
+        const result = await this.prisma.author.update({
             where: { id },
             data,
         });
+        this.revalidation.revalidateTenant(tenantId, ['authors']);
+        return result;
     }
     async remove(tenantId, id) {
         await this.ensureExists(tenantId, id);
-        return this.prisma.author.delete({ where: { id } });
+        const result = await this.prisma.author.delete({ where: { id } });
+        this.revalidation.revalidateTenant(tenantId, ['authors']);
+        return result;
     }
     async ensureExists(tenantId, id) {
         const author = await this.prisma.author.findFirst({
@@ -95,6 +104,6 @@ let AuthorsService = class AuthorsService {
 exports.AuthorsService = AuthorsService;
 exports.AuthorsService = AuthorsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, revalidation_service_1.RevalidationService])
 ], AuthorsService);
 //# sourceMappingURL=authors.service.js.map

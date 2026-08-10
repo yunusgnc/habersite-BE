@@ -12,10 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.WidgetsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const revalidation_service_1 = require("../common/revalidation/revalidation.service");
 let WidgetsService = class WidgetsService {
     prisma;
-    constructor(prisma) {
+    revalidation;
+    constructor(prisma, revalidation) {
         this.prisma = prisma;
+        this.revalidation = revalidation;
     }
     async findAll(tenantId) {
         return this.prisma.widget.findMany({
@@ -35,27 +38,33 @@ let WidgetsService = class WidgetsService {
         });
     }
     async upsert(tenantId, type, data) {
-        return this.prisma.widget.upsert({
+        const result = await this.prisma.widget.upsert({
             where: { tenantId_type: { tenantId, type } },
             create: { tenantId, type, ...data },
             update: data,
         });
+        this.revalidation.revalidateTenant(tenantId, ['widgets', 'homepage-layout']);
+        return result;
     }
     async updateCache(tenantId, type, cache) {
-        return this.prisma.widget.update({
+        const result = await this.prisma.widget.update({
             where: { tenantId_type: { tenantId, type } },
             data: { cache, cachedAt: new Date() },
         });
+        this.revalidation.revalidateTenant(tenantId, ['widgets']);
+        return result;
     }
     async remove(tenantId, type) {
-        return this.prisma.widget.delete({
+        const result = await this.prisma.widget.delete({
             where: { tenantId_type: { tenantId, type } },
         });
+        this.revalidation.revalidateTenant(tenantId, ['widgets', 'homepage-layout']);
+        return result;
     }
 };
 exports.WidgetsService = WidgetsService;
 exports.WidgetsService = WidgetsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, revalidation_service_1.RevalidationService])
 ], WidgetsService);
 //# sourceMappingURL=widgets.service.js.map

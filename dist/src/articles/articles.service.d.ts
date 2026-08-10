@@ -4,11 +4,13 @@ import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { QueryArticlesDto } from './dto/query-articles.dto';
 import { AuditService } from '../common/audit/audit.service';
+import { RevalidationService } from '../common/revalidation/revalidation.service';
 export declare class ArticlesService {
     private readonly prisma;
     private readonly audit;
+    private readonly revalidation;
     private readonly logger;
-    constructor(prisma: PrismaService, audit: AuditService);
+    constructor(prisma: PrismaService, audit: AuditService, revalidation: RevalidationService);
     publishScheduled(): Promise<void>;
     findAll(tenantId: string, query: QueryArticlesDto): Promise<{
         items: ({

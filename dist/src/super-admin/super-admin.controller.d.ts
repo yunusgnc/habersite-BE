@@ -12,109 +12,109 @@ export declare class SuperAdminController {
     }>;
     findAll(): Promise<{
         id: string;
+        active: boolean;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         theme: string;
         plan: string;
-        active: boolean;
         createdAt: Date;
         _count: {
             users: number;
-            categories: number;
             articles: number;
+            categories: number;
             media: number;
         };
     }[]>;
     findOne(id: string): Promise<{
         id: string;
+        active: boolean;
+        name: string;
         slug: string;
+        users: {
+            id: string;
+            active: boolean;
+            name: string;
+            email: string;
+            username: string | null;
+            role: import("@prisma/client").$Enums.UserRole;
+            lastLoginAt: Date | null;
+        }[];
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         theme: string;
         locale: string;
         timezone: string;
         plan: string;
-        active: boolean;
         createdAt: Date;
-        users: {
-            id: string;
-            name: string;
-            active: boolean;
-            email: string;
-            username: string | null;
-            role: import("@prisma/client").$Enums.UserRole;
-            lastLoginAt: Date | null;
-        }[];
         _count: {
             users: number;
-            categories: number;
             articles: number;
+            categories: number;
             media: number;
         };
     }>;
     create(dto: CreateTenantDto): Promise<{
         id: string;
+        active: boolean;
+        name: string;
         slug: string;
+        users: {
+            id: string;
+            active: boolean;
+            name: string;
+            email: string;
+            username: string | null;
+            role: import("@prisma/client").$Enums.UserRole;
+            lastLoginAt: Date | null;
+        }[];
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         theme: string;
         locale: string;
         timezone: string;
         plan: string;
-        active: boolean;
         createdAt: Date;
-        users: {
-            id: string;
-            name: string;
-            active: boolean;
-            email: string;
-            username: string | null;
-            role: import("@prisma/client").$Enums.UserRole;
-            lastLoginAt: Date | null;
-        }[];
         _count: {
             users: number;
-            categories: number;
             articles: number;
+            categories: number;
             media: number;
         };
     }>;
     update(id: string, dto: UpdateTenantDto): Promise<{
         id: string;
+        active: boolean;
+        name: string;
         slug: string;
+        users: {
+            id: string;
+            active: boolean;
+            name: string;
+            email: string;
+            username: string | null;
+            role: import("@prisma/client").$Enums.UserRole;
+            lastLoginAt: Date | null;
+        }[];
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         theme: string;
         locale: string;
         timezone: string;
         plan: string;
-        active: boolean;
         createdAt: Date;
-        users: {
-            id: string;
-            name: string;
-            active: boolean;
-            email: string;
-            username: string | null;
-            role: import("@prisma/client").$Enums.UserRole;
-            lastLoginAt: Date | null;
-        }[];
         _count: {
             users: number;
-            categories: number;
             articles: number;
+            categories: number;
             media: number;
         };
     }>;

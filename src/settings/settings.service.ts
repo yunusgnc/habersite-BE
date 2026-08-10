@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RevalidationService } from '../common/revalidation/revalidation.service';
 
 @Injectable()
 export class SettingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly revalidation: RevalidationService) {}
 
   async getAll(tenantId: string): Promise<Record<string, any>> {
     const settings = await this.prisma.setting.findMany({
@@ -30,13 +31,15 @@ export class SettingsService {
   }
 
   async upsert(tenantId: string, key: string, value: any) {
-    return this.prisma.setting.upsert({
+    const result = await this.prisma.setting.upsert({
       where: {
         tenantId_key: { tenantId, key },
       },
       update: { value },
       create: { tenantId, key, value },
     });
+    this.revalidation.revalidateTenant(tenantId, ['settings']);
+    return result;
   }
 
   async bulkUpsert(tenantId: string, settings: Record<string, any>) {
@@ -50,6 +53,8 @@ export class SettingsService {
       }),
     );
 
-    return this.prisma.$transaction(operations);
+    const result = await this.prisma.$transaction(operations);
+    this.revalidation.revalidateTenant(tenantId, ['settings']);
+    return result;
   }
 }

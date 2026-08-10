@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RevalidationService } from '../common/revalidation/revalidation.service';
 import { CreateAdDto } from './dto/create-ad.dto';
 import { UpdateAdDto } from './dto/update-ad.dto';
 import { AdPosition } from '@prisma/client';
 
 @Injectable()
 export class AdsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly revalidation: RevalidationService) {}
 
   async findByPosition(tenantId: string, position: AdPosition) {
     // Compare using day boundaries so a date-only input like "2026-08-03"
@@ -49,7 +50,7 @@ export class AdsService {
   }
 
   async create(tenantId: string, dto: CreateAdDto) {
-    return this.prisma.ad.create({
+    const result = await this.prisma.ad.create({
       data: {
         tenantId,
         name: dto.name,
@@ -64,6 +65,8 @@ export class AdsService {
         sortOrder: dto.sortOrder ?? 0,
       },
     });
+    this.revalidation.revalidateTenant(tenantId, ['ads']);
+    return result;
   }
 
   async update(tenantId: string, id: string, dto: UpdateAdDto) {
@@ -75,7 +78,7 @@ export class AdsService {
       throw new NotFoundException('Ad not found');
     }
 
-    return this.prisma.ad.update({
+    const result = await this.prisma.ad.update({
       where: { id },
       data: {
         ...dto,
@@ -83,6 +86,8 @@ export class AdsService {
         ...(dto.endsAt && { endsAt: new Date(dto.endsAt) }),
       },
     });
+    this.revalidation.revalidateTenant(tenantId, ['ads']);
+    return result;
   }
 
   async remove(tenantId: string, id: string) {
@@ -95,6 +100,7 @@ export class AdsService {
     }
 
     await this.prisma.ad.delete({ where: { id } });
+    this.revalidation.revalidateTenant(tenantId, ['ads']);
     return { deleted: true };
   }
 
