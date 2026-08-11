@@ -21,6 +21,7 @@ export declare class SuperAdminController {
         plan: string;
         active: boolean;
         createdAt: Date;
+        mediaBaseUrl: string | null;
         _count: {
             users: number;
             categories: number;
@@ -42,6 +43,7 @@ export declare class SuperAdminController {
         plan: string;
         active: boolean;
         createdAt: Date;
+        mediaBaseUrl: string | null;
         users: {
             id: string;
             name: string;
@@ -72,6 +74,7 @@ export declare class SuperAdminController {
         plan: string;
         active: boolean;
         createdAt: Date;
+        mediaBaseUrl: string | null;
         users: {
             id: string;
             name: string;
@@ -102,6 +105,7 @@ export declare class SuperAdminController {
         plan: string;
         active: boolean;
         createdAt: Date;
+        mediaBaseUrl: string | null;
         users: {
             id: string;
             name: string;

@@ -18,6 +18,7 @@ const TENANT_LIST_SELECT = {
   domain: true,
   subdomain: true,
   logo: true,
+  mediaBaseUrl: true,
   plan: true,
   theme: true,
   active: true,
