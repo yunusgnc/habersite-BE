@@ -66,6 +66,8 @@ let S3StorageAdapter = S3StorageAdapter_1 = class S3StorageAdapter {
                 accessKeyId: process.env.S3_ACCESS_KEY_ID ?? '',
                 secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? '',
             },
+            requestChecksumCalculation: 'WHEN_REQUIRED',
+            responseChecksumValidation: 'WHEN_REQUIRED',
         });
         return this.client;
     }
@@ -81,12 +83,20 @@ let S3StorageAdapter = S3StorageAdapter_1 = class S3StorageAdapter {
         if (!body) {
             throw new Error('S3StorageAdapter: buffer veya sourcePath gerekli');
         }
+        const contentLength = opts.buffer
+            ? opts.buffer.length
+            : opts.sourcePath
+                ? fs.statSync(opts.sourcePath).size
+                : opts.size;
         await client.send(new PutObjectCommand({
             Bucket: process.env.S3_BUCKET,
             Key: key,
             Body: body,
             ContentType: opts.mimeType,
-            ACL: 'public-read',
+            ContentLength: contentLength,
+            ...(process.env.S3_ACL
+                ? { ACL: process.env.S3_ACL }
+                : {}),
         }));
         if (opts.sourcePath) {
             try {

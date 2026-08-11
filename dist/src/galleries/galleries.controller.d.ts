@@ -15,8 +15,8 @@ export declare class GalleriesController {
             slug: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
             tenantId: string;
+            description: string | null;
             sortOrder: number;
             seoTitle: string | null;
             seoDesc: string | null;
@@ -33,9 +33,9 @@ export declare class GalleriesController {
     }>;
     findOne(tenantId: string, id: string): Promise<{
         images: {
+            url: string;
             id: string;
             sortOrder: number;
-            url: string;
             alt: string | null;
             credit: string | null;
             caption: string | null;
@@ -46,8 +46,8 @@ export declare class GalleriesController {
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         tenantId: string;
+        description: string | null;
         sortOrder: number;
         seoTitle: string | null;
         seoDesc: string | null;
@@ -62,9 +62,9 @@ export declare class GalleriesController {
     }>;
     findBySlug(tenantId: string, slug: string): Promise<{
         images: {
+            url: string;
             id: string;
             sortOrder: number;
-            url: string;
             alt: string | null;
             credit: string | null;
             caption: string | null;
@@ -75,8 +75,8 @@ export declare class GalleriesController {
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         tenantId: string;
+        description: string | null;
         sortOrder: number;
         seoTitle: string | null;
         seoDesc: string | null;
@@ -91,9 +91,9 @@ export declare class GalleriesController {
     }>;
     create(tenantId: string, dto: CreateGalleryDto): Promise<{
         images: {
+            url: string;
             id: string;
             sortOrder: number;
-            url: string;
             alt: string | null;
             credit: string | null;
             caption: string | null;
@@ -104,8 +104,8 @@ export declare class GalleriesController {
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         tenantId: string;
+        description: string | null;
         sortOrder: number;
         seoTitle: string | null;
         seoDesc: string | null;
@@ -120,9 +120,9 @@ export declare class GalleriesController {
     }>;
     update(tenantId: string, id: string, dto: UpdateGalleryDto): Promise<{
         images: {
+            url: string;
             id: string;
             sortOrder: number;
-            url: string;
             alt: string | null;
             credit: string | null;
             caption: string | null;
@@ -133,8 +133,8 @@ export declare class GalleriesController {
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         tenantId: string;
+        description: string | null;
         sortOrder: number;
         seoTitle: string | null;
         seoDesc: string | null;
@@ -152,8 +152,8 @@ export declare class GalleriesController {
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         tenantId: string;
+        description: string | null;
         sortOrder: number;
         seoTitle: string | null;
         seoDesc: string | null;
@@ -168,18 +168,18 @@ export declare class GalleriesController {
     }>;
     addImages(tenantId: string, galleryId: string, images: CreateGalleryImageDto[]): Promise<import("@prisma/client").Prisma.BatchPayload>;
     removeImage(tenantId: string, imageId: string): Promise<{
+        url: string;
         id: string;
         sortOrder: number;
-        url: string;
         alt: string | null;
         credit: string | null;
         caption: string | null;
         galleryId: string;
     }>;
     reorderImages(tenantId: string, galleryId: string, imageIds: string[]): Promise<{
+        url: string;
         id: string;
         sortOrder: number;
-        url: string;
         alt: string | null;
         credit: string | null;
         caption: string | null;

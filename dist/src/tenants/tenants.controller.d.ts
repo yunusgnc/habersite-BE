@@ -5,10 +5,10 @@ export declare class TenantsController {
     constructor(tenantsService: TenantsService);
     findAll(): Promise<{
         id: string;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         theme: string;
@@ -22,10 +22,10 @@ export declare class TenantsController {
     }[]>;
     findById(id: string): Promise<{
         id: string;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         theme: string;
@@ -39,10 +39,10 @@ export declare class TenantsController {
     }>;
     create(dto: CreateTenantDto): Promise<{
         id: string;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         theme: string;
@@ -56,10 +56,10 @@ export declare class TenantsController {
     }>;
     update(id: string, dto: UpdateTenantDto): Promise<{
         id: string;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         theme: string;
@@ -73,10 +73,10 @@ export declare class TenantsController {
     }>;
     remove(id: string): Promise<{
         id: string;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         theme: string;
@@ -90,10 +90,10 @@ export declare class TenantsController {
     }>;
     suspend(id: string): Promise<{
         id: string;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         theme: string;
@@ -107,10 +107,10 @@ export declare class TenantsController {
     }>;
     activate(id: string): Promise<{
         id: string;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         theme: string;
@@ -127,10 +127,10 @@ export declare class TenantsController {
         version: number;
         tenant: {
             id: string;
+            name: string;
             slug: string;
             domain: string | null;
             subdomain: string | null;
-            name: string;
             logo: string | null;
             favicon: string | null;
             theme: string;
@@ -150,19 +150,19 @@ export declare class TenantsController {
             updatedAt: Date;
             tenantId: string;
             email: string;
-            username: string | null;
             passwordHash: string;
             avatar: string | null;
             role: import("@prisma/client").$Enums.UserRole;
             lastLoginAt: Date | null;
+            username: string | null;
             passwordResetTokenHash: string | null;
             passwordResetExpiresAt: Date | null;
         }[];
         articles: ({
             categories: {
-                primary: boolean;
-                categoryId: string;
                 articleId: string;
+                categoryId: string;
+                primary: boolean;
             }[];
             tags: {
                 articleId: string;
@@ -187,11 +187,6 @@ export declare class TenantsController {
             authorId: string | null;
             createdById: string;
             approvedById: string | null;
-            assignedToId: string | null;
-            deadline: Date | null;
-            submittedAt: Date | null;
-            reviewedAt: Date | null;
-            reviewNote: string | null;
             viewCount: number;
             commentCount: number;
             readingTime: number | null;
@@ -201,6 +196,11 @@ export declare class TenantsController {
             ogImage: string | null;
             source: string | null;
             sourceUrl: string | null;
+            assignedToId: string | null;
+            deadline: Date | null;
+            submittedAt: Date | null;
+            reviewedAt: Date | null;
+            reviewNote: string | null;
             headlineTitle: string | null;
             headlineImage: string | null;
             headlineFontSize: number | null;
@@ -209,14 +209,14 @@ export declare class TenantsController {
         })[];
         categories: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
             tenantId: string;
             parentId: string | null;
+            description: string | null;
             image: string | null;
             color: string | null;
             sortOrder: number;
@@ -225,14 +225,14 @@ export declare class TenantsController {
         }[];
         tags: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             tenantId: string;
         }[];
         authors: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -244,6 +244,7 @@ export declare class TenantsController {
             social: import("@prisma/client/runtime/client").JsonValue;
         }[];
         media: {
+            url: string;
             id: string;
             createdAt: Date;
             tenantId: string;
@@ -253,7 +254,6 @@ export declare class TenantsController {
             originalName: string;
             mimeType: string;
             size: number;
-            url: string;
             thumbnailUrl: string | null;
             width: number | null;
             height: number | null;
@@ -283,8 +283,8 @@ export declare class TenantsController {
             updatedAt: Date;
             tenantId: string;
             location: string;
-            label: string | null;
             items: import("@prisma/client/runtime/client").JsonValue;
+            label: string | null;
         }[];
         pages: {
             id: string;

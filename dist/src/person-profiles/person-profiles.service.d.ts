@@ -11,8 +11,8 @@ export declare class PersonProfilesService {
     }): Promise<{
         items: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             createdAt: Date;
             updatedAt: Date;
             tenantId: string;
@@ -27,8 +27,8 @@ export declare class PersonProfilesService {
     }>;
     findOne(tenantId: string, id: string): Promise<{
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         createdAt: Date;
         updatedAt: Date;
         tenantId: string;
@@ -40,8 +40,8 @@ export declare class PersonProfilesService {
     }>;
     findBySlug(tenantId: string, slug: string): Promise<{
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         createdAt: Date;
         updatedAt: Date;
         tenantId: string;
@@ -53,8 +53,8 @@ export declare class PersonProfilesService {
     }>;
     create(tenantId: string, dto: CreatePersonProfileDto): Promise<{
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         createdAt: Date;
         updatedAt: Date;
         tenantId: string;
@@ -66,8 +66,8 @@ export declare class PersonProfilesService {
     }>;
     update(tenantId: string, id: string, dto: UpdatePersonProfileDto): Promise<{
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         createdAt: Date;
         updatedAt: Date;
         tenantId: string;
@@ -79,8 +79,8 @@ export declare class PersonProfilesService {
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         createdAt: Date;
         updatedAt: Date;
         tenantId: string;

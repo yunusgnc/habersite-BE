@@ -5,10 +5,10 @@ export declare class TenantsService {
     constructor(prisma: PrismaService);
     findAll(): Promise<{
         id: string;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         theme: string;
@@ -22,10 +22,10 @@ export declare class TenantsService {
     }[]>;
     findById(id: string): Promise<{
         id: string;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         theme: string;
@@ -39,10 +39,10 @@ export declare class TenantsService {
     }>;
     findByDomain(domain: string): Promise<{
         id: string;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         theme: string;
@@ -56,10 +56,10 @@ export declare class TenantsService {
     } | null>;
     create(dto: CreateTenantDto): Promise<{
         id: string;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         theme: string;
@@ -73,10 +73,10 @@ export declare class TenantsService {
     }>;
     update(id: string, dto: UpdateTenantDto): Promise<{
         id: string;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         theme: string;
@@ -90,10 +90,10 @@ export declare class TenantsService {
     }>;
     remove(id: string): Promise<{
         id: string;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         theme: string;
@@ -110,10 +110,10 @@ export declare class TenantsService {
         version: number;
         tenant: {
             id: string;
+            name: string;
             slug: string;
             domain: string | null;
             subdomain: string | null;
-            name: string;
             logo: string | null;
             favicon: string | null;
             theme: string;
@@ -133,19 +133,19 @@ export declare class TenantsService {
             updatedAt: Date;
             tenantId: string;
             email: string;
-            username: string | null;
             passwordHash: string;
             avatar: string | null;
             role: import("@prisma/client").$Enums.UserRole;
             lastLoginAt: Date | null;
+            username: string | null;
             passwordResetTokenHash: string | null;
             passwordResetExpiresAt: Date | null;
         }[];
         articles: ({
             categories: {
-                primary: boolean;
-                categoryId: string;
                 articleId: string;
+                categoryId: string;
+                primary: boolean;
             }[];
             tags: {
                 articleId: string;
@@ -170,11 +170,6 @@ export declare class TenantsService {
             authorId: string | null;
             createdById: string;
             approvedById: string | null;
-            assignedToId: string | null;
-            deadline: Date | null;
-            submittedAt: Date | null;
-            reviewedAt: Date | null;
-            reviewNote: string | null;
             viewCount: number;
             commentCount: number;
             readingTime: number | null;
@@ -184,6 +179,11 @@ export declare class TenantsService {
             ogImage: string | null;
             source: string | null;
             sourceUrl: string | null;
+            assignedToId: string | null;
+            deadline: Date | null;
+            submittedAt: Date | null;
+            reviewedAt: Date | null;
+            reviewNote: string | null;
             headlineTitle: string | null;
             headlineImage: string | null;
             headlineFontSize: number | null;
@@ -192,14 +192,14 @@ export declare class TenantsService {
         })[];
         categories: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
             tenantId: string;
             parentId: string | null;
+            description: string | null;
             image: string | null;
             color: string | null;
             sortOrder: number;
@@ -208,14 +208,14 @@ export declare class TenantsService {
         }[];
         tags: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             tenantId: string;
         }[];
         authors: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -227,6 +227,7 @@ export declare class TenantsService {
             social: import("@prisma/client/runtime/client").JsonValue;
         }[];
         media: {
+            url: string;
             id: string;
             createdAt: Date;
             tenantId: string;
@@ -236,7 +237,6 @@ export declare class TenantsService {
             originalName: string;
             mimeType: string;
             size: number;
-            url: string;
             thumbnailUrl: string | null;
             width: number | null;
             height: number | null;
@@ -266,8 +266,8 @@ export declare class TenantsService {
             updatedAt: Date;
             tenantId: string;
             location: string;
-            label: string | null;
             items: import("@prisma/client/runtime/client").JsonValue;
+            label: string | null;
         }[];
         pages: {
             id: string;

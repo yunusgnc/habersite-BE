@@ -47,9 +47,9 @@ export declare class SuperAdminController {
             name: string;
             active: boolean;
             email: string;
-            username: string | null;
             role: import("@prisma/client").$Enums.UserRole;
             lastLoginAt: Date | null;
+            username: string | null;
         }[];
         _count: {
             users: number;
@@ -77,9 +77,9 @@ export declare class SuperAdminController {
             name: string;
             active: boolean;
             email: string;
-            username: string | null;
             role: import("@prisma/client").$Enums.UserRole;
             lastLoginAt: Date | null;
+            username: string | null;
         }[];
         _count: {
             users: number;
@@ -107,9 +107,9 @@ export declare class SuperAdminController {
             name: string;
             active: boolean;
             email: string;
-            username: string | null;
             role: import("@prisma/client").$Enums.UserRole;
             lastLoginAt: Date | null;
+            username: string | null;
         }[];
         _count: {
             users: number;

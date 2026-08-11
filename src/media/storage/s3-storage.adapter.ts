@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import type { ObjectCannedACL } from '@aws-sdk/client-s3';
 import { StorageAdapter, PutOptions, StoredFile } from './storage.types';
 
 /**
@@ -11,6 +12,15 @@ import { StorageAdapter, PutOptions, StoredFile } from './storage.types';
  *   S3_BUCKET, S3_REGION, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY
  *   S3_ENDPOINT   (optional, for non-AWS providers)
  *   S3_PUBLIC_URL (optional, CDN in front of the bucket)
+ *   S3_ACL        (optional, e.g. "public-read" — BOŞ BIRAKIN R2 için)
+ *
+ * Cloudflare R2 örneği:
+ *   STORAGE_DRIVER=s3
+ *   S3_ENDPOINT=https://<account_id>.r2.cloudflarestorage.com
+ *   S3_REGION=auto
+ *   S3_BUCKET=habersite-media
+ *   S3_PUBLIC_URL=https://cdn.example.com
+ *   (S3_ACL tanımlanmaz — R2 ACL desteklemez)
  *
  * The @aws-sdk/client-s3 dependency is loaded lazily so that installations
  * that stay on local storage don't need it installed.
@@ -39,6 +49,12 @@ export class S3StorageAdapter implements StorageAdapter {
         accessKeyId: process.env.S3_ACCESS_KEY_ID ?? '',
         secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? '',
       },
+      // AWS SDK v3.729+ varsayılan olarak her isteğe CRC32 checksum başlığı
+      // ekliyor; R2 ve diğer S3-uyumlu servisler bunu reddedebiliyor.
+      // "WHEN_REQUIRED" yalnızca protokolün zorunlu kıldığı yerde gönderir —
+      // gerçek S3 için de güvenli.
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
     });
     return this.client;
   }
@@ -58,13 +74,29 @@ export class S3StorageAdapter implements StorageAdapter {
     if (!body) {
       throw new Error('S3StorageAdapter: buffer veya sourcePath gerekli');
     }
+
+    // R2 "aws-chunked" streaming yüklemeyi desteklemiyor; boyutu önceden
+    // bildirmek gerekiyor. Buffer'da gerçek uzunluğu kullan — opts.size
+    // yanlışsa istek reddedilir.
+    const contentLength = opts.buffer
+      ? opts.buffer.length
+      : opts.sourcePath
+        ? fs.statSync(opts.sourcePath).size
+        : opts.size;
+
     await client.send(
       new PutObjectCommand({
         Bucket: process.env.S3_BUCKET,
         Key: key,
         Body: body,
         ContentType: opts.mimeType,
-        ACL: 'public-read',
+        ContentLength: contentLength,
+        // Cloudflare R2 ACL DESTEKLEMEZ — parametre gönderilirse istek
+        // reddedilir. R2'de erişim bucket'ın public/custom domain ayarıyla
+        // verilir. Gerçek S3 kullananlar S3_ACL=public-read tanımlayabilir.
+        ...(process.env.S3_ACL
+          ? { ACL: process.env.S3_ACL as ObjectCannedACL }
+          : {}),
       }),
     );
 

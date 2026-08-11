@@ -12,9 +12,9 @@ export declare class WidgetsController {
         id: string;
         active: boolean;
         tenantId: string;
+        sortOrder: number;
         type: string;
         config: import("@prisma/client/runtime/client").JsonValue;
-        sortOrder: number;
         cache: import("@prisma/client/runtime/client").JsonValue | null;
         cachedAt: Date | null;
     }[]>;
@@ -22,9 +22,9 @@ export declare class WidgetsController {
         id: string;
         active: boolean;
         tenantId: string;
+        sortOrder: number;
         type: string;
         config: import("@prisma/client/runtime/client").JsonValue;
-        sortOrder: number;
         cache: import("@prisma/client/runtime/client").JsonValue | null;
         cachedAt: Date | null;
     }[]>;
@@ -32,9 +32,9 @@ export declare class WidgetsController {
         id: string;
         active: boolean;
         tenantId: string;
+        sortOrder: number;
         type: string;
         config: import("@prisma/client/runtime/client").JsonValue;
-        sortOrder: number;
         cache: import("@prisma/client/runtime/client").JsonValue | null;
         cachedAt: Date | null;
     } | null>;
@@ -46,9 +46,9 @@ export declare class WidgetsController {
         id: string;
         active: boolean;
         tenantId: string;
+        sortOrder: number;
         type: string;
         config: import("@prisma/client/runtime/client").JsonValue;
-        sortOrder: number;
         cache: import("@prisma/client/runtime/client").JsonValue | null;
         cachedAt: Date | null;
     }>;
@@ -56,9 +56,9 @@ export declare class WidgetsController {
         id: string;
         active: boolean;
         tenantId: string;
+        sortOrder: number;
         type: string;
         config: import("@prisma/client/runtime/client").JsonValue;
-        sortOrder: number;
         cache: import("@prisma/client/runtime/client").JsonValue | null;
         cachedAt: Date | null;
     }>;

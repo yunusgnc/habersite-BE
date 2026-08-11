@@ -13,8 +13,8 @@ export declare class VideosController {
             slug: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
             tenantId: string;
+            description: string | null;
             sortOrder: number;
             seoTitle: string | null;
             seoDesc: string | null;
@@ -44,8 +44,8 @@ export declare class VideosController {
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         tenantId: string;
+        description: string | null;
         sortOrder: number;
         seoTitle: string | null;
         seoDesc: string | null;
@@ -68,8 +68,8 @@ export declare class VideosController {
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         tenantId: string;
+        description: string | null;
         sortOrder: number;
         seoTitle: string | null;
         seoDesc: string | null;
@@ -97,8 +97,8 @@ export declare class VideosController {
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         tenantId: string;
+        description: string | null;
         sortOrder: number;
         seoTitle: string | null;
         seoDesc: string | null;
@@ -121,8 +121,8 @@ export declare class VideosController {
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         tenantId: string;
+        description: string | null;
         sortOrder: number;
         seoTitle: string | null;
         seoDesc: string | null;
@@ -145,8 +145,8 @@ export declare class VideosController {
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         tenantId: string;
+        description: string | null;
         sortOrder: number;
         seoTitle: string | null;
         seoDesc: string | null;
