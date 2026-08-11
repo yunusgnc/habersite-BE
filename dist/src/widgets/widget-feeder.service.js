@@ -490,7 +490,7 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
                     name,
                     slug,
                     image: thumb,
-                    imageFull: thumb.replace(/\/(\d+)\/\d+\/\d+\//, '/$1/1240/1754/'),
+                    imageFull: thumb.replace(/^(https?:\/\/[^/]+)\/\d+\/\d+\/\d+\//, '$1/'),
                     url: absUrl,
                     date: $el.find('small').first().text().trim(),
                 });

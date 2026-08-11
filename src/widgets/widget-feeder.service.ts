@@ -518,8 +518,11 @@ export class WidgetFeederService implements OnModuleInit {
    *     ├─ <small>11 Ağustos 2026</small>     → tarih
    *     └─ <img src="blank.png" data-src="…"> → kapak (LAZY: gerçek URL data-src'de)
    *
-   * Görsel URL'i `/3/{w}/{h}/storage/…` biçiminde boyut taşır; thumbnail için
-   * kaynaktaki 230x336, fullscreen zoom için 1240x1754 türetilir (~900 KB).
+   * Görsel URL'i `/3/{w}/{h}/storage/…` biçiminde boyut taşır. Boyut
+   * segmenti tamamen atılınca kaynağın ORİJİNALİ gelir: 1280x~2150, ~1 MB.
+   * Bu hem en yüksek çözünürlük hem de kırpılmamış tam sayfa —
+   * `/3/1240/1754/` varyantı A4 oranına zorlayıp gazetenin altını kesiyor.
+   * 1240 üzeri boyut istekleri kaynak tarafından 422 ile reddediliyor.
    */
   private async fetchNewspapers(_config: any) {
     const url = 'https://www.gazeteoku.com/gazeteler';
@@ -565,8 +568,8 @@ export class WidgetFeederService implements OnModuleInit {
           name,
           slug,
           image: thumb,
-          // Boyut segmentini büyüğüyle değiştir — zoom'da okunabilir olsun.
-          imageFull: thumb.replace(/\/(\d+)\/\d+\/\d+\//, '/$1/1240/1754/'),
+          // Boyut segmentini tamamen at → kırpılmamış orijinal (1280x~2150).
+          imageFull: thumb.replace(/^(https?:\/\/[^/]+)\/\d+\/\d+\/\d+\//, '$1/'),
           url: absUrl,
           date: $el.find('small').first().text().trim(),
         });
