@@ -15,7 +15,6 @@ export declare class SuperAdminService {
     }>;
     findAll(): Promise<{
         id: string;
-        active: boolean;
         name: string;
         slug: string;
         domain: string | null;
@@ -23,28 +22,19 @@ export declare class SuperAdminService {
         logo: string | null;
         theme: string;
         plan: string;
+        active: boolean;
         createdAt: Date;
         _count: {
             users: number;
-            articles: number;
             categories: number;
+            articles: number;
             media: number;
         };
     }[]>;
     findOne(id: string): Promise<{
         id: string;
-        active: boolean;
         name: string;
         slug: string;
-        users: {
-            id: string;
-            active: boolean;
-            name: string;
-            email: string;
-            username: string | null;
-            role: import("@prisma/client").$Enums.UserRole;
-            lastLoginAt: Date | null;
-        }[];
         domain: string | null;
         subdomain: string | null;
         logo: string | null;
@@ -53,28 +43,28 @@ export declare class SuperAdminService {
         locale: string;
         timezone: string;
         plan: string;
+        active: boolean;
         createdAt: Date;
+        users: {
+            id: string;
+            name: string;
+            active: boolean;
+            email: string;
+            username: string | null;
+            role: import("@prisma/client").$Enums.UserRole;
+            lastLoginAt: Date | null;
+        }[];
         _count: {
             users: number;
-            articles: number;
             categories: number;
+            articles: number;
             media: number;
         };
     }>;
     create(dto: CreateTenantDto): Promise<{
         id: string;
-        active: boolean;
         name: string;
         slug: string;
-        users: {
-            id: string;
-            active: boolean;
-            name: string;
-            email: string;
-            username: string | null;
-            role: import("@prisma/client").$Enums.UserRole;
-            lastLoginAt: Date | null;
-        }[];
         domain: string | null;
         subdomain: string | null;
         logo: string | null;
@@ -83,28 +73,28 @@ export declare class SuperAdminService {
         locale: string;
         timezone: string;
         plan: string;
+        active: boolean;
         createdAt: Date;
+        users: {
+            id: string;
+            name: string;
+            active: boolean;
+            email: string;
+            username: string | null;
+            role: import("@prisma/client").$Enums.UserRole;
+            lastLoginAt: Date | null;
+        }[];
         _count: {
             users: number;
-            articles: number;
             categories: number;
+            articles: number;
             media: number;
         };
     }>;
     update(id: string, dto: UpdateTenantDto): Promise<{
         id: string;
-        active: boolean;
         name: string;
         slug: string;
-        users: {
-            id: string;
-            active: boolean;
-            name: string;
-            email: string;
-            username: string | null;
-            role: import("@prisma/client").$Enums.UserRole;
-            lastLoginAt: Date | null;
-        }[];
         domain: string | null;
         subdomain: string | null;
         logo: string | null;
@@ -113,11 +103,21 @@ export declare class SuperAdminService {
         locale: string;
         timezone: string;
         plan: string;
+        active: boolean;
         createdAt: Date;
+        users: {
+            id: string;
+            name: string;
+            active: boolean;
+            email: string;
+            username: string | null;
+            role: import("@prisma/client").$Enums.UserRole;
+            lastLoginAt: Date | null;
+        }[];
         _count: {
             users: number;
-            articles: number;
             categories: number;
+            articles: number;
             media: number;
         };
     }>;

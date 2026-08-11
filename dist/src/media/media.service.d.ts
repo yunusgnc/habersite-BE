@@ -8,7 +8,6 @@ export declare class MediaService {
     constructor(prisma: PrismaService, storage: StorageAdapter);
     findAll(tenantId: string, query: QueryMediaDto): Promise<{
         data: {
-            url: string;
             id: string;
             createdAt: Date;
             tenantId: string;
@@ -18,6 +17,7 @@ export declare class MediaService {
             originalName: string;
             mimeType: string;
             size: number;
+            url: string;
             thumbnailUrl: string | null;
             width: number | null;
             height: number | null;
@@ -28,7 +28,6 @@ export declare class MediaService {
         total: number;
     }>;
     findById(tenantId: string, id: string): Promise<{
-        url: string;
         id: string;
         createdAt: Date;
         tenantId: string;
@@ -38,6 +37,7 @@ export declare class MediaService {
         originalName: string;
         mimeType: string;
         size: number;
+        url: string;
         thumbnailUrl: string | null;
         width: number | null;
         height: number | null;
@@ -45,7 +45,6 @@ export declare class MediaService {
         credit: string | null;
     }>;
     create(tenantId: string, file: Express.Multer.File, dto: UploadMediaDto): Promise<{
-        url: string;
         id: string;
         createdAt: Date;
         tenantId: string;
@@ -55,6 +54,7 @@ export declare class MediaService {
         originalName: string;
         mimeType: string;
         size: number;
+        url: string;
         thumbnailUrl: string | null;
         width: number | null;
         height: number | null;
@@ -63,7 +63,6 @@ export declare class MediaService {
     }>;
     private looksLikeSvg;
     update(tenantId: string, id: string, dto: UploadMediaDto): Promise<{
-        url: string;
         id: string;
         createdAt: Date;
         tenantId: string;
@@ -73,6 +72,7 @@ export declare class MediaService {
         originalName: string;
         mimeType: string;
         size: number;
+        url: string;
         thumbnailUrl: string | null;
         width: number | null;
         height: number | null;
@@ -80,7 +80,6 @@ export declare class MediaService {
         credit: string | null;
     }>;
     remove(tenantId: string, id: string): Promise<{
-        url: string;
         id: string;
         createdAt: Date;
         tenantId: string;
@@ -90,6 +89,7 @@ export declare class MediaService {
         originalName: string;
         mimeType: string;
         size: number;
+        url: string;
         thumbnailUrl: string | null;
         width: number | null;
         height: number | null;

@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { TenantGuard } from '../common/guards/tenant.guard';
@@ -24,6 +25,20 @@ export class AuthorsController {
   @UseGuards(TenantGuard)
   findAll(@CurrentTenant() tenantId: string) {
     return this.authorsService.findAll(tenantId);
+  }
+
+  // Köşe Yazarları vitrini — ':slug' rotasından ÖNCE tanımlı olmalı,
+  // aksi halde "with-latest" bir yazar slug'ı sanılır.
+  @Get('with-latest')
+  @UseGuards(TenantGuard)
+  findWithLatest(
+    @CurrentTenant() tenantId: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.authorsService.findWithLatest(
+      tenantId,
+      limit ? parseInt(limit, 10) : undefined,
+    );
   }
 
   @Get(':slug')

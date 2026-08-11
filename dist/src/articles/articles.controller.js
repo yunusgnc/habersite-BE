@@ -41,6 +41,9 @@ let ArticlesController = class ArticlesController {
     getTrending(tenantId, limit) {
         return this.articlesService.getMostRead(tenantId, limit ? +limit : 10);
     }
+    archiveFacets(tenantId) {
+        return this.articlesService.archiveFacets(tenantId);
+    }
     getRelated(tenantId, id, limit) {
         return this.articlesService.getRelated(tenantId, id, limit ? +limit : 5);
     }
@@ -125,6 +128,13 @@ __decorate([
     __metadata("design:paramtypes", [String, Number]),
     __metadata("design:returntype", void 0)
 ], ArticlesController.prototype, "getTrending", null);
+__decorate([
+    (0, common_1.Get)('archive-facets'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ArticlesController.prototype, "archiveFacets", null);
 __decorate([
     (0, common_1.Get)(':id/related'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

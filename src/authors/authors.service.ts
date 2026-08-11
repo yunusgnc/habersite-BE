@@ -16,6 +16,54 @@ export class AuthorsService {
     });
   }
 
+  /**
+   * Köşe Yazarları vitrini: aktif yazarlar + her birinin son yayınlanmış yazısı.
+   * Yazısı olmayan yazarlar listeden düşer — anasayfada boş kart istemiyoruz.
+   */
+  async findWithLatest(tenantId: string, limit = 12) {
+    const authors = await this.prisma.author.findMany({
+      where: { tenantId, active: true },
+      orderBy: { sortOrder: 'asc' },
+      select: { id: true, name: true, slug: true, avatar: true, bio: true },
+    });
+
+    if (authors.length === 0) return [];
+
+    // Yazar başına son yazıyı tek sorguda almak Prisma'da mümkün değil;
+    // yazar sayısı düşük (onlarca) olduğu için paralel sorgu kabul edilebilir.
+    const withLatest = await Promise.all(
+      authors.map(async (author) => {
+        const latest = await this.prisma.article.findFirst({
+          where: {
+            tenantId,
+            authorId: author.id,
+            status: 'PUBLISHED',
+            publishedAt: { lte: new Date() },
+          },
+          orderBy: { publishedAt: 'desc' },
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            spot: true,
+            featuredImage: true,
+            publishedAt: true,
+          },
+        });
+        return { ...author, latestArticle: latest };
+      }),
+    );
+
+    return withLatest
+      .filter((a) => a.latestArticle !== null)
+      .sort((a, b) => {
+        const at = a.latestArticle?.publishedAt?.getTime() ?? 0;
+        const bt = b.latestArticle?.publishedAt?.getTime() ?? 0;
+        return bt - at;
+      })
+      .slice(0, Math.min(limit, 40));
+  }
+
   async findBySlug(tenantId: string, slug: string) {
     const author = await this.prisma.author.findUnique({
       where: { tenantId_slug: { tenantId, slug } },

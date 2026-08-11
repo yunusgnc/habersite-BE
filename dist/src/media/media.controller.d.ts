@@ -6,7 +6,6 @@ export declare class MediaController {
     constructor(mediaService: MediaService);
     findAll(tenantId: string, query: QueryMediaDto): Promise<{
         data: {
-            url: string;
             id: string;
             createdAt: Date;
             tenantId: string;
@@ -16,6 +15,7 @@ export declare class MediaController {
             originalName: string;
             mimeType: string;
             size: number;
+            url: string;
             thumbnailUrl: string | null;
             width: number | null;
             height: number | null;
@@ -26,7 +26,6 @@ export declare class MediaController {
         total: number;
     }>;
     upload(tenantId: string, file: Express.Multer.File, dto: UploadMediaDto): Promise<{
-        url: string;
         id: string;
         createdAt: Date;
         tenantId: string;
@@ -36,6 +35,7 @@ export declare class MediaController {
         originalName: string;
         mimeType: string;
         size: number;
+        url: string;
         thumbnailUrl: string | null;
         width: number | null;
         height: number | null;
@@ -43,7 +43,6 @@ export declare class MediaController {
         credit: string | null;
     }>;
     update(tenantId: string, id: string, dto: UploadMediaDto): Promise<{
-        url: string;
         id: string;
         createdAt: Date;
         tenantId: string;
@@ -53,6 +52,7 @@ export declare class MediaController {
         originalName: string;
         mimeType: string;
         size: number;
+        url: string;
         thumbnailUrl: string | null;
         width: number | null;
         height: number | null;
@@ -60,7 +60,6 @@ export declare class MediaController {
         credit: string | null;
     }>;
     remove(tenantId: string, id: string): Promise<{
-        url: string;
         id: string;
         createdAt: Date;
         tenantId: string;
@@ -70,6 +69,7 @@ export declare class MediaController {
         originalName: string;
         mimeType: string;
         size: number;
+        url: string;
         thumbnailUrl: string | null;
         width: number | null;
         height: number | null;

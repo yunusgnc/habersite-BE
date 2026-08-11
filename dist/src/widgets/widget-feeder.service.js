@@ -51,8 +51,15 @@ const common_1 = require("@nestjs/common");
 const schedule_1 = require("@nestjs/schedule");
 const axios_1 = __importDefault(require("axios"));
 const cheerio = __importStar(require("cheerio"));
+const slugify_1 = __importDefault(require("slugify"));
 const prisma_service_1 = require("../prisma/prisma.service");
 const widgets_service_1 = require("./widgets.service");
+const SCRAPE_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8',
+    'Upgrade-Insecure-Requests': '1',
+};
 let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
     prisma;
     widgets;
@@ -63,13 +70,63 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
         'market-ticker': this.fetchMarketTicker.bind(this),
         horoscope: this.fetchHoroscope.bind(this),
         newspapers: this.fetchNewspapers.bind(this),
+        pharmacy: this.fetchPharmacy.bind(this),
     };
     constructor(prisma, widgets) {
         this.prisma = prisma;
         this.widgets = widgets;
     }
     async onModuleInit() {
-        setTimeout(() => this.refreshAll().catch(() => undefined), 4000);
+        setTimeout(async () => {
+            try {
+                await this.ensureCoreWidgets();
+            }
+            catch (err) {
+                this.logger.warn(`ensureCoreWidgets failed: ${err?.message ?? err}`);
+            }
+            this.refreshAll().catch(() => undefined);
+        }, 4000);
+    }
+    async ensureCoreWidgets() {
+        const defaults = [
+            { type: 'weather', config: { city: 'Kayseri' }, sortOrder: 1 },
+            { type: 'prayer-times', config: { city: 'Kayseri', country: 'Turkey', method: 13 }, sortOrder: 2 },
+            {
+                type: 'market-ticker',
+                config: {
+                    pairs: [
+                        { from: 'USD', to: 'TRY', label: 'Dolar' },
+                        { from: 'EUR', to: 'TRY', label: 'Euro' },
+                        { from: 'GBP', to: 'TRY', label: 'Sterlin' },
+                    ],
+                },
+                sortOrder: 3,
+            },
+            { type: 'horoscope', config: {}, sortOrder: 4 },
+            { type: 'newspapers', config: {}, sortOrder: 5 },
+            { type: 'pharmacy', config: { city: 'Kayseri' }, sortOrder: 6 },
+        ];
+        const tenants = await this.prisma.tenant.findMany({ select: { id: true } });
+        for (const t of tenants) {
+            for (const w of defaults) {
+                const existing = await this.prisma.widget.findFirst({
+                    where: { tenantId: t.id, type: w.type },
+                    select: { id: true },
+                });
+                if (existing)
+                    continue;
+                await this.prisma.widget.create({
+                    data: {
+                        tenantId: t.id,
+                        type: w.type,
+                        config: w.config,
+                        sortOrder: w.sortOrder,
+                        active: true,
+                    },
+                });
+                this.logger.log(`Provisioned missing widget "${w.type}" for tenant ${t.id}`);
+            }
+        }
     }
     async refreshFast() {
         await this.refreshForTypes(['weather', 'market-ticker']);
@@ -82,6 +139,9 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
     }
     async refreshNewspapers() {
         await this.refreshForTypes(['newspapers']);
+    }
+    async refreshPharmacy() {
+        await this.refreshForTypes(['pharmacy']);
     }
     async refreshAll() {
         await this.refreshForTypes(Object.keys(this.feeders));
@@ -402,52 +462,126 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
         return arr[dayOfYear % arr.length];
     }
     async fetchNewspapers(_config) {
+        const url = 'https://www.gazeteoku.com/gazeteler';
         try {
-            const { data: html } = await axios_1.default.get('https://www.gazeteoku.com/', {
-                timeout: 15000,
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36',
-                },
+            const { data: html } = await axios_1.default.get(url, {
+                timeout: 20000,
+                headers: SCRAPE_HEADERS,
+                responseType: 'text',
             });
             const $ = cheerio.load(html);
             const items = [];
-            $('a.gazete, .gazete-item a, .newspaper-card a').each((_, el) => {
+            $('.newspapers a[href*="-manseti"]').each((_, el) => {
                 const $el = $(el);
-                const img = $el.find('img').attr('src') || $el.find('img').attr('data-src') || '';
-                const name = $el.find('.gazete-adi, .newspaper-name, h3, .title').first().text().trim() ||
-                    $el.attr('title') ||
-                    $el.find('img').attr('alt') ||
-                    '';
+                const $img = $el.find('img').first();
+                const thumb = $img.attr('data-src') || $img.attr('src') || '';
+                if (!thumb || thumb.includes('blank.png'))
+                    return;
+                const name = $el.attr('title')?.trim() ||
+                    $img.attr('alt')?.trim() ||
+                    $el.find('strong').first().text().trim();
+                if (!name)
+                    return;
                 const href = $el.attr('href') || '';
-                if (img && name) {
-                    const absImg = img.startsWith('http') ? img : `https://www.gazeteoku.com${img}`;
-                    const absUrl = href.startsWith('http') ? href : `https://www.gazeteoku.com${href}`;
-                    items.push({
-                        name: name.replace(/[\r\n\t]+/g, ' ').trim(),
-                        slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
-                        image: absImg,
-                        url: absUrl,
-                    });
-                }
+                const absUrl = href.startsWith('http') ? href : `https://www.gazeteoku.com${href}`;
+                const slug = href.split('/').pop()?.replace(/-gazetesi-manseti$/, '') ||
+                    (0, slugify_1.default)(name, { lower: true, strict: true, locale: 'tr' });
+                items.push({
+                    name,
+                    slug,
+                    image: thumb,
+                    imageFull: thumb.replace(/\/(\d+)\/\d+\/\d+\//, '/$1/1240/1754/'),
+                    url: absUrl,
+                    date: $el.find('small').first().text().trim(),
+                });
             });
             const seen = new Set();
             const unique = items.filter((it) => {
-                if (seen.has(it.name))
+                const key = it.slug || it.name;
+                if (seen.has(key))
                     return false;
-                seen.add(it.name);
+                seen.add(key);
                 return true;
             });
             if (unique.length === 0) {
-                this.logger.warn('[newspapers] gazeteoku.com scrape returned 0 items — selectors may be outdated');
+                this.logger.warn(`[newspapers] ${url} scrape returned 0 items — selectors may be outdated`);
+            }
+            else {
+                this.logger.log(`[newspapers] ${unique.length} gazete kapağı alındı`);
             }
             return {
                 items: unique.slice(0, 40),
+                source: url,
                 date: new Date().toISOString().split('T')[0],
             };
         }
         catch (err) {
             this.logger.warn(`[newspapers] fetch failed: ${err?.message ?? err}`);
             return { items: [], date: new Date().toISOString().split('T')[0] };
+        }
+    }
+    async fetchPharmacy(config) {
+        const city = config?.city ?? 'Kayseri';
+        const citySlug = (0, slugify_1.default)(city, { lower: true, strict: true, locale: 'tr' });
+        const url = `https://www.eczaneler.gen.tr/nobetci-${citySlug}`;
+        try {
+            const { data: html } = await axios_1.default.get(url, {
+                timeout: 15000,
+                headers: SCRAPE_HEADERS,
+                responseType: 'text',
+            });
+            const $ = cheerio.load(html);
+            const parseTab = (tabId) => {
+                const rows = [];
+                $(`${tabId} table tr`).each((_, tr) => {
+                    const $row = $(tr).find('.row').first();
+                    if (!$row.length)
+                        return;
+                    const name = $row.find('.isim').first().text().trim();
+                    if (!name)
+                        return;
+                    const $addrCol = $row.find('[class*="col-lg-6"]').first();
+                    const district = $addrCol.find('.my-2 span').first().text().trim();
+                    const address = $addrCol
+                        .clone()
+                        .find('.my-2')
+                        .remove()
+                        .end()
+                        .text()
+                        .replace(/\s*→[\s\S]*$/, '')
+                        .replace(/\s+/g, ' ')
+                        .trim();
+                    const phone = $row.find('[class*="col-lg-3"]').last().text().trim();
+                    rows.push({ name, address, district, phone });
+                });
+                return rows;
+            };
+            let pharmacies = parseTab('#nav-bugun');
+            let scope = 'today';
+            if (pharmacies.length === 0) {
+                pharmacies = parseTab('#nav-yarin');
+                scope = 'tomorrow';
+            }
+            if (pharmacies.length === 0) {
+                this.logger.warn(`[pharmacy] ${url} scrape returned 0 items — selectors may be outdated`);
+            }
+            return {
+                city,
+                scope,
+                source: url,
+                date: new Date().toISOString().split('T')[0],
+                pharmacies,
+            };
+        }
+        catch (err) {
+            this.logger.warn(`[pharmacy] fetch failed (${url}): ${err?.message ?? err}`);
+            return {
+                city,
+                scope: 'today',
+                source: url,
+                date: new Date().toISOString().split('T')[0],
+                pharmacies: [],
+            };
         }
     }
 };
@@ -476,6 +610,12 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], WidgetFeederService.prototype, "refreshNewspapers", null);
+__decorate([
+    (0, schedule_1.Cron)('30 8,19 * * *'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], WidgetFeederService.prototype, "refreshPharmacy", null);
 exports.WidgetFeederService = WidgetFeederService = WidgetFeederService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,

@@ -22,6 +22,10 @@ class QueryArticlesDto {
     categoryId;
     authorSlug;
     search;
+    searchScope;
+    from;
+    to;
+    tagSlug;
     featured;
     createdById;
     sort = 'latest';
@@ -70,6 +74,26 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], QueryArticlesDto.prototype, "search", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], QueryArticlesDto.prototype, "searchScope", void 0);
+__decorate([
+    (0, class_validator_1.IsDateString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], QueryArticlesDto.prototype, "from", void 0);
+__decorate([
+    (0, class_validator_1.IsDateString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], QueryArticlesDto.prototype, "to", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], QueryArticlesDto.prototype, "tagSlug", void 0);
 __decorate([
     (0, class_validator_1.IsBooleanString)(),
     (0, class_validator_1.IsOptional)(),

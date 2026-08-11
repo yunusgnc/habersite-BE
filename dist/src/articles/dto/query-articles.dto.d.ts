@@ -8,6 +8,10 @@ export declare class QueryArticlesDto {
     categoryId?: string;
     authorSlug?: string;
     search?: string;
+    searchScope?: 'title' | 'all';
+    from?: string;
+    to?: string;
+    tagSlug?: string;
     featured?: string;
     createdById?: string;
     sort?: string;

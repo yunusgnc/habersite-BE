@@ -27,6 +27,24 @@ function canPublishArticle(role) {
 function canEditAnyArticle(role) {
     return ['SUPER_ADMIN', 'ADMIN', 'EDITOR'].includes(role);
 }
+function buildDateRange(from, to) {
+    const filter = {};
+    if (from) {
+        const d = new Date(from);
+        if (!Number.isNaN(d.getTime()))
+            filter.gte = d;
+    }
+    if (to) {
+        const d = new Date(to);
+        if (!Number.isNaN(d.getTime())) {
+            if (d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0) {
+                d.setUTCHours(23, 59, 59, 999);
+            }
+            filter.lte = d;
+        }
+    }
+    return Object.keys(filter).length ? filter : undefined;
+}
 let ArticlesService = ArticlesService_1 = class ArticlesService {
     prisma;
     audit;
@@ -73,7 +91,7 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
         this.logger.log(`${due.length} zamanlanmış haber yayınlandı.`);
     }
     async findAll(tenantId, query) {
-        const { cursor, limit = 20, status, type, categorySlug, categoryId, authorSlug, search, featured, createdById, sort = 'latest', } = query;
+        const { cursor, limit = 20, status, type, categorySlug, categoryId, authorSlug, search, searchScope, from, to, tagSlug, featured, createdById, sort = 'latest', } = query;
         const where = { tenantId };
         if (status)
             where.status = status;
@@ -81,10 +99,29 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
             where.type = type;
         if (featured)
             where.featured = featured === 'true';
-        if (search)
-            where.title = { contains: search, mode: 'insensitive' };
         if (createdById)
             where.createdById = createdById;
+        if (search?.trim()) {
+            const q = search.trim();
+            where.AND = [
+                ...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []),
+                searchScope === 'all'
+                    ? {
+                        OR: [
+                            { title: { contains: q, mode: 'insensitive' } },
+                            { spot: { contains: q, mode: 'insensitive' } },
+                            { seoDesc: { contains: q, mode: 'insensitive' } },
+                            { tags: { some: { tag: { name: { contains: q, mode: 'insensitive' } } } } },
+                            { categories: { some: { category: { name: { contains: q, mode: 'insensitive' } } } } },
+                            { author: { name: { contains: q, mode: 'insensitive' } } },
+                        ],
+                    }
+                    : { title: { contains: q, mode: 'insensitive' } },
+            ];
+        }
+        const publishedRange = buildDateRange(from, to);
+        if (publishedRange)
+            where.publishedAt = publishedRange;
         if (categoryId) {
             where.categories = { some: { categoryId } };
         }
@@ -92,6 +129,9 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
             where.categories = {
                 some: { category: { slug: categorySlug } },
             };
+        }
+        if (tagSlug) {
+            where.tags = { some: { tag: { slug: tagSlug } } };
         }
         if (authorSlug) {
             where.author = { slug: authorSlug };
@@ -132,6 +172,34 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
             nextCursor = next.id;
         }
         return { items, nextCursor, total };
+    }
+    async archiveFacets(tenantId) {
+        const rows = await this.prisma.$queryRaw `
+      SELECT
+        EXTRACT(YEAR  FROM published_at)::int  AS year,
+        EXTRACT(MONTH FROM published_at)::int  AS month,
+        COUNT(*)                               AS count
+      FROM articles
+      WHERE tenant_id = ${tenantId}
+        AND status = 'PUBLISHED'
+        AND published_at IS NOT NULL
+      GROUP BY year, month
+      ORDER BY year DESC, month DESC
+    `;
+        const months = rows.map((r) => ({
+            year: r.year,
+            month: r.month,
+            count: Number(r.count),
+        }));
+        const years = months.reduce((acc, m) => {
+            const hit = acc.find((y) => y.year === m.year);
+            if (hit)
+                hit.count += m.count;
+            else
+                acc.push({ year: m.year, count: m.count });
+            return acc;
+        }, []);
+        return { years, months };
     }
     async findBySlug(tenantId, slug) {
         const article = await this.prisma.article.findUnique({

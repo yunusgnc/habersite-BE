@@ -29,6 +29,9 @@ let AuthorsController = class AuthorsController {
     findAll(tenantId) {
         return this.authorsService.findAll(tenantId);
     }
+    findWithLatest(tenantId, limit) {
+        return this.authorsService.findWithLatest(tenantId, limit ? parseInt(limit, 10) : undefined);
+    }
     findBySlug(tenantId, slug) {
         return this.authorsService.findBySlug(tenantId, slug);
     }
@@ -51,6 +54,15 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], AuthorsController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('with-latest'),
+    (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], AuthorsController.prototype, "findWithLatest", null);
 __decorate([
     (0, common_1.Get)(':slug'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),

@@ -244,7 +244,6 @@ export declare class TenantsController {
             social: import("@prisma/client/runtime/client").JsonValue;
         }[];
         media: {
-            url: string;
             id: string;
             createdAt: Date;
             tenantId: string;
@@ -254,6 +253,7 @@ export declare class TenantsController {
             originalName: string;
             mimeType: string;
             size: number;
+            url: string;
             thumbnailUrl: string | null;
             width: number | null;
             height: number | null;

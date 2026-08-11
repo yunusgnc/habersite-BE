@@ -2,10 +2,25 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import slugify from 'slugify';
 import { PrismaService } from '../prisma/prisma.service';
 import { WidgetsService } from './widgets.service';
 
 type Feeder = (config: any) => Promise<any>;
+
+/**
+ * Scrape edilen siteler bot filtresi uyguluyor. Yalnızca User-Agent yetmiyor —
+ * axios'un varsayılan `Accept: application/json` başlığı eczaneler.gen.tr'de
+ * 403'e yol açıyordu. Tarayıcının gönderdiği başlık setini taklit et.
+ */
+const SCRAPE_HEADERS = {
+  'User-Agent':
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  Accept:
+    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+  'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8',
+  'Upgrade-Insecure-Requests': '1',
+} as const;
 
 /**
  * Periodically refreshes cache for feed-driven widgets (weather, prayer, market, horoscope).
@@ -21,6 +36,7 @@ export class WidgetFeederService implements OnModuleInit {
     'market-ticker': this.fetchMarketTicker.bind(this),
     horoscope: this.fetchHoroscope.bind(this),
     newspapers: this.fetchNewspapers.bind(this),
+    pharmacy: this.fetchPharmacy.bind(this),
   };
 
   constructor(
@@ -63,6 +79,7 @@ export class WidgetFeederService implements OnModuleInit {
       },
       { type: 'horoscope', config: {}, sortOrder: 4 },
       { type: 'newspapers', config: {}, sortOrder: 5 },
+      { type: 'pharmacy', config: { city: 'Kayseri' }, sortOrder: 6 },
     ];
 
     const tenants = await this.prisma.tenant.findMany({ select: { id: true } });
@@ -107,6 +124,13 @@ export class WidgetFeederService implements OnModuleInit {
   @Cron('0 6 * * *')
   async refreshNewspapers() {
     await this.refreshForTypes(['newspapers']);
+  }
+
+  // Nöbetçi eczaneler: nöbet mesai bitiminde devrediyor. 08:30'da günün
+  // listesini, 19:00'da akşam nöbetini al.
+  @Cron('30 8,19 * * *')
+  async refreshPharmacy() {
+    await this.refreshForTypes(['pharmacy']);
   }
 
   async refreshAll() {
@@ -486,65 +510,182 @@ export class WidgetFeederService implements OnModuleInit {
   }
 
   /**
-   * Gazete manşetleri — gazeteoku.com'dan günlük gazete kapaklarını scrape eder.
-   * Ana ulusal gazetelerin ön yüzlerini toplar. Site fullscreen görüntüleyici ile
-   * kullanır. Kaynak site değişirse selector'ları güncelle.
+   * Gazete manşetleri — gazeteoku.com/gazeteler sayfasından günlük kapakları alır.
+   *
+   * Sayfa yapısı (2026-08 itibarıyla doğrulandı):
+   *   .newspapers a[href$="-manseti"]
+   *     ├─ <strong>HÜRRİYET</strong>          → ad (büyük harf)
+   *     ├─ <small>11 Ağustos 2026</small>     → tarih
+   *     └─ <img src="blank.png" data-src="…"> → kapak (LAZY: gerçek URL data-src'de)
+   *
+   * Görsel URL'i `/3/{w}/{h}/storage/…` biçiminde boyut taşır; thumbnail için
+   * kaynaktaki 230x336, fullscreen zoom için 1240x1754 türetilir (~900 KB).
    */
   private async fetchNewspapers(_config: any) {
+    const url = 'https://www.gazeteoku.com/gazeteler';
+
     try {
-      const { data: html } = await axios.get('https://www.gazeteoku.com/', {
-        timeout: 15000,
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36',
-        },
+      const { data: html } = await axios.get(url, {
+        timeout: 20000,
+        headers: SCRAPE_HEADERS,
+        responseType: 'text',
       });
       const $ = cheerio.load(html);
-      const items: Array<{ name: string; slug: string; image: string; url: string }> = [];
 
-      // gazeteoku.com her gazete için `.item` veya benzeri kart yapısı kullanır.
-      // Sayfa yapısı değişebilir — bu selector'ları güncel tutmak gerekir.
-      $('a.gazete, .gazete-item a, .newspaper-card a').each((_, el) => {
+      const items: Array<{
+        name: string;
+        slug: string;
+        image: string;
+        imageFull: string;
+        url: string;
+        date: string;
+      }> = [];
+
+      $('.newspapers a[href*="-manseti"]').each((_, el) => {
         const $el = $(el);
-        const img = $el.find('img').attr('src') || $el.find('img').attr('data-src') || '';
-        const name = $el.find('.gazete-adi, .newspaper-name, h3, .title').first().text().trim() ||
-                     $el.attr('title') ||
-                     $el.find('img').attr('alt') ||
-                     '';
+        const $img = $el.find('img').first();
+
+        // src bir 1x1 placeholder — gerçek adres data-src'de.
+        const thumb = $img.attr('data-src') || $img.attr('src') || '';
+        if (!thumb || thumb.includes('blank.png')) return;
+
+        const name =
+          $el.attr('title')?.trim() ||
+          $img.attr('alt')?.trim() ||
+          $el.find('strong').first().text().trim();
+        if (!name) return;
+
         const href = $el.attr('href') || '';
-        if (img && name) {
-          const absImg = img.startsWith('http') ? img : `https://www.gazeteoku.com${img}`;
-          const absUrl = href.startsWith('http') ? href : `https://www.gazeteoku.com${href}`;
-          items.push({
-            name: name.replace(/[\r\n\t]+/g, ' ').trim(),
-            slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
-            image: absImg,
-            url: absUrl,
-          });
-        }
+        const absUrl = href.startsWith('http') ? href : `https://www.gazeteoku.com${href}`;
+        const slug =
+          href.split('/').pop()?.replace(/-gazetesi-manseti$/, '') ||
+          slugify(name, { lower: true, strict: true, locale: 'tr' });
+
+        items.push({
+          name,
+          slug,
+          image: thumb,
+          // Boyut segmentini büyüğüyle değiştir — zoom'da okunabilir olsun.
+          imageFull: thumb.replace(/\/(\d+)\/\d+\/\d+\//, '/$1/1240/1754/'),
+          url: absUrl,
+          date: $el.find('small').first().text().trim(),
+        });
       });
 
-      // Deduplicate by name
       const seen = new Set<string>();
       const unique = items.filter((it) => {
-        if (seen.has(it.name)) return false;
-        seen.add(it.name);
+        const key = it.slug || it.name;
+        if (seen.has(key)) return false;
+        seen.add(key);
         return true;
       });
 
       if (unique.length === 0) {
         this.logger.warn(
-          '[newspapers] gazeteoku.com scrape returned 0 items — selectors may be outdated',
+          `[newspapers] ${url} scrape returned 0 items — selectors may be outdated`,
         );
+      } else {
+        this.logger.log(`[newspapers] ${unique.length} gazete kapağı alındı`);
       }
 
       return {
         items: unique.slice(0, 40),
+        source: url,
         date: new Date().toISOString().split('T')[0],
       };
     } catch (err: any) {
       this.logger.warn(`[newspapers] fetch failed: ${err?.message ?? err}`);
       return { items: [], date: new Date().toISOString().split('T')[0] };
+    }
+  }
+
+  /**
+   * Nöbetçi eczaneler — eczaneler.gen.tr'den şehrin günlük nöbet listesi.
+   * Sayfa gün sekmelerine ayrılmış: #nav-bugun / #nav-yarin. "Bugün"
+   * sekmesi boşsa (gece yarısından sonra site sekmeleri kaydırır) yarına düşer.
+   * Config: { city?: string }  (varsayılan: Kayseri)
+   */
+  private async fetchPharmacy(config: any) {
+    const city = (config?.city as string) ?? 'Kayseri';
+    const citySlug = slugify(city, { lower: true, strict: true, locale: 'tr' });
+    const url = `https://www.eczaneler.gen.tr/nobetci-${citySlug}`;
+
+    try {
+      const { data: html } = await axios.get(url, {
+        timeout: 15000,
+        headers: SCRAPE_HEADERS,
+        responseType: 'text',
+      });
+      const $ = cheerio.load(html);
+
+      const parseTab = (tabId: string) => {
+        const rows: Array<{
+          name: string;
+          address: string;
+          district: string;
+          phone: string;
+        }> = [];
+
+        $(`${tabId} table tr`).each((_, tr) => {
+          const $row = $(tr).find('.row').first();
+          if (!$row.length) return; // başlık satırı
+
+          const name = $row.find('.isim').first().text().trim();
+          if (!name) return;
+
+          // Adres: ikinci kolonun düz metni — ilçe etiketi ve yol tarifi
+          // satırı çıkarılır.
+          const $addrCol = $row.find('[class*="col-lg-6"]').first();
+          const district = $addrCol.find('.my-2 span').first().text().trim();
+          const address = $addrCol
+            .clone()
+            .find('.my-2')
+            .remove()
+            .end()
+            .text()
+            .replace(/\s*→[\s\S]*$/, '') // "→ tarif" açıklamasını at
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          const phone = $row.find('[class*="col-lg-3"]').last().text().trim();
+
+          rows.push({ name, address, district, phone });
+        });
+
+        return rows;
+      };
+
+      // "Bugün" sekmesi boşsa yarını dene — bazı saatlerde site aktif
+      // sekmeyi kaydırıyor ve bugün boş kalıyor.
+      let pharmacies = parseTab('#nav-bugun');
+      let scope: 'today' | 'tomorrow' = 'today';
+      if (pharmacies.length === 0) {
+        pharmacies = parseTab('#nav-yarin');
+        scope = 'tomorrow';
+      }
+
+      if (pharmacies.length === 0) {
+        this.logger.warn(
+          `[pharmacy] ${url} scrape returned 0 items — selectors may be outdated`,
+        );
+      }
+
+      return {
+        city,
+        scope,
+        source: url,
+        date: new Date().toISOString().split('T')[0],
+        pharmacies,
+      };
+    } catch (err: any) {
+      this.logger.warn(`[pharmacy] fetch failed (${url}): ${err?.message ?? err}`);
+      return {
+        city,
+        scope: 'today' as const,
+        source: url,
+        date: new Date().toISOString().split('T')[0],
+        pharmacies: [],
+      };
     }
   }
 }

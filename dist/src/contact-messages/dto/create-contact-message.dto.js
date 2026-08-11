@@ -10,15 +10,25 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateContactMessageDto = void 0;
+const client_1 = require("@prisma/client");
 const class_validator_1 = require("class-validator");
 class CreateContactMessageDto {
+    type;
     name;
     email;
     phone;
     subject;
     message;
+    targetUrl;
+    district;
+    attachments;
 }
 exports.CreateContactMessageDto = CreateContactMessageDto;
+__decorate([
+    (0, class_validator_1.IsEnum)(client_1.MessageType),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateContactMessageDto.prototype, "type", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(2),
@@ -47,4 +57,23 @@ __decorate([
     (0, class_validator_1.MaxLength)(5000),
     __metadata("design:type", String)
 ], CreateContactMessageDto.prototype, "message", void 0);
+__decorate([
+    (0, class_validator_1.IsUrl)({ require_protocol: true }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(500),
+    __metadata("design:type", String)
+], CreateContactMessageDto.prototype, "targetUrl", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(120),
+    __metadata("design:type", String)
+], CreateContactMessageDto.prototype, "district", void 0);
+__decorate([
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ArrayMaxSize)(6),
+    (0, class_validator_1.IsString)({ each: true }),
+    __metadata("design:type", Array)
+], CreateContactMessageDto.prototype, "attachments", void 0);
 //# sourceMappingURL=create-contact-message.dto.js.map

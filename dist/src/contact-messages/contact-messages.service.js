@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ContactMessagesService = void 0;
 const common_1 = require("@nestjs/common");
+const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../prisma/prisma.service");
 let ContactMessagesService = class ContactMessagesService {
     prisma;
@@ -18,24 +19,46 @@ let ContactMessagesService = class ContactMessagesService {
         this.prisma = prisma;
     }
     async create(tenantId, dto, meta) {
+        const type = dto.type ?? client_1.MessageType.CONTACT;
         const created = await this.prisma.contactMessage.create({
             data: {
                 tenantId,
+                type,
                 name: dto.name.trim(),
                 email: dto.email.trim().toLowerCase(),
                 phone: dto.phone?.trim() || null,
                 subject: dto.subject?.trim() || null,
                 message: dto.message.trim(),
+                targetUrl: type === client_1.MessageType.REMOVAL_REQUEST ? dto.targetUrl?.trim() || null : null,
+                district: type === client_1.MessageType.TIP ? dto.district?.trim() || null : null,
+                attachments: type === client_1.MessageType.TIP ? (dto.attachments ?? []) : [],
                 ipAddress: meta.ipAddress ?? null,
                 userAgent: meta.userAgent ?? null,
             },
+            select: { id: true },
         });
         return { ok: true, id: created.id };
     }
     async findAll(tenantId, opts = {}) {
         const take = Math.min(opts.limit ?? 25, 100);
+        const where = { tenantId };
+        if (opts.unreadOnly)
+            where.read = false;
+        if (opts.type)
+            where.type = opts.type;
+        if (opts.status)
+            where.status = opts.status;
+        if (opts.search?.trim()) {
+            const q = opts.search.trim();
+            where.OR = [
+                { name: { contains: q, mode: 'insensitive' } },
+                { email: { contains: q, mode: 'insensitive' } },
+                { subject: { contains: q, mode: 'insensitive' } },
+                { message: { contains: q, mode: 'insensitive' } },
+            ];
+        }
         const items = await this.prisma.contactMessage.findMany({
-            where: { tenantId, ...(opts.unreadOnly ? { read: false } : {}) },
+            where,
             take: take + 1,
             ...(opts.cursor ? { cursor: { id: opts.cursor }, skip: 1 } : {}),
             orderBy: { createdAt: 'desc' },
@@ -47,17 +70,48 @@ let ContactMessagesService = class ContactMessagesService {
         };
     }
     async stats(tenantId) {
-        const [total, unread] = await Promise.all([
+        const [total, unread, byType, byStatus] = await Promise.all([
             this.prisma.contactMessage.count({ where: { tenantId } }),
             this.prisma.contactMessage.count({ where: { tenantId, read: false } }),
+            this.prisma.contactMessage.groupBy({
+                by: ['type'],
+                where: { tenantId },
+                _count: { _all: true },
+            }),
+            this.prisma.contactMessage.groupBy({
+                by: ['status'],
+                where: { tenantId },
+                _count: { _all: true },
+            }),
         ]);
-        return { total, unread };
+        const typeCounts = Object.fromEntries(Object.values(client_1.MessageType).map((t) => [
+            t,
+            byType.find((row) => row.type === t)?._count._all ?? 0,
+        ]));
+        const statusCounts = Object.fromEntries(Object.values(client_1.MessageStatus).map((s) => [
+            s,
+            byStatus.find((row) => row.status === s)?._count._all ?? 0,
+        ]));
+        return { total, unread, byType: typeCounts, byStatus: statusCounts };
     }
     async markRead(tenantId, id, read = true) {
         await this.ensureExists(tenantId, id);
         return this.prisma.contactMessage.update({
             where: { id },
             data: { read },
+        });
+    }
+    async updateStatus(tenantId, id, dto) {
+        await this.ensureExists(tenantId, id);
+        const isClosed = dto.status === client_1.MessageStatus.RESOLVED || dto.status === client_1.MessageStatus.REJECTED;
+        return this.prisma.contactMessage.update({
+            where: { id },
+            data: {
+                status: dto.status,
+                adminNote: dto.adminNote?.trim() || null,
+                handledAt: isClosed ? new Date() : null,
+                read: true,
+            },
         });
     }
     async remove(tenantId, id) {

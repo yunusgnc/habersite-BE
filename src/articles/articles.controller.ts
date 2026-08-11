@@ -58,6 +58,13 @@ export class ArticlesController {
     return this.articlesService.getMostRead(tenantId, limit ? +limit : 10);
   }
 
+  // Arşiv sayfasının yıl/ay gezintisi. ':slug' rotasından ÖNCE tanımlı
+  // olmalı, aksi halde "archive-facets" bir haber slug'ı sanılır.
+  @Get('archive-facets')
+  archiveFacets(@CurrentTenant() tenantId: string) {
+    return this.articlesService.archiveFacets(tenantId);
+  }
+
   @Get(':id/related')
   getRelated(
     @CurrentTenant() tenantId: string,

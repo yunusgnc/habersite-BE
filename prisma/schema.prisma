@@ -48,6 +48,7 @@ model Tenant {
   videos           Video[]
   authorCategories AuthorCategory[]
   siteSettings     Setting[]
+  officialNotices  OfficialNotice[]
 
   @@map("tenants")
 }
@@ -723,22 +724,94 @@ model AuditLog {
 
 // ─── CONTACT MESSAGE (İletişim formundan gelen mesajlar) ───
 
+/// Tek tablo üç akışa hizmet eder: iletişim formu, ihbar hattı ve
+/// KVKK içerik kaldırma talebi. `type` hangi akış olduğunu belirler,
+/// tipe özel alanlar (targetUrl, district, attachments) opsiyoneldir.
 model ContactMessage {
-  id        String   @id @default(cuid())
-  tenantId  String   @map("tenant_id")
+  id        String        @id @default(cuid())
+  tenantId  String        @map("tenant_id")
+  type      MessageType   @default(CONTACT)
+  status    MessageStatus @default(NEW)
   name      String
   email     String
   phone     String?
   subject   String?
   message   String
-  read      Boolean  @default(false)
-  ipAddress String?  @map("ip_address")
-  userAgent String?  @map("user_agent")
-  createdAt DateTime @default(now()) @map("created_at")
+  /// KVKK talebinde kaldırılması istenen içeriğin adresi.
+  targetUrl String?       @map("target_url")
+  /// İhbarda olayın geçtiği ilçe / mahalle.
+  district  String?
+  /// İhbara eklenen medya URL'leri: string[]
+  attachments Json        @default("[]")
+  /// Editörün dahili notu — okuyucuya gösterilmez.
+  adminNote String?       @map("admin_note")
+  handledAt DateTime?     @map("handled_at")
+  read      Boolean       @default(false)
+  ipAddress String?       @map("ip_address")
+  userAgent String?       @map("user_agent")
+  createdAt DateTime      @default(now()) @map("created_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, createdAt(sort: Desc)])
   @@index([tenantId, read])
+  @@index([tenantId, type, createdAt(sort: Desc)])
+  @@index([tenantId, status])
   @@map("contact_messages")
+}
+
+enum MessageType {
+  CONTACT /// İletişim formu
+  TIP /// İhbar hattı
+  REMOVAL_REQUEST /// KVKK içerik kaldırma talebi
+}
+
+enum MessageStatus {
+  NEW
+  IN_REVIEW
+  RESOLVED
+  REJECTED
+}
+
+/// Resmi İlanlar — ihale, personel alımı, imar, icra vb. kamu duyuruları.
+/// Yerel gazeteler için ayrı bir gelir ve trafik kalemidir.
+model OfficialNotice {
+  id          String     @id @default(cuid())
+  tenantId    String     @map("tenant_id")
+  title       String
+  slug        String
+  noticeType  NoticeType @default(TENDER) @map("notice_type")
+  /// İlanı veren kurum: "Kayseri Büyükşehir Belediyesi"
+  institution String
+  /// İhale/ilan kayıt numarası.
+  referenceNo String?    @map("reference_no")
+  summary     String?
+  content     String
+  /// PDF/görsel ekler: [{ url, name, size }]
+  attachments Json       @default("[]")
+  publishedAt DateTime   @default(now()) @map("published_at")
+  /// Son başvuru / geçerlilik tarihi. Geçmişse sitede arşivde görünür.
+  expiresAt   DateTime?  @map("expires_at")
+  active      Boolean    @default(true)
+  viewCount   Int        @default(0) @map("view_count")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, active, publishedAt(sort: Desc)])
+  @@index([tenantId, noticeType])
+  @@index([tenantId, expiresAt])
+  @@map("official_notices")
+}
+
+enum NoticeType {
+  TENDER /// İhale
+  AUCTION /// Satış / mezat
+  RECRUITMENT /// Personel alımı
+  ZONING /// İmar ve şehircilik
+  COURT /// Mahkeme / icra
+  ANNOUNCEMENT /// Genel duyuru
+  OTHER
 }
