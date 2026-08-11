@@ -7,14 +7,14 @@ export declare class AdsController {
     constructor(adsService: AdsService);
     findByPosition(tenantId: string, position: AdPosition): Promise<{
         id: string;
-        name: string;
+        tenantId: string;
         active: boolean;
+        sortOrder: number;
+        name: string;
+        code: string | null;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
-        sortOrder: number;
         position: import("@prisma/client").$Enums.AdPosition;
-        code: string | null;
         imageUrl: string | null;
         mobileImageUrl: string | null;
         targetUrl: string | null;
@@ -27,14 +27,14 @@ export declare class AdsController {
     }[]>;
     findAll(tenantId: string): Promise<{
         id: string;
-        name: string;
+        tenantId: string;
         active: boolean;
+        sortOrder: number;
+        name: string;
+        code: string | null;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
-        sortOrder: number;
         position: import("@prisma/client").$Enums.AdPosition;
-        code: string | null;
         imageUrl: string | null;
         mobileImageUrl: string | null;
         targetUrl: string | null;
@@ -47,14 +47,14 @@ export declare class AdsController {
     }[]>;
     create(tenantId: string, dto: CreateAdDto): Promise<{
         id: string;
-        name: string;
+        tenantId: string;
         active: boolean;
+        sortOrder: number;
+        name: string;
+        code: string | null;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
-        sortOrder: number;
         position: import("@prisma/client").$Enums.AdPosition;
-        code: string | null;
         imageUrl: string | null;
         mobileImageUrl: string | null;
         targetUrl: string | null;
@@ -67,14 +67,14 @@ export declare class AdsController {
     }>;
     update(tenantId: string, id: string, dto: UpdateAdDto): Promise<{
         id: string;
-        name: string;
+        tenantId: string;
         active: boolean;
+        sortOrder: number;
+        name: string;
+        code: string | null;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
-        sortOrder: number;
         position: import("@prisma/client").$Enums.AdPosition;
-        code: string | null;
         imageUrl: string | null;
         mobileImageUrl: string | null;
         targetUrl: string | null;
@@ -90,14 +90,14 @@ export declare class AdsController {
     }>;
     trackImpression(tenantId: string, id: string): Promise<{
         id: string;
-        name: string;
+        tenantId: string;
         active: boolean;
+        sortOrder: number;
+        name: string;
+        code: string | null;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
-        sortOrder: number;
         position: import("@prisma/client").$Enums.AdPosition;
-        code: string | null;
         imageUrl: string | null;
         mobileImageUrl: string | null;
         targetUrl: string | null;
@@ -110,14 +110,14 @@ export declare class AdsController {
     }>;
     trackClick(tenantId: string, id: string): Promise<{
         id: string;
-        name: string;
+        tenantId: string;
         active: boolean;
+        sortOrder: number;
+        name: string;
+        code: string | null;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
-        sortOrder: number;
         position: import("@prisma/client").$Enums.AdPosition;
-        code: string | null;
         imageUrl: string | null;
         mobileImageUrl: string | null;
         targetUrl: string | null;

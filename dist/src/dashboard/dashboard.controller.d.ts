@@ -20,13 +20,13 @@ export declare class DashboardController {
         totalTags: number;
         recentArticles: {
             id: string;
+            tenantId: string;
+            type: import("@prisma/client").$Enums.ArticleType;
             slug: string;
             createdAt: Date;
             updatedAt: Date;
-            tenantId: string;
             seoTitle: string | null;
             seoDesc: string | null;
-            type: import("@prisma/client").$Enums.ArticleType;
             title: string;
             spot: string | null;
             content: import("@prisma/client/runtime/client").JsonValue;
@@ -63,9 +63,9 @@ export declare class DashboardController {
             };
         } & {
             id: string;
+            tenantId: string;
             name: string;
             createdAt: Date;
-            tenantId: string;
             email: string;
             parentId: string | null;
             content: string;

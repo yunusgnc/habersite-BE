@@ -8,9 +8,9 @@ export declare class CommentsService {
     findByArticle(tenantId: string, articleId: string): Promise<({
         replies: {
             id: string;
+            tenantId: string;
             name: string;
             createdAt: Date;
-            tenantId: string;
             email: string;
             parentId: string | null;
             content: string;
@@ -20,9 +20,9 @@ export declare class CommentsService {
         }[];
     } & {
         id: string;
+        tenantId: string;
         name: string;
         createdAt: Date;
-        tenantId: string;
         email: string;
         parentId: string | null;
         content: string;
@@ -33,9 +33,9 @@ export declare class CommentsService {
     findAll(tenantId: string, query: QueryCommentsDto): Promise<{
         items: {
             id: string;
+            tenantId: string;
             name: string;
             createdAt: Date;
-            tenantId: string;
             email: string;
             parentId: string | null;
             content: string;
@@ -48,9 +48,9 @@ export declare class CommentsService {
     }>;
     create(tenantId: string, dto: CreateCommentDto, ipAddress: string): Promise<{
         id: string;
+        tenantId: string;
         name: string;
         createdAt: Date;
-        tenantId: string;
         email: string;
         parentId: string | null;
         content: string;
@@ -60,9 +60,9 @@ export declare class CommentsService {
     }>;
     updateStatus(tenantId: string, id: string, status: CommentStatus): Promise<{
         id: string;
+        tenantId: string;
         name: string;
         createdAt: Date;
-        tenantId: string;
         email: string;
         parentId: string | null;
         content: string;

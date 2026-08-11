@@ -12,8 +12,8 @@ export declare class AuditController {
             } | null;
         } & {
             id: string;
-            createdAt: Date;
             tenantId: string;
+            createdAt: Date;
             ipAddress: string | null;
             userId: string | null;
             action: string;

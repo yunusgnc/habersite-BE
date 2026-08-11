@@ -17,17 +17,17 @@ export declare class ArticlesService {
             categories: ({
                 category: {
                     id: string;
-                    slug: string;
-                    name: string;
+                    tenantId: string;
                     active: boolean;
+                    sortOrder: number;
+                    name: string;
+                    slug: string;
                     createdAt: Date;
                     updatedAt: Date;
                     description: string | null;
-                    tenantId: string;
                     parentId: string | null;
                     image: string | null;
                     color: string | null;
-                    sortOrder: number;
                     seoTitle: string | null;
                     seoDesc: string | null;
                 };
@@ -39,9 +39,9 @@ export declare class ArticlesService {
             tags: ({
                 tag: {
                     id: string;
-                    slug: string;
-                    name: string;
                     tenantId: string;
+                    name: string;
+                    slug: string;
                 };
             } & {
                 articleId: string;
@@ -49,15 +49,15 @@ export declare class ArticlesService {
             })[];
             author: {
                 id: string;
-                slug: string;
-                name: string;
+                tenantId: string;
                 active: boolean;
+                sortOrder: number;
+                name: string;
+                slug: string;
                 createdAt: Date;
                 updatedAt: Date;
-                tenantId: string;
                 email: string | null;
                 avatar: string | null;
-                sortOrder: number;
                 bio: string | null;
                 social: Prisma.JsonValue;
             } | null;
@@ -72,13 +72,13 @@ export declare class ArticlesService {
             } | null;
         } & {
             id: string;
+            tenantId: string;
+            type: import("@prisma/client").$Enums.ArticleType;
             slug: string;
             createdAt: Date;
             updatedAt: Date;
-            tenantId: string;
             seoTitle: string | null;
             seoDesc: string | null;
-            type: import("@prisma/client").$Enums.ArticleType;
             title: string;
             spot: string | null;
             content: Prisma.JsonValue;
@@ -117,17 +117,17 @@ export declare class ArticlesService {
             categories: ({
                 category: {
                     id: string;
-                    slug: string;
-                    name: string;
+                    tenantId: string;
                     active: boolean;
+                    sortOrder: number;
+                    name: string;
+                    slug: string;
                     createdAt: Date;
                     updatedAt: Date;
                     description: string | null;
-                    tenantId: string;
                     parentId: string | null;
                     image: string | null;
                     color: string | null;
-                    sortOrder: number;
                     seoTitle: string | null;
                     seoDesc: string | null;
                 };
@@ -138,27 +138,27 @@ export declare class ArticlesService {
             })[];
             author: {
                 id: string;
-                slug: string;
-                name: string;
+                tenantId: string;
                 active: boolean;
+                sortOrder: number;
+                name: string;
+                slug: string;
                 createdAt: Date;
                 updatedAt: Date;
-                tenantId: string;
                 email: string | null;
                 avatar: string | null;
-                sortOrder: number;
                 bio: string | null;
                 social: Prisma.JsonValue;
             } | null;
         } & {
             id: string;
+            tenantId: string;
+            type: import("@prisma/client").$Enums.ArticleType;
             slug: string;
             createdAt: Date;
             updatedAt: Date;
-            tenantId: string;
             seoTitle: string | null;
             seoDesc: string | null;
-            type: import("@prisma/client").$Enums.ArticleType;
             title: string;
             spot: string | null;
             content: Prisma.JsonValue;
@@ -192,17 +192,17 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                slug: string;
-                name: string;
+                tenantId: string;
                 active: boolean;
+                sortOrder: number;
+                name: string;
+                slug: string;
                 createdAt: Date;
                 updatedAt: Date;
                 description: string | null;
-                tenantId: string;
                 parentId: string | null;
                 image: string | null;
                 color: string | null;
-                sortOrder: number;
                 seoTitle: string | null;
                 seoDesc: string | null;
             };
@@ -214,9 +214,9 @@ export declare class ArticlesService {
         tags: ({
             tag: {
                 id: string;
-                slug: string;
-                name: string;
                 tenantId: string;
+                name: string;
+                slug: string;
             };
         } & {
             articleId: string;
@@ -224,15 +224,15 @@ export declare class ArticlesService {
         })[];
         author: {
             id: string;
-            slug: string;
-            name: string;
+            tenantId: string;
             active: boolean;
+            sortOrder: number;
+            name: string;
+            slug: string;
             createdAt: Date;
             updatedAt: Date;
-            tenantId: string;
             email: string | null;
             avatar: string | null;
-            sortOrder: number;
             bio: string | null;
             social: Prisma.JsonValue;
         } | null;
@@ -246,13 +246,13 @@ export declare class ArticlesService {
             name: string;
         } | null;
         id: string;
+        tenantId: string;
+        type: import("@prisma/client").$Enums.ArticleType;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
-        type: import("@prisma/client").$Enums.ArticleType;
         title: string;
         spot: string | null;
         content: Prisma.JsonValue;
@@ -287,17 +287,17 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                slug: string;
-                name: string;
+                tenantId: string;
                 active: boolean;
+                sortOrder: number;
+                name: string;
+                slug: string;
                 createdAt: Date;
                 updatedAt: Date;
                 description: string | null;
-                tenantId: string;
                 parentId: string | null;
                 image: string | null;
                 color: string | null;
-                sortOrder: number;
                 seoTitle: string | null;
                 seoDesc: string | null;
             };
@@ -309,9 +309,9 @@ export declare class ArticlesService {
         tags: ({
             tag: {
                 id: string;
-                slug: string;
-                name: string;
                 tenantId: string;
+                name: string;
+                slug: string;
             };
         } & {
             articleId: string;
@@ -319,15 +319,15 @@ export declare class ArticlesService {
         })[];
         author: {
             id: string;
-            slug: string;
-            name: string;
+            tenantId: string;
             active: boolean;
+            sortOrder: number;
+            name: string;
+            slug: string;
             createdAt: Date;
             updatedAt: Date;
-            tenantId: string;
             email: string | null;
             avatar: string | null;
-            sortOrder: number;
             bio: string | null;
             social: Prisma.JsonValue;
         } | null;
@@ -347,13 +347,13 @@ export declare class ArticlesService {
         } | null;
     } & {
         id: string;
+        tenantId: string;
+        type: import("@prisma/client").$Enums.ArticleType;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
-        type: import("@prisma/client").$Enums.ArticleType;
         title: string;
         spot: string | null;
         content: Prisma.JsonValue;
@@ -388,17 +388,17 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                slug: string;
-                name: string;
+                tenantId: string;
                 active: boolean;
+                sortOrder: number;
+                name: string;
+                slug: string;
                 createdAt: Date;
                 updatedAt: Date;
                 description: string | null;
-                tenantId: string;
                 parentId: string | null;
                 image: string | null;
                 color: string | null;
-                sortOrder: number;
                 seoTitle: string | null;
                 seoDesc: string | null;
             };
@@ -410,9 +410,9 @@ export declare class ArticlesService {
         tags: ({
             tag: {
                 id: string;
-                slug: string;
-                name: string;
                 tenantId: string;
+                name: string;
+                slug: string;
             };
         } & {
             articleId: string;
@@ -420,27 +420,27 @@ export declare class ArticlesService {
         })[];
         author: {
             id: string;
-            slug: string;
-            name: string;
+            tenantId: string;
             active: boolean;
+            sortOrder: number;
+            name: string;
+            slug: string;
             createdAt: Date;
             updatedAt: Date;
-            tenantId: string;
             email: string | null;
             avatar: string | null;
-            sortOrder: number;
             bio: string | null;
             social: Prisma.JsonValue;
         } | null;
     } & {
         id: string;
+        tenantId: string;
+        type: import("@prisma/client").$Enums.ArticleType;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
-        type: import("@prisma/client").$Enums.ArticleType;
         title: string;
         spot: string | null;
         content: Prisma.JsonValue;
@@ -475,17 +475,17 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                slug: string;
-                name: string;
+                tenantId: string;
                 active: boolean;
+                sortOrder: number;
+                name: string;
+                slug: string;
                 createdAt: Date;
                 updatedAt: Date;
                 description: string | null;
-                tenantId: string;
                 parentId: string | null;
                 image: string | null;
                 color: string | null;
-                sortOrder: number;
                 seoTitle: string | null;
                 seoDesc: string | null;
             };
@@ -497,9 +497,9 @@ export declare class ArticlesService {
         tags: ({
             tag: {
                 id: string;
-                slug: string;
-                name: string;
                 tenantId: string;
+                name: string;
+                slug: string;
             };
         } & {
             articleId: string;
@@ -507,27 +507,27 @@ export declare class ArticlesService {
         })[];
         author: {
             id: string;
-            slug: string;
-            name: string;
+            tenantId: string;
             active: boolean;
+            sortOrder: number;
+            name: string;
+            slug: string;
             createdAt: Date;
             updatedAt: Date;
-            tenantId: string;
             email: string | null;
             avatar: string | null;
-            sortOrder: number;
             bio: string | null;
             social: Prisma.JsonValue;
         } | null;
     } & {
         id: string;
+        tenantId: string;
+        type: import("@prisma/client").$Enums.ArticleType;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
-        type: import("@prisma/client").$Enums.ArticleType;
         title: string;
         spot: string | null;
         content: Prisma.JsonValue;
@@ -560,13 +560,13 @@ export declare class ArticlesService {
     }>;
     remove(tenantId: string, id: string, userId?: string): Promise<{
         id: string;
+        tenantId: string;
+        type: import("@prisma/client").$Enums.ArticleType;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
-        type: import("@prisma/client").$Enums.ArticleType;
         title: string;
         spot: string | null;
         content: Prisma.JsonValue;
@@ -600,15 +600,15 @@ export declare class ArticlesService {
     submitForReview(tenantId: string, id: string, userId: string): Promise<{
         author: {
             id: string;
-            slug: string;
-            name: string;
+            tenantId: string;
             active: boolean;
+            sortOrder: number;
+            name: string;
+            slug: string;
             createdAt: Date;
             updatedAt: Date;
-            tenantId: string;
             email: string | null;
             avatar: string | null;
-            sortOrder: number;
             bio: string | null;
             social: Prisma.JsonValue;
         } | null;
@@ -619,13 +619,13 @@ export declare class ArticlesService {
         } | null;
     } & {
         id: string;
+        tenantId: string;
+        type: import("@prisma/client").$Enums.ArticleType;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
-        type: import("@prisma/client").$Enums.ArticleType;
         title: string;
         spot: string | null;
         content: Prisma.JsonValue;
@@ -658,13 +658,13 @@ export declare class ArticlesService {
     }>;
     approve(tenantId: string, id: string, userId: string, userRole: string): Promise<{
         id: string;
+        tenantId: string;
+        type: import("@prisma/client").$Enums.ArticleType;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
-        type: import("@prisma/client").$Enums.ArticleType;
         title: string;
         spot: string | null;
         content: Prisma.JsonValue;
@@ -697,13 +697,13 @@ export declare class ArticlesService {
     }>;
     reject(tenantId: string, id: string, userId: string, userRole: string, note: string): Promise<{
         id: string;
+        tenantId: string;
+        type: import("@prisma/client").$Enums.ArticleType;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
-        type: import("@prisma/client").$Enums.ArticleType;
         title: string;
         spot: string | null;
         content: Prisma.JsonValue;
@@ -745,13 +745,13 @@ export declare class ArticlesService {
         } | null;
     } & {
         id: string;
+        tenantId: string;
+        type: import("@prisma/client").$Enums.ArticleType;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
-        type: import("@prisma/client").$Enums.ArticleType;
         title: string;
         spot: string | null;
         content: Prisma.JsonValue;
@@ -793,13 +793,13 @@ export declare class ArticlesService {
         } | null;
     } & {
         id: string;
+        tenantId: string;
+        type: import("@prisma/client").$Enums.ArticleType;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
-        type: import("@prisma/client").$Enums.ArticleType;
         title: string;
         spot: string | null;
         content: Prisma.JsonValue;
@@ -846,13 +846,13 @@ export declare class ArticlesService {
         } | null;
     } & {
         id: string;
+        tenantId: string;
+        type: import("@prisma/client").$Enums.ArticleType;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
-        type: import("@prisma/client").$Enums.ArticleType;
         title: string;
         spot: string | null;
         content: Prisma.JsonValue;
@@ -891,9 +891,9 @@ export declare class ArticlesService {
         } | null;
     } & {
         id: string;
+        tenantId: string;
         slug: string;
         createdAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
         title: string;
@@ -907,17 +907,17 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                slug: string;
-                name: string;
+                tenantId: string;
                 active: boolean;
+                sortOrder: number;
+                name: string;
+                slug: string;
                 createdAt: Date;
                 updatedAt: Date;
                 description: string | null;
-                tenantId: string;
                 parentId: string | null;
                 image: string | null;
                 color: string | null;
-                sortOrder: number;
                 seoTitle: string | null;
                 seoDesc: string | null;
             };
@@ -929,9 +929,9 @@ export declare class ArticlesService {
         tags: ({
             tag: {
                 id: string;
-                slug: string;
-                name: string;
                 tenantId: string;
+                name: string;
+                slug: string;
             };
         } & {
             articleId: string;
@@ -939,27 +939,27 @@ export declare class ArticlesService {
         })[];
         author: {
             id: string;
-            slug: string;
-            name: string;
+            tenantId: string;
             active: boolean;
+            sortOrder: number;
+            name: string;
+            slug: string;
             createdAt: Date;
             updatedAt: Date;
-            tenantId: string;
             email: string | null;
             avatar: string | null;
-            sortOrder: number;
             bio: string | null;
             social: Prisma.JsonValue;
         } | null;
     } & {
         id: string;
+        tenantId: string;
+        type: import("@prisma/client").$Enums.ArticleType;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
-        type: import("@prisma/client").$Enums.ArticleType;
         title: string;
         spot: string | null;
         content: Prisma.JsonValue;
@@ -992,13 +992,13 @@ export declare class ArticlesService {
     }>;
     incrementViewCount(tenantId: string, id: string): Promise<{
         id: string;
+        tenantId: string;
+        type: import("@prisma/client").$Enums.ArticleType;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
-        type: import("@prisma/client").$Enums.ArticleType;
         title: string;
         spot: string | null;
         content: Prisma.JsonValue;
@@ -1033,17 +1033,17 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                slug: string;
-                name: string;
+                tenantId: string;
                 active: boolean;
+                sortOrder: number;
+                name: string;
+                slug: string;
                 createdAt: Date;
                 updatedAt: Date;
                 description: string | null;
-                tenantId: string;
                 parentId: string | null;
                 image: string | null;
                 color: string | null;
-                sortOrder: number;
                 seoTitle: string | null;
                 seoDesc: string | null;
             };
@@ -1054,19 +1054,19 @@ export declare class ArticlesService {
         })[];
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             avatar: string | null;
         } | null;
     } & {
         id: string;
+        tenantId: string;
+        type: import("@prisma/client").$Enums.ArticleType;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
-        type: import("@prisma/client").$Enums.ArticleType;
         title: string;
         spot: string | null;
         content: Prisma.JsonValue;
@@ -1101,17 +1101,17 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                slug: string;
-                name: string;
+                tenantId: string;
                 active: boolean;
+                sortOrder: number;
+                name: string;
+                slug: string;
                 createdAt: Date;
                 updatedAt: Date;
                 description: string | null;
-                tenantId: string;
                 parentId: string | null;
                 image: string | null;
                 color: string | null;
-                sortOrder: number;
                 seoTitle: string | null;
                 seoDesc: string | null;
             };
@@ -1122,27 +1122,27 @@ export declare class ArticlesService {
         })[];
         author: {
             id: string;
-            slug: string;
-            name: string;
+            tenantId: string;
             active: boolean;
+            sortOrder: number;
+            name: string;
+            slug: string;
             createdAt: Date;
             updatedAt: Date;
-            tenantId: string;
             email: string | null;
             avatar: string | null;
-            sortOrder: number;
             bio: string | null;
             social: Prisma.JsonValue;
         } | null;
     } & {
         id: string;
+        tenantId: string;
+        type: import("@prisma/client").$Enums.ArticleType;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
-        type: import("@prisma/client").$Enums.ArticleType;
         title: string;
         spot: string | null;
         content: Prisma.JsonValue;
@@ -1178,17 +1178,17 @@ export declare class ArticlesService {
             categories: ({
                 category: {
                     id: string;
-                    slug: string;
-                    name: string;
+                    tenantId: string;
                     active: boolean;
+                    sortOrder: number;
+                    name: string;
+                    slug: string;
                     createdAt: Date;
                     updatedAt: Date;
                     description: string | null;
-                    tenantId: string;
                     parentId: string | null;
                     image: string | null;
                     color: string | null;
-                    sortOrder: number;
                     seoTitle: string | null;
                     seoDesc: string | null;
                 };
@@ -1200,9 +1200,9 @@ export declare class ArticlesService {
             tags: ({
                 tag: {
                     id: string;
-                    slug: string;
-                    name: string;
                     tenantId: string;
+                    name: string;
+                    slug: string;
                 };
             } & {
                 articleId: string;
@@ -1210,27 +1210,27 @@ export declare class ArticlesService {
             })[];
             author: {
                 id: string;
-                slug: string;
-                name: string;
+                tenantId: string;
                 active: boolean;
+                sortOrder: number;
+                name: string;
+                slug: string;
                 createdAt: Date;
                 updatedAt: Date;
-                tenantId: string;
                 email: string | null;
                 avatar: string | null;
-                sortOrder: number;
                 bio: string | null;
                 social: Prisma.JsonValue;
             } | null;
         } & {
             id: string;
+            tenantId: string;
+            type: import("@prisma/client").$Enums.ArticleType;
             slug: string;
             createdAt: Date;
             updatedAt: Date;
-            tenantId: string;
             seoTitle: string | null;
             seoDesc: string | null;
-            type: import("@prisma/client").$Enums.ArticleType;
             title: string;
             spot: string | null;
             content: Prisma.JsonValue;

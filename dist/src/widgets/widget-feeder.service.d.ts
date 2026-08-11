@@ -11,6 +11,7 @@ export declare class WidgetFeederService implements OnModuleInit {
     refreshFast(): Promise<void>;
     refreshPrayer(): Promise<void>;
     refreshHoroscope(): Promise<void>;
+    refreshNewspapers(): Promise<void>;
     refreshAll(): Promise<void>;
     refreshOne(tenantId: string, type: string): Promise<{
         ok: boolean;
@@ -21,4 +22,5 @@ export declare class WidgetFeederService implements OnModuleInit {
     private fetchPrayerTimes;
     private fetchMarketTicker;
     private fetchHoroscope;
+    private fetchNewspapers;
 }

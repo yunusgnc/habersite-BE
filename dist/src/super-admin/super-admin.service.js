@@ -209,7 +209,8 @@ let SuperAdminService = SuperAdminService_1 = class SuperAdminService {
                         sortOrder: 3,
                     },
                     { type: 'horoscope', config: {}, sortOrder: 4 },
-                    { type: 'pharmacy', config: { city }, sortOrder: 5 },
+                    { type: 'newspapers', config: {}, sortOrder: 5 },
+                    { type: 'pharmacy', config: { city }, sortOrder: 6 },
                     {
                         type: 'homepage-layout',
                         sortOrder: 10,

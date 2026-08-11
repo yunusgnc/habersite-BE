@@ -24,8 +24,8 @@ export declare class AuthController {
     me(req: any): Promise<{
         user: {
             id: string;
-            name: string;
             tenantId: string;
+            name: string;
             email: string;
             avatar: string | null;
             role: import("@prisma/client").$Enums.UserRole;

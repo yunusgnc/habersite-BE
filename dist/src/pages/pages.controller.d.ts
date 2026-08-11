@@ -5,10 +5,10 @@ export declare class PagesController {
     constructor(pagesService: PagesService);
     findPublished(tenantId: string): Promise<{
         id: string;
+        tenantId: string;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
         title: string;
@@ -17,10 +17,10 @@ export declare class PagesController {
     }[]>;
     findAll(tenantId: string): Promise<{
         id: string;
+        tenantId: string;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
         title: string;
@@ -29,10 +29,10 @@ export declare class PagesController {
     }[]>;
     findBySlug(tenantId: string, slug: string): Promise<{
         id: string;
+        tenantId: string;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
         title: string;
@@ -41,10 +41,10 @@ export declare class PagesController {
     }>;
     create(tenantId: string, dto: CreatePageDto): Promise<{
         id: string;
+        tenantId: string;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
         title: string;
@@ -53,10 +53,10 @@ export declare class PagesController {
     }>;
     update(tenantId: string, id: string, dto: UpdatePageDto): Promise<{
         id: string;
+        tenantId: string;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
         title: string;
@@ -65,10 +65,10 @@ export declare class PagesController {
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
+        tenantId: string;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         seoTitle: string | null;
         seoDesc: string | null;
         title: string;

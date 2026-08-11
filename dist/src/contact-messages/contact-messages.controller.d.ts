@@ -10,9 +10,9 @@ export declare class ContactMessagesController {
     findAll(tenantId: string, limit?: string, cursor?: string, unreadOnly?: string): Promise<{
         data: {
             id: string;
+            tenantId: string;
             name: string;
             createdAt: Date;
-            tenantId: string;
             email: string;
             ipAddress: string | null;
             read: boolean;
@@ -29,9 +29,9 @@ export declare class ContactMessagesController {
     }>;
     markRead(tenantId: string, id: string, read?: boolean): Promise<{
         id: string;
+        tenantId: string;
         name: string;
         createdAt: Date;
-        tenantId: string;
         email: string;
         ipAddress: string | null;
         read: boolean;

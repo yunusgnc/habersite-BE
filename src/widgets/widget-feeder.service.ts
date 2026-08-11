@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import axios from 'axios';
+import * as cheerio from 'cheerio';
 import { PrismaService } from '../prisma/prisma.service';
 import { WidgetsService } from './widgets.service';
 
@@ -19,6 +20,7 @@ export class WidgetFeederService implements OnModuleInit {
     'prayer-times': this.fetchPrayerTimes.bind(this),
     'market-ticker': this.fetchMarketTicker.bind(this),
     horoscope: this.fetchHoroscope.bind(this),
+    newspapers: this.fetchNewspapers.bind(this),
   };
 
   constructor(
@@ -45,6 +47,12 @@ export class WidgetFeederService implements OnModuleInit {
   @Cron('0 2 * * *')
   async refreshHoroscope() {
     await this.refreshForTypes(['horoscope']);
+  }
+
+  // Gazete manşetleri: her sabah 06:00'da güncelle (gazeteler o saatte hazır olur).
+  @Cron('0 6 * * *')
+  async refreshNewspapers() {
+    await this.refreshForTypes(['newspapers']);
   }
 
   async refreshAll() {
@@ -236,5 +244,68 @@ export class WidgetFeederService implements OnModuleInit {
       }),
     );
     return { signs: results, date: new Date().toISOString().split('T')[0] };
+  }
+
+  /**
+   * Gazete manşetleri — gazeteoku.com'dan günlük gazete kapaklarını scrape eder.
+   * Ana ulusal gazetelerin ön yüzlerini toplar. Site fullscreen görüntüleyici ile
+   * kullanır. Kaynak site değişirse selector'ları güncelle.
+   */
+  private async fetchNewspapers(_config: any) {
+    try {
+      const { data: html } = await axios.get('https://www.gazeteoku.com/', {
+        timeout: 15000,
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36',
+        },
+      });
+      const $ = cheerio.load(html);
+      const items: Array<{ name: string; slug: string; image: string; url: string }> = [];
+
+      // gazeteoku.com her gazete için `.item` veya benzeri kart yapısı kullanır.
+      // Sayfa yapısı değişebilir — bu selector'ları güncel tutmak gerekir.
+      $('a.gazete, .gazete-item a, .newspaper-card a').each((_, el) => {
+        const $el = $(el);
+        const img = $el.find('img').attr('src') || $el.find('img').attr('data-src') || '';
+        const name = $el.find('.gazete-adi, .newspaper-name, h3, .title').first().text().trim() ||
+                     $el.attr('title') ||
+                     $el.find('img').attr('alt') ||
+                     '';
+        const href = $el.attr('href') || '';
+        if (img && name) {
+          const absImg = img.startsWith('http') ? img : `https://www.gazeteoku.com${img}`;
+          const absUrl = href.startsWith('http') ? href : `https://www.gazeteoku.com${href}`;
+          items.push({
+            name: name.replace(/[\r\n\t]+/g, ' ').trim(),
+            slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+            image: absImg,
+            url: absUrl,
+          });
+        }
+      });
+
+      // Deduplicate by name
+      const seen = new Set<string>();
+      const unique = items.filter((it) => {
+        if (seen.has(it.name)) return false;
+        seen.add(it.name);
+        return true;
+      });
+
+      if (unique.length === 0) {
+        this.logger.warn(
+          '[newspapers] gazeteoku.com scrape returned 0 items — selectors may be outdated',
+        );
+      }
+
+      return {
+        items: unique.slice(0, 40),
+        date: new Date().toISOString().split('T')[0],
+      };
+    } catch (err: any) {
+      this.logger.warn(`[newspapers] fetch failed: ${err?.message ?? err}`);
+      return { items: [], date: new Date().toISOString().split('T')[0] };
+    }
   }
 }

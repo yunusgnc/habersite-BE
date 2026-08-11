@@ -7,42 +7,42 @@ export declare class BreakingNewsService {
     private readonly revalidation;
     constructor(prisma: PrismaService, revalidation: RevalidationService);
     findActive(tenantId: string): Promise<{
-        url: string | null;
         id: string;
-        active: boolean;
-        createdAt: Date;
         tenantId: string;
+        active: boolean;
         sortOrder: number;
+        url: string | null;
+        createdAt: Date;
         title: string;
         expiresAt: Date | null;
     }[]>;
     findAll(tenantId: string): Promise<{
-        url: string | null;
         id: string;
-        active: boolean;
-        createdAt: Date;
         tenantId: string;
+        active: boolean;
         sortOrder: number;
+        url: string | null;
+        createdAt: Date;
         title: string;
         expiresAt: Date | null;
     }[]>;
     create(tenantId: string, dto: CreateBreakingNewsDto): Promise<{
-        url: string | null;
         id: string;
-        active: boolean;
-        createdAt: Date;
         tenantId: string;
+        active: boolean;
         sortOrder: number;
+        url: string | null;
+        createdAt: Date;
         title: string;
         expiresAt: Date | null;
     }>;
     update(tenantId: string, id: string, dto: UpdateBreakingNewsDto): Promise<{
-        url: string | null;
         id: string;
-        active: boolean;
-        createdAt: Date;
         tenantId: string;
+        active: boolean;
         sortOrder: number;
+        url: string | null;
+        createdAt: Date;
         title: string;
         expiresAt: Date | null;
     }>;

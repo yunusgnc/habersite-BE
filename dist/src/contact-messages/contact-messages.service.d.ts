@@ -17,9 +17,9 @@ export declare class ContactMessagesService {
     }): Promise<{
         data: {
             id: string;
+            tenantId: string;
             name: string;
             createdAt: Date;
-            tenantId: string;
             email: string;
             ipAddress: string | null;
             read: boolean;
@@ -36,9 +36,9 @@ export declare class ContactMessagesService {
     }>;
     markRead(tenantId: string, id: string, read?: boolean): Promise<{
         id: string;
+        tenantId: string;
         name: string;
         createdAt: Date;
-        tenantId: string;
         email: string;
         ipAddress: string | null;
         read: boolean;

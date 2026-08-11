@@ -7,11 +7,11 @@ export declare class PersonProfilesController {
     findAll(tenantId: string, cursor?: string, limit?: string, search?: string): Promise<{
         items: {
             id: string;
-            slug: string;
+            tenantId: string;
             name: string;
+            slug: string;
             createdAt: Date;
             updatedAt: Date;
-            tenantId: string;
             image: string | null;
             bio: string | null;
             social: import("@prisma/client/runtime/client").JsonValue;
@@ -23,11 +23,11 @@ export declare class PersonProfilesController {
     }>;
     findBySlug(tenantId: string, slug: string): Promise<{
         id: string;
-        slug: string;
+        tenantId: string;
         name: string;
+        slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         image: string | null;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
@@ -36,11 +36,11 @@ export declare class PersonProfilesController {
     }>;
     findOne(tenantId: string, id: string): Promise<{
         id: string;
-        slug: string;
+        tenantId: string;
         name: string;
+        slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         image: string | null;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
@@ -49,11 +49,11 @@ export declare class PersonProfilesController {
     }>;
     create(tenantId: string, dto: CreatePersonProfileDto): Promise<{
         id: string;
-        slug: string;
+        tenantId: string;
         name: string;
+        slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         image: string | null;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
@@ -62,11 +62,11 @@ export declare class PersonProfilesController {
     }>;
     update(tenantId: string, id: string, dto: UpdatePersonProfileDto): Promise<{
         id: string;
-        slug: string;
+        tenantId: string;
         name: string;
+        slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         image: string | null;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
@@ -75,11 +75,11 @@ export declare class PersonProfilesController {
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
-        slug: string;
+        tenantId: string;
         name: string;
+        slug: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         image: string | null;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
