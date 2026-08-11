@@ -29,8 +29,62 @@ export class WidgetFeederService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    // Fetch once on boot so the site has fresh data immediately.
-    setTimeout(() => this.refreshAll().catch(() => undefined), 4000);
+    // Ensure every tenant has the core feed-driven widgets, then fetch once
+    // on boot so the site has fresh data immediately.
+    setTimeout(async () => {
+      try {
+        await this.ensureCoreWidgets();
+      } catch (err: any) {
+        this.logger.warn(`ensureCoreWidgets failed: ${err?.message ?? err}`);
+      }
+      this.refreshAll().catch(() => undefined);
+    }, 4000);
+  }
+
+  /**
+   * Older tenants may be missing widget rows added in later releases
+   * (e.g. `newspapers`). Idempotently insert them with sensible defaults so
+   * cron + refresh feeders can populate their cache.
+   */
+  private async ensureCoreWidgets() {
+    const defaults: Array<{ type: string; config: any; sortOrder: number }> = [
+      { type: 'weather', config: { city: 'Kayseri' }, sortOrder: 1 },
+      { type: 'prayer-times', config: { city: 'Kayseri', country: 'Turkey', method: 13 }, sortOrder: 2 },
+      {
+        type: 'market-ticker',
+        config: {
+          pairs: [
+            { from: 'USD', to: 'TRY', label: 'Dolar' },
+            { from: 'EUR', to: 'TRY', label: 'Euro' },
+            { from: 'GBP', to: 'TRY', label: 'Sterlin' },
+          ],
+        },
+        sortOrder: 3,
+      },
+      { type: 'horoscope', config: {}, sortOrder: 4 },
+      { type: 'newspapers', config: {}, sortOrder: 5 },
+    ];
+
+    const tenants = await this.prisma.tenant.findMany({ select: { id: true } });
+    for (const t of tenants) {
+      for (const w of defaults) {
+        const existing = await this.prisma.widget.findFirst({
+          where: { tenantId: t.id, type: w.type },
+          select: { id: true },
+        });
+        if (existing) continue;
+        await this.prisma.widget.create({
+          data: {
+            tenantId: t.id,
+            type: w.type,
+            config: w.config,
+            sortOrder: w.sortOrder,
+            active: true,
+          },
+        });
+        this.logger.log(`Provisioned missing widget "${w.type}" for tenant ${t.id}`);
+      }
+    }
   }
 
   // Every 30 minutes: weather, market. Prayer times once at 03:00. Horoscope at 02:00.
