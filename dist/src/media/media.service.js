@@ -68,6 +68,14 @@ const ALLOWED_MIMES = new Set([
     'application/pdf',
 ]);
 const SVG_MAX_BYTES = 2 * 1024 * 1024;
+const num = (v, fallback) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : fallback;
+};
+const IMAGE_MAX_DIMENSION = num(process.env.IMAGE_MAX_DIMENSION, 1600);
+const IMAGE_QUALITY = num(process.env.IMAGE_QUALITY, 82);
+const THUMBNAIL_DIMENSION = num(process.env.THUMBNAIL_DIMENSION, 400);
+const THUMBNAIL_QUALITY = num(process.env.THUMBNAIL_QUALITY, 72);
 let MediaService = class MediaService {
     prisma;
     storage;
@@ -131,25 +139,38 @@ let MediaService = class MediaService {
         let thumbnailBuffer = null;
         let width;
         let height;
-        const finalMime = safeMime;
-        const finalExt = safeExt;
+        let finalMime = safeMime;
+        let finalExt = safeExt;
         if (safeMime.startsWith('image/') &&
             safeMime !== 'image/svg+xml' &&
             safeMime !== 'image/gif') {
             try {
                 const sourceImg = (0, sharp_1.default)(file.buffer, { failOn: 'none' }).rotate();
-                const meta = await sourceImg.metadata();
-                width = meta.width;
-                height = meta.height;
                 processedBuffer = await sourceImg
                     .clone()
-                    .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true })
-                    .withMetadata({ orientation: undefined })
+                    .resize({
+                    width: IMAGE_MAX_DIMENSION,
+                    height: IMAGE_MAX_DIMENSION,
+                    fit: 'inside',
+                    withoutEnlargement: true,
+                })
+                    .webp({ quality: IMAGE_QUALITY })
                     .toBuffer();
                 thumbnailBuffer = await sourceImg
                     .clone()
-                    .resize({ width: 300, height: 300, fit: 'inside', withoutEnlargement: true })
+                    .resize({
+                    width: THUMBNAIL_DIMENSION,
+                    height: THUMBNAIL_DIMENSION,
+                    fit: 'inside',
+                    withoutEnlargement: true,
+                })
+                    .webp({ quality: THUMBNAIL_QUALITY })
                     .toBuffer();
+                const outMeta = await (0, sharp_1.default)(processedBuffer).metadata();
+                width = outMeta.width;
+                height = outMeta.height;
+                finalMime = 'image/webp';
+                finalExt = '.webp';
             }
             catch {
                 throw new common_1.BadRequestException('Geçersiz görsel dosyası');
