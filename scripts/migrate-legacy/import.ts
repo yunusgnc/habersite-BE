@@ -195,8 +195,12 @@ async function main() {
   const categoryMap = await importCategories(legacy.categories);
   const { authorMap, invites } = await importAuthors(legacy.authors);
 
-  const articleMap = await importArticles(cols, categoryMap, importer.id);
-  await importColumns(cols, authorMap, importer.id);
+  const { map: articleMap, slugs: articleSlugs } = await importArticles(
+    cols,
+    categoryMap,
+    importer.id,
+  );
+  await importColumns(cols, authorMap, importer.id, articleSlugs);
   await importVideos(legacy.videos);
   await importGalleries(legacy.galleries, legacy.galleryImages);
   await importArticleGalleries(legacy.articleImages, articleMap);
@@ -418,7 +422,7 @@ async function importArticles(
   cols: Map<string, string[]>,
   categoryMap: Map<number, string>,
   createdById: string,
-): Promise<Map<number, string>> {
+): Promise<{ map: Map<number, string>; slugs: Set<string> }> {
   console.log('Haberler (akış halinde)…');
   const map = new Map<number, string>();
   const seenSlugs = new Set<string>();
@@ -525,7 +529,7 @@ async function importArticles(
   }
   await flush();
   process.stdout.write(`\r  ${processed.toLocaleString('tr-TR')} haber işlendi.        \n\n`);
-  return map;
+  return { map, slugs: seenSlugs };
 }
 
 // ── Köşe yazıları ─────────────────────────────────────────────────
@@ -534,9 +538,16 @@ async function importColumns(
   cols: Map<string, string[]>,
   authorMap: Map<number, string>,
   createdById: string,
+  /**
+   * Haber aktarımında kullanilan slug'lar. Ayni slug'a sahip bir kose yazisi
+   * upsert edildiginde MEVCUT HABERI gunceller ve turunu COLUMN'a cevirir —
+   * yani haber kaybolur. Denemede 4 haber bu sekilde uzerine yazildi.
+   */
+  articleSlugs: Set<string>,
 ) {
   console.log('Köşe yazıları…');
-  const seenSlugs = new Set<string>();
+  // Haber slug'lariyla ayni havuzu paylas.
+  const seenSlugs = new Set<string>(articleSlugs);
 
   for await (const { table, row } of readRows(DUMP, new Set(['makaleler']), cols)) {
     if (table !== 'makaleler') continue;
