@@ -18,6 +18,7 @@ class UpdateTenantDto {
     subdomain;
     logo;
     favicon;
+    mediaBaseUrl;
     theme;
     plan;
     active;
@@ -56,6 +57,11 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Object)
 ], UpdateTenantDto.prototype, "favicon", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], UpdateTenantDto.prototype, "mediaBaseUrl", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),

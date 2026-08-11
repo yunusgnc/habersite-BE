@@ -46,6 +46,20 @@ export class MediaService {
     @Inject(STORAGE_ADAPTER) private readonly storage: StorageAdapter,
   ) {}
 
+  /**
+   * Müşterinin kendi CDN domaini (ör. cdn.kayseritimes.com). Tek R2 bucket'ına
+   * birden çok özel domain bağlanabildiği için dosya taşınmaz, yalnızca
+   * üretilen adres değişir. Tanımsızsa S3_PUBLIC_URL'e düşer.
+   * Yükleme başına tek sorgu; sıcak yolda değil.
+   */
+  private async resolveMediaBaseUrl(tenantId: string): Promise<string | null> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { mediaBaseUrl: true },
+    });
+    return tenant?.mediaBaseUrl ?? null;
+  }
+
   async findAll(tenantId: string, query: QueryMediaDto) {
     const limit = query.limit ?? 30;
 
@@ -182,12 +196,15 @@ export class MediaService {
       path.basename(file.originalname, path.extname(file.originalname)) +
       finalExt;
 
+    const publicBaseUrl = await this.resolveMediaBaseUrl(tenantId);
+
     const { url, key } = await this.storage.put({
       tenantId,
       filename: safeFilename,
       mimeType: finalMime,
       size: processedBuffer.length,
       buffer: processedBuffer,
+      publicBaseUrl,
     });
 
     // Thumbnail'i ayrı bir dosya olarak yükle (aynı klasöre "-thumb" suffix ile).
@@ -204,6 +221,7 @@ export class MediaService {
           mimeType: finalMime,
           size: thumbnailBuffer.length,
           buffer: thumbnailBuffer,
+          publicBaseUrl,
         });
         thumbnailUrl = thumb.url;
       } catch {

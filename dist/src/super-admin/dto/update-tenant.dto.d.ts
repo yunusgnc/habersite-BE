@@ -5,6 +5,7 @@ export declare class UpdateTenantDto {
     subdomain?: string | null;
     logo?: string | null;
     favicon?: string | null;
+    mediaBaseUrl?: string | null;
     theme?: string;
     plan?: string;
     active?: boolean;

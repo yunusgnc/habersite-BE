@@ -16,6 +16,10 @@ model Tenant {
   subdomain String?  @unique
   logo      String?
   favicon   String?
+  /// Bu müşterinin medya CDN adresi — ör. "https://cdn.kayseritimes.com".
+  /// Tek R2 bucket'ına birden çok özel domain bağlanabilir; dosyalar zaten
+  /// uploads/{tenantId}/ altında ayrışır. Boşsa S3_PUBLIC_URL'e düşer.
+  mediaBaseUrl String? @map("media_base_url")
   theme     String   @default("classic")
   locale    String   @default("tr")
   timezone  String   @default("Europe/Istanbul")

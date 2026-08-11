@@ -83,6 +83,13 @@ let MediaService = class MediaService {
         this.prisma = prisma;
         this.storage = storage;
     }
+    async resolveMediaBaseUrl(tenantId) {
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { mediaBaseUrl: true },
+        });
+        return tenant?.mediaBaseUrl ?? null;
+    }
     async findAll(tenantId, query) {
         const limit = query.limit ?? 30;
         const where = { tenantId };
@@ -178,12 +185,14 @@ let MediaService = class MediaService {
         }
         const safeFilename = path.basename(file.originalname, path.extname(file.originalname)) +
             finalExt;
+        const publicBaseUrl = await this.resolveMediaBaseUrl(tenantId);
         const { url, key } = await this.storage.put({
             tenantId,
             filename: safeFilename,
             mimeType: finalMime,
             size: processedBuffer.length,
             buffer: processedBuffer,
+            publicBaseUrl,
         });
         let thumbnailUrl = null;
         if (thumbnailBuffer) {
@@ -197,6 +206,7 @@ let MediaService = class MediaService {
                     mimeType: finalMime,
                     size: thumbnailBuffer.length,
                     buffer: thumbnailBuffer,
+                    publicBaseUrl,
                 });
                 thumbnailUrl = thumb.url;
             }

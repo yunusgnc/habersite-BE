@@ -104,8 +104,9 @@ let S3StorageAdapter = S3StorageAdapter_1 = class S3StorageAdapter {
             }
             catch { }
         }
-        const url = process.env.S3_PUBLIC_URL
-            ? `${process.env.S3_PUBLIC_URL.replace(/\/$/, '')}/${key}`
+        const base = opts.publicBaseUrl?.trim() || process.env.S3_PUBLIC_URL;
+        const url = base
+            ? `${base.replace(/\/$/, '')}/${key}`
             : `https://${process.env.S3_BUCKET}.s3.${process.env.S3_REGION}.amazonaws.com/${key}`;
         return { url, key };
     }

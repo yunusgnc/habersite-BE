@@ -15,6 +15,12 @@ export type PutOptions = {
   sourcePath?: string;
   /** Alternatif: dosya içeriğini doğrudan buffer olarak sağla (memoryStorage). */
   buffer?: Buffer;
+  /**
+   * Bu tenant'a özel public taban adresi — ör. "https://cdn.kayseritimes.com".
+   * Her müşterinin kendi CDN domaini olabildiği için URL'i tek bir global
+   * env'den üretemiyoruz. Verilmezse adaptör kendi varsayılanına düşer.
+   */
+  publicBaseUrl?: string | null;
 };
 
 export interface StorageAdapter {

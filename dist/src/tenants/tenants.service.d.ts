@@ -19,6 +19,7 @@ export declare class TenantsService {
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
+        mediaBaseUrl: string | null;
     }[]>;
     findById(id: string): Promise<{
         id: string;
@@ -36,6 +37,7 @@ export declare class TenantsService {
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
+        mediaBaseUrl: string | null;
     }>;
     findByDomain(domain: string): Promise<{
         id: string;
@@ -53,6 +55,7 @@ export declare class TenantsService {
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
+        mediaBaseUrl: string | null;
     } | null>;
     create(dto: CreateTenantDto): Promise<{
         id: string;
@@ -70,6 +73,7 @@ export declare class TenantsService {
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
+        mediaBaseUrl: string | null;
     }>;
     update(id: string, dto: UpdateTenantDto): Promise<{
         id: string;
@@ -87,6 +91,7 @@ export declare class TenantsService {
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
+        mediaBaseUrl: string | null;
     }>;
     remove(id: string): Promise<{
         id: string;
@@ -104,6 +109,7 @@ export declare class TenantsService {
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
+        mediaBaseUrl: string | null;
     }>;
     exportAll(id: string): Promise<{
         exportedAt: string;
@@ -124,6 +130,7 @@ export declare class TenantsService {
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
+            mediaBaseUrl: string | null;
         };
         users: {
             id: string;

@@ -6,6 +6,7 @@ export declare class MediaService {
     private readonly prisma;
     private readonly storage;
     constructor(prisma: PrismaService, storage: StorageAdapter);
+    private resolveMediaBaseUrl;
     findAll(tenantId: string, query: QueryMediaDto): Promise<{
         data: {
             url: string;

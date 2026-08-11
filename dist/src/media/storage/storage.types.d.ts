@@ -9,6 +9,7 @@ export type PutOptions = {
     size: number;
     sourcePath?: string;
     buffer?: Buffer;
+    publicBaseUrl?: string | null;
 };
 export interface StorageAdapter {
     put(opts: PutOptions): Promise<StoredFile>;

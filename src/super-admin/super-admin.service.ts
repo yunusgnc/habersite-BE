@@ -309,6 +309,10 @@ export class SuperAdminService {
           ...(dto.subdomain !== undefined && { subdomain: dto.subdomain?.trim() || null }),
           ...(dto.logo !== undefined && { logo: dto.logo?.trim() || null }),
           ...(dto.favicon !== undefined && { favicon: dto.favicon?.trim() || null }),
+          ...(dto.mediaBaseUrl !== undefined && {
+            // Sondaki eğik çizgi temizlenir; URL birleştirmede çift // olmasın.
+            mediaBaseUrl: dto.mediaBaseUrl?.trim().replace(/\/+$/, '') || null,
+          }),
           ...(dto.theme !== undefined && { theme: dto.theme }),
           ...(dto.plan !== undefined && { plan: dto.plan }),
           ...(dto.active !== undefined && { active: dto.active }),

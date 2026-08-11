@@ -107,8 +107,11 @@ export class S3StorageAdapter implements StorageAdapter {
       } catch {}
     }
 
-    const url = process.env.S3_PUBLIC_URL
-      ? `${process.env.S3_PUBLIC_URL.replace(/\/$/, '')}/${key}`
+    // Müşteri başına CDN domaini desteklenir; tenant'ınki yoksa global env,
+    // o da yoksa AWS'in varsayılan bucket adresi.
+    const base = opts.publicBaseUrl?.trim() || process.env.S3_PUBLIC_URL;
+    const url = base
+      ? `${base.replace(/\/$/, '')}/${key}`
       : `https://${process.env.S3_BUCKET}.s3.${process.env.S3_REGION}.amazonaws.com/${key}`;
     return { url, key };
   }

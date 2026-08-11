@@ -28,6 +28,11 @@ export class UpdateTenantDto {
   @IsOptional()
   favicon?: string | null;
 
+  /** Müşteriye özel medya CDN adresi — ör. "https://cdn.kayseritimes.com" */
+  @IsString()
+  @IsOptional()
+  mediaBaseUrl?: string | null;
+
   @IsString()
   @IsOptional()
   theme?: string;
