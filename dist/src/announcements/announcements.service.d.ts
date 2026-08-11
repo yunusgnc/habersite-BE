@@ -8,10 +8,10 @@ export declare class AnnouncementsService {
     constructor(prisma: PrismaService, revalidation: RevalidationService);
     findAll(tenantId: string): Promise<{
         id: string;
-        tenantId: string;
-        type: string;
         active: boolean;
         createdAt: Date;
+        tenantId: string;
+        type: string;
         title: string;
         content: string | null;
         expiresAt: Date | null;
@@ -19,10 +19,10 @@ export declare class AnnouncementsService {
     }[]>;
     findOne(tenantId: string, id: string): Promise<{
         id: string;
-        tenantId: string;
-        type: string;
         active: boolean;
         createdAt: Date;
+        tenantId: string;
+        type: string;
         title: string;
         content: string | null;
         expiresAt: Date | null;
@@ -30,10 +30,10 @@ export declare class AnnouncementsService {
     }>;
     findActive(tenantId: string): Promise<{
         id: string;
-        tenantId: string;
-        type: string;
         active: boolean;
         createdAt: Date;
+        tenantId: string;
+        type: string;
         title: string;
         content: string | null;
         expiresAt: Date | null;
@@ -41,10 +41,10 @@ export declare class AnnouncementsService {
     }[]>;
     create(tenantId: string, dto: CreateAnnouncementDto): Promise<{
         id: string;
-        tenantId: string;
-        type: string;
         active: boolean;
         createdAt: Date;
+        tenantId: string;
+        type: string;
         title: string;
         content: string | null;
         expiresAt: Date | null;
@@ -52,10 +52,10 @@ export declare class AnnouncementsService {
     }>;
     update(tenantId: string, id: string, dto: UpdateAnnouncementDto): Promise<{
         id: string;
-        tenantId: string;
-        type: string;
         active: boolean;
         createdAt: Date;
+        tenantId: string;
+        type: string;
         title: string;
         content: string | null;
         expiresAt: Date | null;
@@ -63,10 +63,10 @@ export declare class AnnouncementsService {
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
-        tenantId: string;
-        type: string;
         active: boolean;
         createdAt: Date;
+        tenantId: string;
+        type: string;
         title: string;
         content: string | null;
         expiresAt: Date | null;

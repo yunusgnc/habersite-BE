@@ -9,9 +9,9 @@ export declare class PopupsService {
     findAll(tenantId: string, page?: number, limit?: number): Promise<{
         items: {
             id: string;
-            tenantId: string;
             active: boolean;
             createdAt: Date;
+            tenantId: string;
             title: string;
             content: string | null;
             imageUrl: string | null;
@@ -27,9 +27,9 @@ export declare class PopupsService {
     }>;
     findOne(tenantId: string, id: string): Promise<{
         id: string;
-        tenantId: string;
         active: boolean;
         createdAt: Date;
+        tenantId: string;
         title: string;
         content: string | null;
         imageUrl: string | null;
@@ -41,9 +41,9 @@ export declare class PopupsService {
     }>;
     findActive(tenantId: string): Promise<{
         id: string;
-        tenantId: string;
         active: boolean;
         createdAt: Date;
+        tenantId: string;
         title: string;
         content: string | null;
         imageUrl: string | null;
@@ -55,9 +55,9 @@ export declare class PopupsService {
     }[]>;
     create(tenantId: string, dto: CreatePopupDto): Promise<{
         id: string;
-        tenantId: string;
         active: boolean;
         createdAt: Date;
+        tenantId: string;
         title: string;
         content: string | null;
         imageUrl: string | null;
@@ -69,9 +69,9 @@ export declare class PopupsService {
     }>;
     update(tenantId: string, id: string, dto: UpdatePopupDto): Promise<{
         id: string;
-        tenantId: string;
         active: boolean;
         createdAt: Date;
+        tenantId: string;
         title: string;
         content: string | null;
         imageUrl: string | null;

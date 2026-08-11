@@ -6,8 +6,8 @@ export declare class UsersController {
     findAll(tenantId: string, cursor?: string, limit?: string, search?: string, role?: string): Promise<{
         items: {
             id: string;
-            active: boolean;
             name: string;
+            active: boolean;
             createdAt: Date;
             email: string;
             avatar: string | null;
@@ -19,8 +19,8 @@ export declare class UsersController {
     }>;
     findById(tenantId: string, id: string): Promise<{
         id: string;
-        active: boolean;
         name: string;
+        active: boolean;
         createdAt: Date;
         email: string;
         avatar: string | null;
@@ -35,8 +35,8 @@ export declare class UsersController {
         active?: boolean;
     }): Promise<{
         id: string;
-        active: boolean;
         name: string;
+        active: boolean;
         createdAt: Date;
         email: string;
         avatar: string | null;
@@ -51,8 +51,8 @@ export declare class UsersController {
         active?: boolean;
     }): Promise<{
         id: string;
-        active: boolean;
         name: string;
+        active: boolean;
         createdAt: Date;
         email: string;
         avatar: string | null;
@@ -69,16 +69,16 @@ export declare class UsersController {
     }>;
     toggleActive(tenantId: string, id: string): Promise<{
         id: string;
-        active: boolean;
         name: string;
+        active: boolean;
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
-        tenantId: string;
-        active: boolean;
         name: string;
+        active: boolean;
         createdAt: Date;
         updatedAt: Date;
+        tenantId: string;
         email: string;
         username: string | null;
         passwordHash: string;

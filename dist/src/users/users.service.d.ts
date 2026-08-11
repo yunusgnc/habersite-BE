@@ -12,8 +12,8 @@ export declare class UsersService {
     }): Promise<{
         items: {
             id: string;
-            active: boolean;
             name: string;
+            active: boolean;
             createdAt: Date;
             email: string;
             avatar: string | null;
@@ -25,8 +25,8 @@ export declare class UsersService {
     }>;
     findById(tenantId: string, id: string): Promise<{
         id: string;
-        active: boolean;
         name: string;
+        active: boolean;
         createdAt: Date;
         email: string;
         avatar: string | null;
@@ -41,8 +41,8 @@ export declare class UsersService {
         active?: boolean;
     }): Promise<{
         id: string;
-        active: boolean;
         name: string;
+        active: boolean;
         createdAt: Date;
         email: string;
         avatar: string | null;
@@ -57,8 +57,8 @@ export declare class UsersService {
         active?: boolean;
     }): Promise<{
         id: string;
-        active: boolean;
         name: string;
+        active: boolean;
         createdAt: Date;
         email: string;
         avatar: string | null;
@@ -73,16 +73,16 @@ export declare class UsersService {
     }>;
     toggleActive(tenantId: string, id: string): Promise<{
         id: string;
-        active: boolean;
         name: string;
+        active: boolean;
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
-        tenantId: string;
-        active: boolean;
         name: string;
+        active: boolean;
         createdAt: Date;
         updatedAt: Date;
+        tenantId: string;
         email: string;
         username: string | null;
         passwordHash: string;

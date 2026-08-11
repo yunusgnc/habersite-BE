@@ -7,9 +7,9 @@ export declare class NewslettersController {
         name?: string;
     }): Promise<{
         id: string;
-        tenantId: string;
         name: string | null;
         createdAt: Date;
+        tenantId: string;
         email: string;
         confirmed: boolean;
         unsubscribed: boolean;
@@ -19,9 +19,9 @@ export declare class NewslettersController {
     }): Promise<import("@prisma/client").Prisma.BatchPayload>;
     findAll(tenantId: string): Promise<{
         id: string;
-        tenantId: string;
         name: string | null;
         createdAt: Date;
+        tenantId: string;
         email: string;
         confirmed: boolean;
         unsubscribed: boolean;

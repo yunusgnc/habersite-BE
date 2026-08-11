@@ -22,5 +22,6 @@ export declare class WidgetFeederService implements OnModuleInit {
     private fetchPrayerTimes;
     private fetchMarketTicker;
     private fetchHoroscope;
+    private pickHoroscopeFallback;
     private fetchNewspapers;
 }

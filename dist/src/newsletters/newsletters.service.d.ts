@@ -4,18 +4,18 @@ export declare class NewslettersService {
     constructor(prisma: PrismaService);
     findAll(tenantId: string): Promise<{
         id: string;
-        tenantId: string;
         name: string | null;
         createdAt: Date;
+        tenantId: string;
         email: string;
         confirmed: boolean;
         unsubscribed: boolean;
     }[]>;
     subscribe(tenantId: string, email: string, name?: string): Promise<{
         id: string;
-        tenantId: string;
         name: string | null;
         createdAt: Date;
+        tenantId: string;
         email: string;
         confirmed: boolean;
         unsubscribed: boolean;

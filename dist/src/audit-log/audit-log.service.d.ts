@@ -14,8 +14,8 @@ export declare class AuditLogService {
         } | null;
     } & {
         id: string;
-        tenantId: string;
         createdAt: Date;
+        tenantId: string;
         ipAddress: string | null;
         userId: string | null;
         action: string;
@@ -33,8 +33,8 @@ export declare class AuditLogService {
         ipAddress?: string;
     }): Promise<{
         id: string;
-        tenantId: string;
         createdAt: Date;
+        tenantId: string;
         ipAddress: string | null;
         userId: string | null;
         action: string;

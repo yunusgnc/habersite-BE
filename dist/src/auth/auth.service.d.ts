@@ -8,11 +8,11 @@ export declare class AuthService {
     constructor(prisma: PrismaService, jwtService: JwtService);
     validateUser(tenantId: string, identifier: string, password: string): Promise<{
         id: string;
-        tenantId: string;
-        active: boolean;
         name: string;
+        active: boolean;
         createdAt: Date;
         updatedAt: Date;
+        tenantId: string;
         email: string;
         username: string | null;
         avatar: string | null;
@@ -23,11 +23,11 @@ export declare class AuthService {
     }>;
     validateUserFlexible(identifier: string, password: string, tenantIdHint?: string, host?: string): Promise<{
         id: string;
-        tenantId: string;
-        active: boolean;
         name: string;
+        active: boolean;
         createdAt: Date;
         updatedAt: Date;
+        tenantId: string;
         email: string;
         username: string | null;
         avatar: string | null;

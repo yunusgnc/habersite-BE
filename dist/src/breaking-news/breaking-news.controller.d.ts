@@ -5,22 +5,22 @@ export declare class BreakingNewsController {
     private readonly breakingNewsService;
     constructor(breakingNewsService: BreakingNewsService);
     findActive(tenantId: string): Promise<{
-        id: string;
-        tenantId: string;
-        active: boolean;
-        sortOrder: number;
         url: string | null;
+        id: string;
+        active: boolean;
         createdAt: Date;
+        tenantId: string;
+        sortOrder: number;
         title: string;
         expiresAt: Date | null;
     }[]>;
     findAll(tenantId: string): Promise<{
-        id: string;
-        tenantId: string;
-        active: boolean;
-        sortOrder: number;
         url: string | null;
+        id: string;
+        active: boolean;
         createdAt: Date;
+        tenantId: string;
+        sortOrder: number;
         title: string;
         expiresAt: Date | null;
     }[]>;
@@ -30,22 +30,22 @@ export declare class BreakingNewsController {
         updated: number;
     }>;
     create(tenantId: string, dto: CreateBreakingNewsDto): Promise<{
-        id: string;
-        tenantId: string;
-        active: boolean;
-        sortOrder: number;
         url: string | null;
+        id: string;
+        active: boolean;
         createdAt: Date;
+        tenantId: string;
+        sortOrder: number;
         title: string;
         expiresAt: Date | null;
     }>;
     update(tenantId: string, id: string, dto: UpdateBreakingNewsDto): Promise<{
-        id: string;
-        tenantId: string;
-        active: boolean;
-        sortOrder: number;
         url: string | null;
+        id: string;
+        active: boolean;
         createdAt: Date;
+        tenantId: string;
+        sortOrder: number;
         title: string;
         expiresAt: Date | null;
     }>;

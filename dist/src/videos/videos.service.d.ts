@@ -8,12 +8,12 @@ export declare class VideosService {
     findAll(tenantId: string, query: QueryVideosDto): Promise<{
         items: {
             id: string;
-            tenantId: string;
-            sortOrder: number;
             slug: string;
             createdAt: Date;
             updatedAt: Date;
             description: string | null;
+            tenantId: string;
+            sortOrder: number;
             seoTitle: string | null;
             seoDesc: string | null;
             title: string;
@@ -34,12 +34,12 @@ export declare class VideosService {
     }>;
     findOne(tenantId: string, id: string): Promise<{
         id: string;
-        tenantId: string;
-        sortOrder: number;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
+        tenantId: string;
+        sortOrder: number;
         seoTitle: string | null;
         seoDesc: string | null;
         title: string;
@@ -58,12 +58,12 @@ export declare class VideosService {
     }>;
     findBySlug(tenantId: string, slug: string): Promise<{
         id: string;
-        tenantId: string;
-        sortOrder: number;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
+        tenantId: string;
+        sortOrder: number;
         seoTitle: string | null;
         seoDesc: string | null;
         title: string;
@@ -82,12 +82,12 @@ export declare class VideosService {
     }>;
     create(tenantId: string, dto: CreateVideoDto): Promise<{
         id: string;
-        tenantId: string;
-        sortOrder: number;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
+        tenantId: string;
+        sortOrder: number;
         seoTitle: string | null;
         seoDesc: string | null;
         title: string;
@@ -106,12 +106,12 @@ export declare class VideosService {
     }>;
     update(tenantId: string, id: string, dto: UpdateVideoDto): Promise<{
         id: string;
-        tenantId: string;
-        sortOrder: number;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
+        tenantId: string;
+        sortOrder: number;
         seoTitle: string | null;
         seoDesc: string | null;
         title: string;
@@ -130,12 +130,12 @@ export declare class VideosService {
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
-        tenantId: string;
-        sortOrder: number;
         slug: string;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
+        tenantId: string;
+        sortOrder: number;
         seoTitle: string | null;
         seoDesc: string | null;
         title: string;

@@ -22,7 +22,7 @@ RUN npm prune --omit=dev
 # ─── RUNNER ──────────────────────────────────────────────
 FROM node:22-alpine AS runner
 
-RUN apk add --no-cache libc6-compat openssl tini
+RUN apk add --no-cache libc6-compat openssl tini curl
 
 WORKDIR /app
 

@@ -11,11 +11,11 @@ export declare class PersonProfilesService {
     }): Promise<{
         items: {
             id: string;
-            tenantId: string;
-            name: string;
             slug: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
+            tenantId: string;
             image: string | null;
             bio: string | null;
             social: import("@prisma/client/runtime/client").JsonValue;
@@ -27,11 +27,11 @@ export declare class PersonProfilesService {
     }>;
     findOne(tenantId: string, id: string): Promise<{
         id: string;
-        tenantId: string;
-        name: string;
         slug: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        tenantId: string;
         image: string | null;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
@@ -40,11 +40,11 @@ export declare class PersonProfilesService {
     }>;
     findBySlug(tenantId: string, slug: string): Promise<{
         id: string;
-        tenantId: string;
-        name: string;
         slug: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        tenantId: string;
         image: string | null;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
@@ -53,11 +53,11 @@ export declare class PersonProfilesService {
     }>;
     create(tenantId: string, dto: CreatePersonProfileDto): Promise<{
         id: string;
-        tenantId: string;
-        name: string;
         slug: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        tenantId: string;
         image: string | null;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
@@ -66,11 +66,11 @@ export declare class PersonProfilesService {
     }>;
     update(tenantId: string, id: string, dto: UpdatePersonProfileDto): Promise<{
         id: string;
-        tenantId: string;
-        name: string;
         slug: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        tenantId: string;
         image: string | null;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
@@ -79,11 +79,11 @@ export declare class PersonProfilesService {
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
-        tenantId: string;
-        name: string;
         slug: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        tenantId: string;
         image: string | null;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
