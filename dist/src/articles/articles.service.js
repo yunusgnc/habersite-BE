@@ -91,7 +91,7 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
         this.logger.log(`${due.length} zamanlanmış haber yayınlandı.`);
     }
     async findAll(tenantId, query) {
-        const { cursor, limit = 20, status, type, categorySlug, categoryId, authorSlug, search, searchScope, from, to, tagSlug, featured, createdById, sort = 'latest', } = query;
+        const { cursor, limit = 20, status, type, categorySlug, categoryId, authorSlug, page, search, searchScope, from, to, tagSlug, featured, createdById, sort = 'latest', } = query;
         const where = { tenantId };
         if (status)
             where.status = status;
@@ -147,15 +147,17 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
             default:
                 orderBy = { publishedAt: 'desc' };
         }
+        const usePageOffset = Boolean(page && page > 0);
         const [items, total] = await Promise.all([
             this.prisma.article.findMany({
                 where,
                 orderBy,
                 take: limit + 1,
-                ...(cursor && {
-                    cursor: { id: cursor },
-                    skip: 1,
-                }),
+                ...(usePageOffset
+                    ? { skip: (page - 1) * limit }
+                    : cursor
+                        ? { cursor: { id: cursor }, skip: 1 }
+                        : {}),
                 include: {
                     categories: { include: { category: true } },
                     tags: { include: { tag: true } },
@@ -166,12 +168,21 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
             }),
             this.prisma.article.count({ where }),
         ]);
+        const hasMore = items.length > limit;
         let nextCursor;
-        if (items.length > limit) {
+        if (hasMore) {
             const next = items.pop();
-            nextCursor = next.id;
+            if (!usePageOffset)
+                nextCursor = next.id;
         }
-        return { items, nextCursor, total };
+        return {
+            items,
+            nextCursor,
+            total,
+            page: usePageOffset ? page : undefined,
+            totalPages: Math.max(1, Math.ceil(total / limit)),
+            hasMore,
+        };
     }
     async archiveFacets(tenantId) {
         const rows = await this.prisma.$queryRaw `

@@ -1,6 +1,7 @@
 import { ArticleStatus, ArticleType } from '@prisma/client';
 export declare class QueryArticlesDto {
     cursor?: string;
+    page?: number;
     limit?: number;
     status?: ArticleStatus;
     type?: ArticleType;

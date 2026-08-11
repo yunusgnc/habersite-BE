@@ -16,6 +16,18 @@ export class QueryArticlesDto {
   @IsOptional()
   cursor?: string;
 
+  /**
+   * 1'den başlayan sayfa numarası. Verilirse cursor yerine offset kullanılır.
+   * Kategori/arşiv sayfalarında gerekli: arama motorlarının derin sayfaları
+   * tarayabilmesi için adresin (?sayfa=3) kalıcı ve paylaşılabilir olması şart,
+   * cursor bunu sağlamıyor.
+   */
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  page?: number;
+
   @Type(() => Number)
   @IsInt()
   @Min(1)

@@ -61,6 +61,13 @@ const PURGE = flag('purge');
 const LIMIT = Number(arg('limit', '0')) || 0; // 0 = sınırsız (test için)
 const INVITE_DAYS = Number(arg('invite-days', '14'));
 const OUT_DIR = arg('out', path.join(process.cwd(), 'migration-output'));
+/**
+ * Gorsellerin R2'de bulundugu tenant klasoru. Normalde --tenant ile ayni,
+ * ama yerel denemede icerik local veritabanina yazilirken dosyalar prod
+ * tenant klasorune yuklenmis olabilir. O durumda gorsel adresleri 404
+ * dondugu icin yol bu secenekle ayri verilir.
+ */
+const MEDIA_TENANT = arg('media-tenant', TENANT_ID);
 
 // ── Sabitler ──────────────────────────────────────────────────────
 
@@ -80,7 +87,7 @@ const TABLES = new Set([
 /** Aynı anda tek INSERT'te gönderilecek kayıt sayısı. */
 const BATCH = 500;
 
-const media = createMediaResolver({ cdnBaseUrl: CDN, tenantId: TENANT_ID });
+const media = createMediaResolver({ cdnBaseUrl: CDN, tenantId: MEDIA_TENANT });
 
 // ── Yardımcılar ───────────────────────────────────────────────────
 
@@ -133,6 +140,9 @@ async function main() {
   console.log(`  Dump    : ${DUMP}`);
   console.log(`  Tenant  : ${TENANT_ID}`);
   console.log(`  CDN     : ${CDN}`);
+  if (MEDIA_TENANT !== TENANT_ID) {
+    console.log(`  Medya   : uploads/${MEDIA_TENANT}/legacy  (--media-tenant)`);
+  }
   console.log(`  Mod     : ${APPLY ? '⚠️  YAZMA (--apply)' : '👀 ÖNİZLEME (kuru çalışma)'}`);
   if (PURGE) console.log('  Temizle : ⚠️  mevcut içerik silinecek (--purge)');
   if (LIMIT) console.log(`  Limit   : ${LIMIT} haber (test)`);

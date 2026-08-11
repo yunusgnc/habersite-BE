@@ -105,6 +105,9 @@ export declare class ArticlesController {
         })[];
         nextCursor: string | undefined;
         total: number;
+        page: number | undefined;
+        totalPages: number;
+        hasMore: boolean;
     }>;
     findById(tenantId: string, id: string): Promise<{
         categories: ({

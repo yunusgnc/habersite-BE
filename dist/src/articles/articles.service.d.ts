@@ -111,6 +111,9 @@ export declare class ArticlesService {
         })[];
         nextCursor: string | undefined;
         total: number;
+        page: number | undefined;
+        totalPages: number;
+        hasMore: boolean;
     }>;
     archiveFacets(tenantId: string): Promise<{
         years: {

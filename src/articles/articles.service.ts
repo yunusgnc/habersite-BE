@@ -114,6 +114,7 @@ export class ArticlesService {
       categorySlug,
       categoryId,
       authorSlug,
+      page,
       search,
       searchScope,
       from,
@@ -185,15 +186,21 @@ export class ArticlesService {
         orderBy = { publishedAt: 'desc' };
     }
 
+    // İki sayfalama biçimi: `page` verilirse offset (paylaşılabilir, arama
+    // motorlarının tarayabileceği adresler), aksi halde cursor (sonsuz
+    // kaydırma ve panel listeleri için daha verimli).
+    const usePageOffset = Boolean(page && page > 0);
+
     const [items, total] = await Promise.all([
       this.prisma.article.findMany({
         where,
         orderBy,
         take: limit + 1,
-        ...(cursor && {
-          cursor: { id: cursor },
-          skip: 1,
-        }),
+        ...(usePageOffset
+          ? { skip: (page! - 1) * limit }
+          : cursor
+            ? { cursor: { id: cursor }, skip: 1 }
+            : {}),
         include: {
           categories: { include: { category: true } },
           tags: { include: { tag: true } },
@@ -205,13 +212,22 @@ export class ArticlesService {
       this.prisma.article.count({ where }),
     ]);
 
+    // limit+1 çekiliyor; fazlası varsa sonraki sayfa var demektir.
+    const hasMore = items.length > limit;
     let nextCursor: string | undefined;
-    if (items.length > limit) {
+    if (hasMore) {
       const next = items.pop();
-      nextCursor = next!.id;
+      if (!usePageOffset) nextCursor = next!.id;
     }
 
-    return { items, nextCursor, total };
+    return {
+      items,
+      nextCursor,
+      total,
+      page: usePageOffset ? page : undefined,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      hasMore,
+    };
   }
 
   /**
