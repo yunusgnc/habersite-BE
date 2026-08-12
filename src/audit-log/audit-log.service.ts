@@ -13,7 +13,8 @@ export class AuditLogService {
         ...(options?.entity && { entity: options.entity }),
       },
       include: { user: { select: { id: true, name: true, email: true } } },
-      orderBy: { createdAt: 'desc' },
+      // id tiebreaker: createdAt unique degil, cursor pagination deterministik siralama ister.
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: limit,
       ...(options?.cursor && { cursor: { id: options.cursor }, skip: 1 }),
     });

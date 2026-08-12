@@ -23,7 +23,8 @@ export class PersonProfilesService {
         skip: 1,
         cursor: { id: options.cursor },
       }),
-      orderBy: { createdAt: 'desc' },
+      // id tiebreaker: createdAt unique degil, cursor pagination deterministik siralama ister.
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     });
 
     const hasMore = items.length === take;

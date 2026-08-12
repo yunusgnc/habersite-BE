@@ -69,7 +69,8 @@ export class ContactMessagesService {
       where,
       take: take + 1,
       ...(opts.cursor ? { cursor: { id: opts.cursor }, skip: 1 } : {}),
-      orderBy: { createdAt: 'desc' },
+      // id tiebreaker: createdAt unique degil, cursor pagination deterministik siralama ister.
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     });
 
     const hasMore = items.length > take;

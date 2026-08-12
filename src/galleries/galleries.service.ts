@@ -21,7 +21,8 @@ export class GalleriesService {
 
     const items = await this.prisma.gallery.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      // id tiebreaker: createdAt unique degil, cursor pagination deterministik siralama ister.
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: limit + 1,
       ...(cursor && {
         cursor: { id: cursor },

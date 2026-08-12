@@ -72,7 +72,11 @@ export class MediaService {
       this.prisma.media.findMany({
         where,
         take: limit + 1,
-        orderBy: { createdAt: 'desc' },
+        // `createdAt` tek başına unique degil — ozellikle migration ile gelen
+        // kayitlarda binlerce satir ayni damgayi tasiyor. Cursor pagination
+        // deterministik bir siralama sart, yoksa sayfa sinirlarinda satirlar
+        // hem tekrarliyor (React "duplicate key") hem de tamamen atlaniyor.
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
       }),
       this.prisma.media.count({ where }),

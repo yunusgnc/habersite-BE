@@ -63,7 +63,8 @@ export class OfficialNoticesService {
       where,
       take: take + 1,
       ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
-      orderBy: { publishedAt: 'desc' },
+      // id tiebreaker: publishedAt unique degil, cursor pagination deterministik siralama ister.
+      orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
       select: {
         id: true,
         title: true,
@@ -135,7 +136,8 @@ export class OfficialNoticesService {
       where,
       take: take + 1,
       ...(opts.cursor ? { cursor: { id: opts.cursor }, skip: 1 } : {}),
-      orderBy: { publishedAt: 'desc' },
+      // id tiebreaker: publishedAt unique degil, cursor pagination deterministik siralama ister.
+      orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
     });
 
     const hasMore = items.length > take;

@@ -38,7 +38,8 @@ export class UsersService {
       this.prisma.user.findMany({
         where,
         select: this.selectFields,
-        orderBy: { createdAt: 'desc' },
+        // id tiebreaker: createdAt unique degil, cursor pagination deterministik siralama ister.
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         take: limit + 1,
         ...(opts.cursor
           ? { cursor: { id: opts.cursor }, skip: 1 }

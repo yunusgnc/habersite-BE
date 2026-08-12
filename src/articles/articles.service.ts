@@ -174,16 +174,20 @@ export class ArticlesService {
       where.author = { slug: authorSlug };
     }
 
-    let orderBy: Prisma.ArticleOrderByWithRelationInput;
+    // Her siralamanin sonunda `id` tiebreaker'i var: sirasi tek basina belirsiz
+    // olan bir alanla (ayni saniyede yayinlanmis haberler, `viewCount: 0` olan
+    // binlerce arsiv haberi) sayfalamak satirlarin sayfa sinirinda tekrarlanip
+    // baskalarinin tamamen atlanmasina yol aciyor — hem cursor hem offset icin.
+    let orderBy: Prisma.ArticleOrderByWithRelationInput[];
     switch (sort) {
       case 'oldest':
-        orderBy = { publishedAt: 'asc' };
+        orderBy = [{ publishedAt: 'asc' }, { id: 'asc' }];
         break;
       case 'popular':
-        orderBy = { viewCount: 'desc' };
+        orderBy = [{ viewCount: 'desc' }, { id: 'desc' }];
         break;
       default:
-        orderBy = { publishedAt: 'desc' };
+        orderBy = [{ publishedAt: 'desc' }, { id: 'desc' }];
     }
 
     // İki sayfalama biçimi: `page` verilirse offset (paylaşılabilir, arama
@@ -915,7 +919,7 @@ export class ArticlesService {
         status: ArticleStatus.PUBLISHED,
         categories: { some: { category: { slug: categorySlug } } },
       },
-      orderBy: { publishedAt: 'desc' },
+      orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
       take: limit + 1,
       ...(cursor && {
         cursor: { id: cursor },

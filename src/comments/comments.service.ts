@@ -41,7 +41,8 @@ export class CommentsService {
           skip: 1,
           cursor: { id: cursor },
         }),
-        orderBy: { createdAt: 'desc' },
+        // id tiebreaker: createdAt unique degil, cursor pagination deterministik siralama ister.
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       }),
       this.prisma.comment.count({ where }),
     ]);
