@@ -82,6 +82,7 @@ const TABLES = new Set([
   'galeriler',
   'galeriresim',
   'haberresim',
+  'settings',
 ]);
 
 /** Aynı anda tek INSERT'te gönderilecek kayıt sayısı. */
@@ -180,6 +181,7 @@ async function main() {
     comments: [] as Row[],
     notices: [] as Row[],
     videos: [] as Row[],
+    settings: [] as Row[],
   };
 
   console.log('Dump okunuyor (referans tabloları)…');
@@ -193,6 +195,7 @@ async function main() {
       case 'yorumlar': legacy.comments.push(row); break;
       case 'resmi_ilanlar': legacy.notices.push(row); break;
       case 'videolar': legacy.videos.push(row); break;
+      case 'settings': legacy.settings.push(row); break;
       default: break; // haberler/makaleler ikinci geçişte
     }
   }
@@ -216,6 +219,8 @@ async function main() {
   await importArticleGalleries(legacy.articleImages, articleMap);
   await importComments(legacy.comments, articleMap);
   await importNotices(legacy.notices);
+  await importSettings(legacy.settings);
+  await buildMediaLibrary();
 
   writeInvitesCsv(invites);
   report();
@@ -249,9 +254,25 @@ async function purge() {
   const c3 = await prisma.gallery.deleteMany({ where: { tenantId: TENANT_ID } });
   const c4 = await prisma.author.deleteMany({ where: { tenantId: TENANT_ID } });
   const c5 = await prisma.officialNotice.deleteMany({ where: { tenantId: TENANT_ID } });
+  // Haber silinince `article_media` cascade ile gidiyor ama `media` satırları
+  // sahipsiz kalıyor. Bunlar bir sonraki içe aktarımda yeniden üretildiği için
+  // temizlenmezse panelin medya kütüphanesinde katman katman birikiyorlar.
+  // Yalnızca migration'ın ürettiği kayıtlara dokunuyoruz: panelden yüklenen
+  // dosyaların adresi `/uploads/<tenant>/<yıl>/<ay>/` biçiminde, `legacy`
+  // segmenti taşımıyor.
+  const c6 = await prisma.media.deleteMany({
+    where: { tenantId: TENANT_ID, url: { contains: '/legacy/' } },
+  });
+  // Tenant açılırken oluşturulan demo kategorileri (Kayseri, Magazin, Eğitim,
+  // Bilim ve Teknoloji…) eski sitede karşılığı olmadığı için içi boş kalıyor.
+  // Menüde ilk sırada göründükleri için ziyaretçi "hiç haber yok" sayfasına
+  // düşüyordu. Haberler zaten silindiği için burada FK sorunu yok; eski
+  // sitenin kategorileri hemen ardından yeniden oluşturuluyor.
+  const c7 = await prisma.category.deleteMany({ where: { tenantId: TENANT_ID } });
   console.log(
     `  silindi → haber ${c1.count} · video ${c2.count} · galeri ${c3.count} · ` +
-      `yazar ${c4.count} · resmi ilan ${c5.count}\n`,
+      `yazar ${c4.count} · resmi ilan ${c5.count} · medya ${c6.count} · ` +
+      `kategori ${c7.count}\n`,
   );
 }
 
@@ -428,6 +449,43 @@ async function createUserWithInvite(name: string, email: string): Promise<Invite
 
 // ── Haberler ──────────────────────────────────────────────────────
 
+/**
+ * Eski `haberler` tablosunda tek bir görsel alanı değil dokuz tane var:
+ * `Resim` asıl kapak, `MResim` manşet, `DResim` dar manşet, geri kalanı
+ * bunların WebP/AMP/thumbnail türevleri. Editörler bazı haberleri doğrudan
+ * manşetten girmiş ve `Resim` alanı boş kalmış.
+ *
+ * Yalnızca `Resim`'e bakmak 41.939 haberin 97'sini görselsiz bırakıyordu.
+ * Ölçüm (dump + arşiv karşılaştırması): `Resim` boş olan 220 haberden
+ * 97'sinin dosyası diskte MResim/DResim/AMPWebp altında mevcut, 122'sinin
+ * hiçbir görsel kaydı yok, 1'inin adresi var ama dosyası silinmiş.
+ *
+ * Sıralama kaliteye göre: tam boy → manşet → dar manşet → türevler. WebP
+ * sürümleri en sonda, çünkü çoğu kırpılmış/küçültülmüş.
+ */
+const IMAGE_COLUMNS = [
+  'Resim',
+  'MResim',
+  'DResim',
+  'ResimWebp',
+  'MResimWebp',
+  'DResimWebp',
+  'AMPWebp',
+  'Thumb',
+  'ThumbWebp',
+] as const;
+
+function pickImage(row: Row): string | null {
+  for (const col of IMAGE_COLUMNS) {
+    const url = media.file('haberler', asStr(row[col]));
+    if (url) {
+      if (col !== 'Resim') bump(`haber görseli ${col}'den alındı`);
+      return url;
+    }
+  }
+  return null;
+}
+
 async function importArticles(
   cols: Map<string, string[]>,
   categoryMap: Map<number, string>,
@@ -514,7 +572,7 @@ async function importArticles(
       slug,
       spot: firstText(row.Ozet),
       content: contentJson(row.Icerik),
-      featuredImage: media.file('haberler', asStr(row.Resim)),
+      featuredImage: pickImage(row),
       status: statusOf(row.Durum),
       publishedAt,
       viewCount: asInt(row.Okunma),
@@ -744,6 +802,10 @@ async function importGalleries(galleries: Row[], images: Row[]) {
 async function importArticleGalleries(rows: Row[], articleMap: Map<number, string>) {
   console.log('Haber galerileri…');
 
+  // Aynı görsel birden fazla haberde kullanılabiliyor; tek bir media satırını
+  // paylaşsınlar diye çalışma boyunca url→id eşlemesi tutuyoruz.
+  const mediaIdByUrl = new Map<string, string>();
+
   for (const r of rows) {
     const articleId = articleMap.get(asInt(r.HaberId));
     const url = media.file('habergaleri', asStr(r.Resim));
@@ -754,24 +816,45 @@ async function importArticleGalleries(rows: Row[], articleMap: Map<number, strin
     if (!APPLY || articleId.startsWith('DRY-')) continue;
 
     try {
-      const m = await prisma.media.create({
-        data: {
-          tenantId: TENANT_ID,
-          type: 'IMAGE',
-          filename: asStr(r.Resim),
-          originalName: path.basename(asStr(r.Resim)),
-          mimeType: 'image/jpeg',
-          size: 0, // eski sistemde saklanmıyordu
-          url,
-          title: firstText(r.Ozet),
-          createdAt: asDate(r.Olusturulma) ?? undefined,
+      // `media` tablosunda (tenantId, url) üzerinde tekillik kısıtı yok, bu
+      // yüzden idempotanlığı burada sağlıyoruz. Aksi halde script her
+      // çalıştırmada aynı dosya için yeni bir satır üretiyor ve medya
+      // kütüphanesi kopyalarla doluyor.
+      const mediaId =
+        mediaIdByUrl.get(url) ??
+        (
+          await prisma.media.findFirst({
+            where: { tenantId: TENANT_ID, url },
+            select: { id: true },
+          })
+        )?.id ??
+        (
+          await prisma.media.create({
+            data: {
+              tenantId: TENANT_ID,
+              type: 'IMAGE',
+              filename: asStr(r.Resim),
+              originalName: path.basename(asStr(r.Resim)),
+              mimeType: 'image/jpeg',
+              size: 0, // eski sistemde saklanmıyordu
+              url,
+              title: firstText(r.Ozet),
+              createdAt: asDate(r.Olusturulma) ?? undefined,
+            },
+            select: { id: true },
+          })
+        ).id;
+      mediaIdByUrl.set(url, mediaId);
+
+      await prisma.articleMedia.upsert({
+        where: { articleId_mediaId: { articleId, mediaId } },
+        update: {
+          sortOrder: asInt(r.Sira),
+          caption: firstText(r.Ozet),
         },
-        select: { id: true },
-      });
-      await prisma.articleMedia.create({
-        data: {
+        create: {
           articleId,
-          mediaId: m.id,
+          mediaId,
           sortOrder: asInt(r.Sira),
           caption: firstText(r.Ozet),
         },
@@ -784,6 +867,102 @@ async function importArticleGalleries(rows: Row[], articleMap: Map<number, strin
 }
 
 // ── Yorumlar ──────────────────────────────────────────────────────
+
+// ── Medya kütüphanesi ─────────────────────────────────────────────
+
+/**
+ * Aktarılan görselleri panelin Medya Kütüphanesi'ne kaydeder.
+ *
+ * Haberin kapak görseli `articles.featured_image` içinde düz bir adres olarak
+ * duruyor; `media` tablosunda karşılığı olmadığı sürece panelden ne aranabiliyor
+ * ne de başka bir habere yeniden eklenebiliyor. 19 GB'lık arşivin panelde
+ * "yok" görünmesinin sebebi buydu.
+ *
+ * Adresi veritabanından okuyoruz, dosya adına göre değil: böylece hangi
+ * görselin gerçekten kullanıldığı kesin. Arşivdeki türev dosyalar (amp,
+ * içerik kopyaları, silinmiş haberlerin görselleri) kütüphaneyi şişirmiyor.
+ */
+async function buildMediaLibrary() {
+  console.log('Medya kütüphanesi…');
+
+  // (adres, ilk kullanım tarihi) — aynı görsel birden fazla kayıtta geçebilir.
+  const rows = await prisma.$queryRawUnsafe<
+    { url: string; at: Date | null }[]
+  >(
+    `
+    select url, min(at) as at from (
+      select featured_image as url, published_at as at from articles
+        where tenant_id = $1 and featured_image like '%/legacy/%'
+      union all
+      select avatar as url, null::timestamp as at from authors
+        where tenant_id = $1 and avatar like '%/legacy/%'
+      union all
+      select cover_image as url, published_at as at from galleries
+        where tenant_id = $1 and cover_image like '%/legacy/%'
+      union all
+      select gi.url, g.published_at as at from gallery_images gi
+        join galleries g on g.id = gi.gallery_id
+        where g.tenant_id = $1 and gi.url like '%/legacy/%'
+    ) t
+    group by url
+    `,
+    TENANT_ID,
+  );
+
+  const known = new Set(
+    (
+      await prisma.media.findMany({
+        where: { tenantId: TENANT_ID },
+        select: { url: true },
+      })
+    ).map((m) => m.url),
+  );
+
+  const MIME: Record<string, string> = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.webp': 'image/webp',
+    '.gif': 'image/gif',
+    '.svg': 'image/svg+xml',
+  };
+
+  const pending = rows.filter((r) => r.url && !known.has(r.url));
+  bump('medya kütüphanesi kaydı', pending.length);
+  bump('medya kütüphanesi (zaten kayıtlı)', rows.length - pending.length);
+
+  if (!APPLY) {
+    console.log(`  ${rows.length} görsel · ${pending.length} yeni kayıt\n`);
+    return;
+  }
+
+  const BATCH = 1000;
+  let written = 0;
+  for (let i = 0; i < pending.length; i += BATCH) {
+    const slice = pending.slice(i, i + BATCH);
+    await prisma.media.createMany({
+      data: slice.map((r) => {
+        const filename = decodeURIComponent(r.url.split('/').pop() ?? '');
+        const ext = path.extname(filename).toLowerCase();
+        return {
+          tenantId: TENANT_ID,
+          type: 'IMAGE' as const,
+          filename,
+          originalName: filename,
+          mimeType: MIME[ext] ?? 'image/jpeg',
+          size: 0, // eski sistemde saklanmıyordu
+          url: r.url,
+          // Kütüphane arşivle aynı sırada görünsün diye haberin yayın tarihi.
+          createdAt: r.at ?? undefined,
+        };
+      }),
+    });
+    written += slice.length;
+    if (written % 10000 === 0) process.stdout.write(`  ${written} kayıt…`);
+  }
+
+  console.log(`  ${rows.length} görsel · ${written} yeni kayıt\n`);
+}
 
 async function importComments(rows: Row[], articleMap: Map<number, string>) {
   console.log('Yorumlar…');
@@ -870,6 +1049,88 @@ async function importNotices(rows: Row[]) {
 }
 
 // ── Çıktılar ──────────────────────────────────────────────────────
+
+// ── Site ayarları ─────────────────────────────────────────────────
+
+/**
+ * Eski `settings` tablosu (tek satır) → yeni Setting anahtar/değer tablosu.
+ * Site adı, logo, iletişim ve sosyal medya bilgileri buradan gelir; aksi
+ * halde devralınan site eski müşterinin markasıyla yayınlanır.
+ *
+ * Logo/favicon yolları `/storage/images/...` biçiminde; `storage/` öneki
+ * atılıp CDN adresine çevrilir çünkü R2'ye `images/` ağacı yüklendi.
+ */
+async function importSettings(rows: Row[]) {
+  console.log('Site ayarları…');
+  const r = rows[0];
+  if (!r) { console.log('  ayar satırı yok, atlandı\n'); return; }
+
+  const storagePath = (v: unknown) => {
+    const raw = asStr(v).trim();
+    if (!raw) return null;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    // "/storage/images/genel/logo.png" → "genel/logo.png"
+    const rel = raw.replace(/^\/?storage\/images\//, '').replace(/^\/+/, '');
+    return media.file('', rel);
+  };
+
+  // WhatsApp numarası wa.me bağlantısına çevrilir; ham numara tıklanamaz.
+  const waRaw = asStr(r.whatsapp).replace(/\D/g, '');
+  const waUrl = waRaw
+    ? `https://wa.me/${waRaw.startsWith('90') ? waRaw : '90' + waRaw.replace(/^0+/, '')}`
+    : null;
+
+  // DİKKAT: eski şemadaki isimler ZEMİNİ değil LOGONUN RENGİNİ anlatıyor.
+  //   logo_light = açık renkli (beyaz) logo  → KOYU zeminde kullanılır
+  //   logo_dark  = koyu renkli (siyah) logo  → AÇIK zeminde kullanılır
+  // Ölçümle doğrulandı: logo-light ortalama parlaklık 255/255, logo-dark 0/255.
+  // Bu yüzden varsayılan (açık temalı) logo `logo_dark`, gece modu logosu
+  // `logo_light` olmalı. Ters bağlanınca beyaz logo beyaz header'da kayboluyor.
+  const values: Record<string, string | null> = {
+    siteTitle: firstText(r.site_name, r.site_title),
+    siteDescription: firstText(r.site_description),
+    siteUrl: firstText(r.site_url),
+    logo: storagePath(r.logo_dark) ?? storagePath(r.logo_light),
+    logoDark: storagePath(r.logo_light),
+    favicon: storagePath(r.favicon),
+    contactEmail: firstText(r.email),
+    contactPhone: firstText(r.phone),
+    contactAddress: firstText(r.address),
+    facebookUrl: firstText(r.facebook),
+    twitterUrl: firstText(r.twitter),
+    instagramUrl: firstText(r.instagram),
+    youtubeUrl: firstText(r.youtube),
+    linkedinUrl: firstText(r.linkedin),
+    tiktokUrl: firstText(r.tiktok),
+    whatsappUrl: waUrl,
+    copyrightText: firstText(r.footer_text),
+    footerDescription: firstText(r.site_description),
+  };
+
+  const entries = Object.entries(values).filter(([, v]) => v);
+  bump('site ayarı', entries.length);
+
+  if (APPLY) {
+    for (const [key, value] of entries) {
+      await prisma.setting.upsert({
+        where: { tenantId_key: { tenantId: TENANT_ID, key } },
+        update: { value: value as string },
+        create: { tenantId: TENANT_ID, key, value: value as string },
+      });
+    }
+    // Tenant kaydındaki logo/favicon da güncellenir — panel bunları gösterir.
+    await prisma.tenant.update({
+      where: { id: TENANT_ID },
+      data: {
+        ...(values.siteTitle ? { name: values.siteTitle } : {}),
+        ...(values.logo ? { logo: values.logo } : {}),
+        ...(values.favicon ? { favicon: values.favicon } : {}),
+      },
+    });
+  }
+
+  console.log(`  ${entries.length} ayar aktarıldı (site adı: ${values.siteTitle ?? '—'})\n`);
+}
 
 function writeInvitesCsv(invites: Invite[]) {
   if (!invites.length) return;
