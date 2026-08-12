@@ -231,6 +231,7 @@ async function main() {
   await buildMediaLibrary();
 
   writeInvitesCsv(invites);
+  await writeCoverlessCsv();
   report();
 }
 
@@ -1160,7 +1161,7 @@ const IMPRINT_FIELDS: [keyof Row & string, string][] = [
 ];
 
 /** HTML'e gömülecek metni kaçır — künye alanları düz metin. */
-const esc = (s: string) =>
+const escHtml = (s: string) =>
   s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -1176,15 +1177,15 @@ async function importImprint(rows: Row[]) {
     const value = firstText(r[col]);
     if (!value) return null;
     // Editörler/ajanslar alanları satır sonuyla ayrılmış çoklu değer tutuyor.
-    const html = esc(value).replace(/\r?\n/g, '<br />');
-    return `<tr><th>${esc(label)}</th><td>${html}</td></tr>`;
+    const html = escHtml(value).replace(/\r?\n/g, '<br />');
+    return `<tr><th>${escHtml(label)}</th><td>${html}</td></tr>`;
   }).filter(Boolean);
 
   bump('künye alanı', cells.length);
 
   const extras = [firstText(r.Diger), firstText(r.YasalUyari)]
     .filter(Boolean)
-    .map((t) => `<p>${esc(t as string).replace(/\r?\n/g, '<br />')}</p>`)
+    .map((t) => `<p>${escHtml(t as string).replace(/\r?\n/g, '<br />')}</p>`)
     .join('\n');
 
   const html = `<table class="imprint-table">\n<tbody>\n${cells.join('\n')}\n</tbody>\n</table>${
@@ -1302,6 +1303,53 @@ function writeInvitesCsv(invites: Invite[]) {
     console.log('  ⚠️  KURU ÇALIŞMA — bu linkler geçerli DEĞİL, --apply ile yeniden üret.');
   }
   console.log();
+}
+
+/**
+ * Kapak görseli hiç olmayan yayında haberleri CSV'ye döker.
+ *
+ * Eski veritabanında dokuz görsel kolonunun tamamı boş olan kayıtlar —
+ * kurtarılacak bir dosya yok, editoryal iş. Panelde medya kütüphanesinden
+ * elle kapak atanabilir.
+ */
+async function writeCoverlessCsv() {
+  if (!APPLY) return;
+  const rows = await prisma.article.findMany({
+    where: {
+      tenantId: TENANT_ID,
+      type: 'NEWS',
+      status: ArticleStatus.PUBLISHED,
+      OR: [{ featuredImage: null }, { featuredImage: '' }],
+    },
+    select: {
+      title: true,
+      slug: true,
+      publishedAt: true,
+      categories: { select: { category: { select: { name: true } } } },
+    },
+    orderBy: { publishedAt: 'desc' },
+  });
+  if (!rows.length) return;
+
+  fs.mkdirSync(OUT_DIR, { recursive: true });
+  const file = path.join(OUT_DIR, 'kapaksiz-haberler.csv');
+  const q = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  const csv = [
+    ['Baslik', 'Slug', 'Kategori', 'Yayin Tarihi'].join(','),
+    ...rows.map((r) =>
+      [
+        r.title,
+        r.slug,
+        r.categories.map((c) => c.category.name).join(' / '),
+        r.publishedAt ? r.publishedAt.toISOString().slice(0, 10) : '',
+      ]
+        .map(q)
+        .join(','),
+    ),
+  ].join('\n');
+
+  fs.writeFileSync(file, '\ufeff' + csv, 'utf8'); // BOM — Excel Türkçe karakterler
+  console.log(`Kapaksız haber CSV'si yazıldı: ${file} (${rows.length} haber)\n`);
 }
 
 function report() {
