@@ -137,10 +137,17 @@ run_import() {
     -w /app \
     -e DATABASE_URL="$DB_URL" \
     "$NODE_IMAGE" \
-    sh -c "apk add --no-cache openssl libc6-compat >/dev/null 2>&1 \
-      && npm ci --silent \
-      && npx prisma generate >/dev/null \
-      && npx tsx scripts/migrate-legacy/import.ts \
+    sh -c "set -e
+      # stderr SUSTURULMUYOR. Bir kez sustumuştu ve deploy sırasında ağ
+      # meşgulken \`apk add\` sessizce düştü; \`&&\` zinciri koptuğu için
+      # ekranda tek satır hata bile görünmedi, sebebi bulmak zaman aldı.
+      echo '  [1/3] sistem paketleri…'
+      apk add --no-cache openssl libc6-compat >/dev/null || { echo 'apk add BAŞARISIZ (ağ?)' >&2; exit 1; }
+      echo '  [2/3] npm ci…'
+      npm ci --silent || { echo 'npm ci BAŞARISIZ' >&2; exit 1; }
+      echo '  [3/3] prisma generate…'
+      npx prisma generate >/dev/null || { echo 'prisma generate BAŞARISIZ' >&2; exit 1; }
+      npx tsx scripts/migrate-legacy/import.ts \
            --dump /dump.sql \
            --tenant $TENANT_ID \
            --cdn $CDN \
