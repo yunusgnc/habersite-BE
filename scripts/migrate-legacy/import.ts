@@ -1289,6 +1289,45 @@ const escHtml = (s: string) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
+/**
+ * Zaten HTML olan bir alanı mı, düz metni mi işlediğimize karar verir.
+ *
+ * Eski panelde bazı künye alanları zengin metin editöründen geçmiş (`<p>`,
+ * `<strong>`, stil, bağlantı), bazıları düz metin olarak yazılmış. Ölçtüm:
+ * `Diger` HTML, `YasalUyari` düz metin. Ayrımı içeriğe bakarak yapıyoruz ki
+ * müşteri ileride hangisini nasıl doldurursa doldursun doğru çıksın.
+ *
+ * HTML olanlarda `rewriteHtml` çalışıyor — gövdedeki kendi sunucumuza ait
+ * görsel adresleri CDN'e taşınsın.
+ */
+function richText(value: string): string {
+  const looksLikeHtml =
+    /<\/?(p|div|span|strong|em|b|i|u|br|a|ul|ol|li|table|h[1-6])\b/i.test(
+      value,
+    );
+  if (!looksLikeHtml) {
+    return `<p>${escHtml(value).replace(/\r?\n/g, '<br />')}</p>`;
+  }
+  return (
+    media
+      .rewriteHtml(value)
+      // Editörden kalan boş paragraflar sayfada koca bir boşluk bırakıyor.
+      // Sadece `<p>&nbsp;</p>` aramak yetmiyor; boşluk `<strong>` gibi bir
+      // biçim etiketinin içinde de olabiliyor. Bu yüzden etiketleri soyup
+      // geriye metin kalıp kalmadığına bakıyoruz.
+      .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, (match, inner: string) => {
+        const text = inner
+          .replace(/<[^>]*>/g, '')
+          .replace(/&nbsp;/gi, ' ')
+          .trim();
+        return text ? match : '';
+      })
+      // Silinen paragrafların bıraktığı boş satırları topla.
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+  );
+}
+
 async function importImprint(rows: Row[]) {
   const r = rows[0];
   if (!r) {
@@ -1307,9 +1346,13 @@ async function importImprint(rows: Row[]) {
 
   bump('künye alanı', cells.length);
 
+  // `Diger` ve `YasalUyari` mediumtext alanları; ilki editörden gelen HTML
+  // taşıyor (stil, bağlantı, `&Ccedil;` gibi varlıklar), ikincisi düz metin.
+  // İkisini aynı muamele ile ele almak hataydı: hepsini kaçırdığımızda HTML
+  // olan alan sayfada etiketleriyle birlikte yazı olarak görünüyordu.
   const extras = [firstText(r.Diger), firstText(r.YasalUyari)]
-    .filter(Boolean)
-    .map((t) => `<p>${escHtml(t as string).replace(/\r?\n/g, '<br />')}</p>`)
+    .filter((t): t is string => Boolean(t))
+    .map(richText)
     .join('\n');
 
   const html = `<table class="imprint-table">\n<tbody>\n${cells.join('\n')}\n</tbody>\n</table>${
