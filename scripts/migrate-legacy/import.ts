@@ -83,6 +83,8 @@ const TABLES = new Set([
   'galeriresim',
   'haberresim',
   'settings',
+  'sayfa',
+  'kunye',
 ]);
 
 /** Aynı anda tek INSERT'te gönderilecek kayıt sayısı. */
@@ -182,6 +184,8 @@ async function main() {
     notices: [] as Row[],
     videos: [] as Row[],
     settings: [] as Row[],
+    pages: [] as Row[],
+    imprint: [] as Row[],
   };
 
   console.log('Dump okunuyor (referans tabloları)…');
@@ -196,6 +200,8 @@ async function main() {
       case 'resmi_ilanlar': legacy.notices.push(row); break;
       case 'videolar': legacy.videos.push(row); break;
       case 'settings': legacy.settings.push(row); break;
+      case 'sayfa': legacy.pages.push(row); break;
+      case 'kunye': legacy.imprint.push(row); break;
       default: break; // haberler/makaleler ikinci geçişte
     }
   }
@@ -220,6 +226,8 @@ async function main() {
   await importComments(legacy.comments, articleMap);
   await importNotices(legacy.notices);
   await importSettings(legacy.settings);
+  await importPages(legacy.pages);
+  await importImprint(legacy.imprint);
   await buildMediaLibrary();
 
   writeInvitesCsv(invites);
@@ -274,6 +282,8 @@ async function purge() {
       `yazar ${c4.count} · resmi ilan ${c5.count} · medya ${c6.count} · ` +
       `kategori ${c7.count}\n`,
   );
+  // Statik sayfalar ve künye slug üzerinden upsert edildiği için silmeye gerek
+  // yok — aksi halde müşterinin panelden eklediği sayfalar da uçardı.
 }
 
 // ── Kategoriler ───────────────────────────────────────────────────
@@ -1060,6 +1070,147 @@ async function importNotices(rows: Row[]) {
  * Logo/favicon yolları `/storage/images/...` biçiminde; `storage/` öneki
  * atılıp CDN adresine çevrilir çünkü R2'ye `images/` ağacı yüklendi.
  */
+// ── Statik sayfalar ───────────────────────────────────────────────
+
+/**
+ * Eski `sayfa` tablosu → `pages`. Üç kayıt var: Çerez Politikası, Gizlilik
+ * İlkeleri, İçerik Kaldırma Talebi. Hepsi hukuki metin, hepsi Google'da
+ * indeksli.
+ *
+ * Slug'ı `SayfaLinki` kolonundan alıyoruz (`/cerez-politikasi` gibi) —
+ * başlıktan üretmek Türkçe karakter dönüşümü yüzünden farklı bir adres
+ * verebilir ve indeksli bağlantı kırılır.
+ *
+ * Site tarafında ek iş yok: `app/[slug]/page.tsx` bilinmeyen slug'ları
+ * `DynamicPage` ile `pages` tablosundan okuyor.
+ */
+async function importPages(rows: Row[]) {
+  console.log('Statik sayfalar…');
+
+  for (const r of rows) {
+    const title = firstText(r.SayfaBaslik);
+    if (!title) { warn(`Sayfa ${asStr(r.Id)}: başlık boş, atlandı`); continue; }
+
+    const link = asStr(r.SayfaLinki).trim().replace(/^\/+|\/+$/g, '');
+    const slug = link || makeSlug(title, asStr(r.Id));
+
+    bump('statik sayfa');
+    if (!APPLY) continue;
+
+    try {
+      await prisma.page.upsert({
+        where: { tenantId_slug: { tenantId: TENANT_ID, slug } },
+        update: {
+          title,
+          content: contentJson(r.SayfaIcerik),
+          seoDesc: firstText(r.Aciklama),
+          published: asBool(r.Durum),
+        },
+        create: {
+          tenantId: TENANT_ID,
+          title,
+          slug,
+          content: contentJson(r.SayfaIcerik),
+          seoDesc: firstText(r.Aciklama),
+          published: asBool(r.Durum),
+          createdAt: asDate(r.Olusturulma) ?? undefined,
+        },
+      });
+    } catch (e: any) {
+      warn(`Sayfa "${title}" yazılamadı: ${e?.message ?? e}`);
+    }
+  }
+  console.log(`  ${stats['statik sayfa'] ?? 0} sayfa\n`);
+}
+
+// ── Künye ─────────────────────────────────────────────────────────
+
+/**
+ * Eski `kunye` tablosu → `pages` içinde `kunye` slug'lı tek sayfa.
+ *
+ * 5187 sayılı Basın Kanunu internet haber siteleri için künye
+ * bulundurmayı zorunlu kılıyor; bu yüzden alanları tek tek taşıyoruz.
+ * Tablo tek satır ve 20'den fazla kolon tutuyor (ticaret unvanı, yayıncı,
+ * sorumlu yazı işleri müdürü, hukuk danışmanı, haber ajansları, UETS
+ * adresi, yer sağlayıcı…), bunları okunabilir bir tabloya çeviriyoruz.
+ *
+ * Site `/kunye` adresinde önce `pages` tablosuna bakıyor, bulamazsa
+ * ayarlardan derlenmiş kısa bir özet gösteriyordu — artık gerçek künye var.
+ */
+const IMPRINT_FIELDS: [keyof Row & string, string][] = [
+  ['TicaretUnvani', 'Ticaret Unvanı'],
+  ['Yayinci', 'Yayıncı'],
+  ['TuzelKisiTemsilcisi', 'Tüzel Kişi Temsilcisi'],
+  ['GenelYayinYonetmeni', 'Genel Yayın Yönetmeni'],
+  ['SorumluYaziIsleriMuduru', 'Sorumlu Yazı İşleri Müdürü'],
+  ['HaberMuduru', 'Haber Müdürü'],
+  ['GeceVardiyasiEditoru', 'Gece Vardiyası Editörü'],
+  ['Editorler', 'Editörler'],
+  ['HukukDanismani', 'Hukuk Danışmanı'],
+  ['MaliMusavir', 'Mali Müşavir'],
+  ['HaberAjanslari', 'Haber Ajansları'],
+  ['SistemYonetimi', 'Sistem Yönetimi'],
+  ['Yazilim', 'Yazılım'],
+  ['YonetimYeri', 'Yönetim Yeri'],
+  ['IletisimTelefonu', 'İletişim Telefonu'],
+  ['KurumsalEposta', 'Kurumsal E-posta'],
+  ['UETSAdresi', 'UETS Adresi'],
+  ['YerSaglayiciUnvan', 'Yer Sağlayıcı'],
+  ['YerSaglayiciAdresi', 'Yer Sağlayıcı Adresi'],
+];
+
+/** HTML'e gömülecek metni kaçır — künye alanları düz metin. */
+const esc = (s: string) =>
+  s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+async function importImprint(rows: Row[]) {
+  const r = rows[0];
+  if (!r) { console.log('Künye… kayıt yok, atlandı\n'); return; }
+  console.log('Künye…');
+
+  const cells = IMPRINT_FIELDS.map(([col, label]) => {
+    const value = firstText(r[col]);
+    if (!value) return null;
+    // Editörler/ajanslar alanları satır sonuyla ayrılmış çoklu değer tutuyor.
+    const html = esc(value).replace(/\r?\n/g, '<br />');
+    return `<tr><th>${esc(label)}</th><td>${html}</td></tr>`;
+  }).filter(Boolean);
+
+  bump('künye alanı', cells.length);
+
+  const extras = [firstText(r.Diger), firstText(r.YasalUyari)]
+    .filter(Boolean)
+    .map((t) => `<p>${esc(t as string).replace(/\r?\n/g, '<br />')}</p>`)
+    .join('\n');
+
+  const html = `<table class="imprint-table">\n<tbody>\n${cells.join('\n')}\n</tbody>\n</table>${
+    extras ? `\n${extras}` : ''
+  }`;
+
+  if (!APPLY) { console.log(`  ${cells.length} alan\n`); return; }
+
+  try {
+    await prisma.page.upsert({
+      where: { tenantId_slug: { tenantId: TENANT_ID, slug: 'kunye' } },
+      update: { title: 'Künye', content: { html }, published: true },
+      create: {
+        tenantId: TENANT_ID,
+        title: 'Künye',
+        slug: 'kunye',
+        content: { html },
+        published: true,
+      },
+    });
+  } catch (e: any) {
+    warn(`Künye yazılamadı: ${e?.message ?? e}`);
+  }
+  console.log(`  ${cells.length} alan\n`);
+}
+
 async function importSettings(rows: Row[]) {
   console.log('Site ayarları…');
   const r = rows[0];
