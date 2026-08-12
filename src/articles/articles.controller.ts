@@ -16,6 +16,8 @@ import { QueryArticlesDto } from './dto/query-articles.dto';
 import { BulkArticleDto } from './dto/bulk-article.dto';
 import { TenantGuard } from '../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
+import { ArticleStatus } from '@prisma/client';
 import { RolesGuard, Roles } from '../auth/guards/roles.guard';
 import { CurrentTenant } from '../common/decorators/tenant.decorator';
 import { CurrentUser } from '../common/decorators/user.decorator';
@@ -25,11 +27,28 @@ import { CurrentUser } from '../common/decorators/user.decorator';
 export class ArticlesController {
   constructor(private readonly articlesService: ArticlesService) {}
 
+  /**
+   * Bu uç noktayı hem panel hem de herkese açık site kullanıyor. Panel bütün
+   * durumları görmek zorunda (taslak listesi, "Tümü" sekmesi), ziyaretçi ise
+   * yalnızca yayınlanmışları görmeli. Ayrım kimlik doğrulamayla yapılıyor:
+   * token yoksa `status` isteğe bakılmaksızın PUBLISHED'a sabitlenir.
+   *
+   * Daha önce filtre yoktu; taslak haberler ana sayfada manşete kadar
+   * çıkıyordu.
+   */
   @Get()
+  @UseGuards(OptionalJwtAuthGuard)
   findAll(
     @CurrentTenant() tenantId: string,
     @Query() query: QueryArticlesDto,
+    @CurrentUser() user?: { id: string },
   ) {
+    if (!user) {
+      return this.articlesService.findAll(tenantId, {
+        ...query,
+        status: ArticleStatus.PUBLISHED,
+      });
+    }
     return this.articlesService.findAll(tenantId, query);
   }
 
