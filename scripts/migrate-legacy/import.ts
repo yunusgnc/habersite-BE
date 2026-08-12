@@ -27,7 +27,12 @@ import * as path from 'path';
 import { randomBytes, createHash } from 'crypto';
 // Auth servisiyle AYNI kütüphane olmalı — yoksa üretilen hash doğrulanamaz.
 import * as bcrypt from 'bcryptjs';
-import { PrismaClient, ArticleStatus, NoticeType, CommentStatus } from '@prisma/client';
+import {
+  PrismaClient,
+  ArticleStatus,
+  NoticeType,
+  CommentStatus,
+} from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import slugify from 'slugify';
 import {
@@ -146,7 +151,9 @@ async function main() {
   if (MEDIA_TENANT !== TENANT_ID) {
     console.log(`  Medya   : uploads/${MEDIA_TENANT}/legacy  (--media-tenant)`);
   }
-  console.log(`  Mod     : ${APPLY ? '⚠️  YAZMA (--apply)' : '👀 ÖNİZLEME (kuru çalışma)'}`);
+  console.log(
+    `  Mod     : ${APPLY ? '⚠️  YAZMA (--apply)' : '👀 ÖNİZLEME (kuru çalışma)'}`,
+  );
   if (PURGE) console.log('  Temizle : ⚠️  mevcut içerik silinecek (--purge)');
   if (LIMIT) console.log(`  Limit   : ${LIMIT} haber (test)`);
   console.log('═'.repeat(66) + '\n');
@@ -157,7 +164,10 @@ async function main() {
   });
   if (!tenant) throw new Error(`Tenant bulunamadı: ${TENANT_ID}`);
   console.log(`Tenant doğrulandı: ${tenant.name}`);
-  if (tenant.mediaBaseUrl && tenant.mediaBaseUrl.replace(/\/$/, '') !== CDN.replace(/\/$/, '')) {
+  if (
+    tenant.mediaBaseUrl &&
+    tenant.mediaBaseUrl.replace(/\/$/, '') !== CDN.replace(/\/$/, '')
+  ) {
     warn(
       `Tenant'ın kayıtlı CDN adresi (${tenant.mediaBaseUrl}) --cdn ile aynı değil. ` +
         `Yeni yüklemeler farklı adresten servis edilir.`,
@@ -191,18 +201,41 @@ async function main() {
   console.log('Dump okunuyor (referans tabloları)…');
   for await (const { table, row } of readRows(DUMP, TABLES, cols)) {
     switch (table) {
-      case 'haberkategori': legacy.categories.push(row); break;
-      case 'yazarlar': legacy.authors.push(row); break;
-      case 'galeriler': legacy.galleries.push(row); break;
-      case 'galeriresim': legacy.galleryImages.push(row); break;
-      case 'haberresim': legacy.articleImages.push(row); break;
-      case 'yorumlar': legacy.comments.push(row); break;
-      case 'resmi_ilanlar': legacy.notices.push(row); break;
-      case 'videolar': legacy.videos.push(row); break;
-      case 'settings': legacy.settings.push(row); break;
-      case 'sayfa': legacy.pages.push(row); break;
-      case 'kunye': legacy.imprint.push(row); break;
-      default: break; // haberler/makaleler ikinci geçişte
+      case 'haberkategori':
+        legacy.categories.push(row);
+        break;
+      case 'yazarlar':
+        legacy.authors.push(row);
+        break;
+      case 'galeriler':
+        legacy.galleries.push(row);
+        break;
+      case 'galeriresim':
+        legacy.galleryImages.push(row);
+        break;
+      case 'haberresim':
+        legacy.articleImages.push(row);
+        break;
+      case 'yorumlar':
+        legacy.comments.push(row);
+        break;
+      case 'resmi_ilanlar':
+        legacy.notices.push(row);
+        break;
+      case 'videolar':
+        legacy.videos.push(row);
+        break;
+      case 'settings':
+        legacy.settings.push(row);
+        break;
+      case 'sayfa':
+        legacy.pages.push(row);
+        break;
+      case 'kunye':
+        legacy.imprint.push(row);
+        break;
+      default:
+        break; // haberler/makaleler ikinci geçişte
     }
   }
   console.log(
@@ -239,7 +272,11 @@ async function main() {
 
 async function resolveImporter() {
   const existing = await prisma.user.findFirst({
-    where: { tenantId: TENANT_ID, role: { in: ['ADMIN', 'SUPER_ADMIN'] }, active: true },
+    where: {
+      tenantId: TENANT_ID,
+      role: { in: ['ADMIN', 'SUPER_ADMIN'] },
+      active: true,
+    },
     select: { id: true, email: true },
     orderBy: { createdAt: 'asc' },
   });
@@ -258,11 +295,17 @@ async function resolveImporter() {
  */
 async function purge() {
   console.log('Mevcut içerik temizleniyor…');
-  const c1 = await prisma.article.deleteMany({ where: { tenantId: TENANT_ID } });
+  const c1 = await prisma.article.deleteMany({
+    where: { tenantId: TENANT_ID },
+  });
   const c2 = await prisma.video.deleteMany({ where: { tenantId: TENANT_ID } });
-  const c3 = await prisma.gallery.deleteMany({ where: { tenantId: TENANT_ID } });
+  const c3 = await prisma.gallery.deleteMany({
+    where: { tenantId: TENANT_ID },
+  });
   const c4 = await prisma.author.deleteMany({ where: { tenantId: TENANT_ID } });
-  const c5 = await prisma.officialNotice.deleteMany({ where: { tenantId: TENANT_ID } });
+  const c5 = await prisma.officialNotice.deleteMany({
+    where: { tenantId: TENANT_ID },
+  });
   // Haber silinince `article_media` cascade ile gidiyor ama `media` satırları
   // sahipsiz kalıyor. Bunlar bir sonraki içe aktarımda yeniden üretildiği için
   // temizlenmezse panelin medya kütüphanesinde katman katman birikiyorlar.
@@ -277,7 +320,9 @@ async function purge() {
   // Menüde ilk sırada göründükleri için ziyaretçi "hiç haber yok" sayfasına
   // düşüyordu. Haberler zaten silindiği için burada FK sorunu yok; eski
   // sitenin kategorileri hemen ardından yeniden oluşturuluyor.
-  const c7 = await prisma.category.deleteMany({ where: { tenantId: TENANT_ID } });
+  const c7 = await prisma.category.deleteMany({
+    where: { tenantId: TENANT_ID },
+  });
   console.log(
     `  silindi → haber ${c1.count} · video ${c2.count} · galeri ${c3.count} · ` +
       `yazar ${c4.count} · resmi ilan ${c5.count} · medya ${c6.count} · ` +
@@ -296,7 +341,10 @@ async function importCategories(rows: Row[]): Promise<Map<number, string>> {
   for (const r of rows) {
     const legacyId = asInt(r.Id);
     const name = asStr(r.Baslik).trim();
-    if (!name) { warn(`Kategori ${legacyId}: adı boş, atlandı`); continue; }
+    if (!name) {
+      warn(`Kategori ${legacyId}: adı boş, atlandı`);
+      continue;
+    }
     const slug = firstText(r.Seo) ?? makeSlug(name, legacyId);
 
     if (!APPLY) {
@@ -350,7 +398,10 @@ async function importAuthors(rows: Row[]) {
   for (const r of rows) {
     const legacyId = asInt(r.Id);
     const name = asStr(r.AdSoyad).trim();
-    if (!name) { warn(`Yazar ${legacyId}: adı boş, atlandı`); continue; }
+    if (!name) {
+      warn(`Yazar ${legacyId}: adı boş, atlandı`);
+      continue;
+    }
 
     const slug = firstText(r.Seo, r.Perma) ?? makeSlug(name, legacyId);
     const avatar = media.file('yazarlar', asStr(r.Resim));
@@ -389,10 +440,15 @@ async function importAuthors(rows: Row[]) {
 
     // Panele girecek hesap — yalnızca geçerli ve tekil e-posta varsa.
     const validEmail = /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email);
-    if (!validEmail) { bump('yazar (e-postasız, hesap açılmadı)'); continue; }
+    if (!validEmail) {
+      bump('yazar (e-postasız, hesap açılmadı)');
+      continue;
+    }
     // Punycode/hatalı alan adları (ör. gmaıl.com) hesap açmaya değmez.
     if (email.includes('xn--')) {
-      warn(`Yazar "${name}": e-posta alan adı hatalı görünüyor, hesap açılmadı`);
+      warn(
+        `Yazar "${name}": e-posta alan adı hatalı görünüyor, hesap açılmadı`,
+      );
       continue;
     }
     if (seenEmails.has(email)) {
@@ -415,7 +471,10 @@ async function importAuthors(rows: Row[]) {
  * Hesabı rastgele — kimsenin bilmediği — bir şifreyle açar ve şifre belirleme
  * token'ı üretir. Böylece hiçbir yerde düz metin geçici şifre dolaşmaz.
  */
-async function createUserWithInvite(name: string, email: string): Promise<Invite | null> {
+async function createUserWithInvite(
+  name: string,
+  email: string,
+): Promise<Invite | null> {
   const token = randomBytes(32).toString('base64url');
   const tokenHash = createHash('sha256').update(token).digest('hex');
   const expiresAt = new Date(Date.now() + INVITE_DAYS * 86400_000);
@@ -514,7 +573,8 @@ async function importArticles(
     if (!APPLY) {
       // Önizlemede de haritayı doldur — yorum/galeri eşleşmelerinin
       // gerçekten tuttuğunu kuru çalışmada görebilmek için.
-      for (const item of buffer) map.set(item.legacyId, `DRY-${item.data.slug}`);
+      for (const item of buffer)
+        map.set(item.legacyId, `DRY-${item.data.slug}`);
       buffer = [];
       return;
     }
@@ -522,7 +582,9 @@ async function importArticles(
       for (const item of buffer) {
         try {
           const saved = await prisma.article.upsert({
-            where: { tenantId_slug: { tenantId: TENANT_ID, slug: item.data.slug } },
+            where: {
+              tenantId_slug: { tenantId: TENANT_ID, slug: item.data.slug },
+            },
             update: item.data,
             create: { ...item.data, createdById },
             select: { id: true },
@@ -531,7 +593,9 @@ async function importArticles(
 
           if (item.catIds.length) {
             // Yeniden çalıştırmada kopya bağ oluşmasın.
-            await prisma.articleCategory.deleteMany({ where: { articleId: saved.id } });
+            await prisma.articleCategory.deleteMany({
+              where: { articleId: saved.id },
+            });
             await prisma.articleCategory.createMany({
               data: item.catIds.map((categoryId, i) => ({
                 articleId: saved.id,
@@ -549,13 +613,24 @@ async function importArticles(
     buffer = [];
   };
 
-  for await (const { table, row } of readRows(DUMP, new Set(['haberler']), cols)) {
+  for await (const { table, row } of readRows(
+    DUMP,
+    new Set(['haberler']),
+    cols,
+  )) {
     if (table !== 'haberler') continue;
     if (LIMIT && processed >= LIMIT) break;
 
     const legacyId = asInt(row.Id);
-    const title = firstText(row.HaberBaslik, row.HaberBaslik2, row.HaberBaslik3);
-    if (!title) { warn(`Haber ${legacyId}: başlık boş, atlandı`); continue; }
+    const title = firstText(
+      row.HaberBaslik,
+      row.HaberBaslik2,
+      row.HaberBaslik3,
+    );
+    if (!title) {
+      warn(`Haber ${legacyId}: başlık boş, atlandı`);
+      continue;
+    }
 
     let slug = firstText(row.Slug) ?? makeSlug(title, legacyId);
     if (seenSlugs.has(slug)) {
@@ -593,7 +668,14 @@ async function importArticles(
       seoDesc: firstText(row.MetaDesc),
       source: firstText(row.Mahrec),
       sourceUrl: firstText(row.Canonical),
-      readingTime: Math.max(1, Math.ceil(asStr(row.Icerik).replace(/<[^>]+>/g, ' ').split(/\s+/).length / 200)),
+      readingTime: Math.max(
+        1,
+        Math.ceil(
+          asStr(row.Icerik)
+            .replace(/<[^>]+>/g, ' ')
+            .split(/\s+/).length / 200,
+        ),
+      ),
       createdAt: publishedAt ?? undefined,
     };
 
@@ -603,11 +685,15 @@ async function importArticles(
 
     if (buffer.length >= BATCH) {
       await flush();
-      process.stdout.write(`\r  ${processed.toLocaleString('tr-TR')} haber işlendi…`);
+      process.stdout.write(
+        `\r  ${processed.toLocaleString('tr-TR')} haber işlendi…`,
+      );
     }
   }
   await flush();
-  process.stdout.write(`\r  ${processed.toLocaleString('tr-TR')} haber işlendi.        \n\n`);
+  process.stdout.write(
+    `\r  ${processed.toLocaleString('tr-TR')} haber işlendi.        \n\n`,
+  );
   return { map, slugs: seenSlugs };
 }
 
@@ -628,12 +714,19 @@ async function importColumns(
   // Haber slug'lariyla ayni havuzu paylas.
   const seenSlugs = new Set<string>(articleSlugs);
 
-  for await (const { table, row } of readRows(DUMP, new Set(['makaleler']), cols)) {
+  for await (const { table, row } of readRows(
+    DUMP,
+    new Set(['makaleler']),
+    cols,
+  )) {
     if (table !== 'makaleler') continue;
 
     const legacyId = asInt(row.Id);
     const title = firstText(row.HaberBaslik);
-    if (!title) { warn(`Makale ${legacyId}: başlık boş, atlandı`); continue; }
+    if (!title) {
+      warn(`Makale ${legacyId}: başlık boş, atlandı`);
+      continue;
+    }
 
     let slug = firstText(row.Slug) ?? makeSlug(title, legacyId);
     if (seenSlugs.has(slug)) {
@@ -690,7 +783,10 @@ async function importVideos(rows: Row[]) {
     // Eski şemada video başlığı `VideoBaslik` — haber tablosundaki
     // `HaberBaslik` ile karıştırılmamalı.
     const title = firstText(r.VideoBaslik, r.VideoBaslik2, r.VideoBaslik3);
-    if (!title) { warn(`Video ${legacyId}: başlık boş, atlandı`); continue; }
+    if (!title) {
+      warn(`Video ${legacyId}: başlık boş, atlandı`);
+      continue;
+    }
 
     let slug = firstText(r.Slug) ?? makeSlug(title, legacyId);
     if (seen.has(slug)) slug = `${slug}-${legacyId}`;
@@ -714,7 +810,10 @@ async function importVideos(rows: Row[]) {
       coverImage: cover,
       videoUrl: localVideo || '',
       embedCode: embed,
-      source: /youtu/i.test(embed ?? '') || /youtu/i.test(localVideo) ? 'youtube' : 'upload',
+      source:
+        /youtu/i.test(embed ?? '') || /youtu/i.test(localVideo)
+          ? 'youtube'
+          : 'upload',
       status: statusOf(r.Durum),
       publishedAt,
       viewCount: asInt(r.Okunma),
@@ -757,7 +856,10 @@ async function importGalleries(galleries: Row[], images: Row[]) {
   for (const g of galleries) {
     const legacyId = asInt(g.Id);
     const title = firstText(g.HaberBaslik, g.Baslik);
-    if (!title) { warn(`Galeri ${legacyId}: başlık boş, atlandı`); continue; }
+    if (!title) {
+      warn(`Galeri ${legacyId}: başlık boş, atlandı`);
+      continue;
+    }
     const slug = firstText(g.Slug) ?? makeSlug(title, legacyId);
     const publishedAt = asDate(g.Olusturulma);
     const items = byGallery.get(legacyId) ?? [];
@@ -805,12 +907,17 @@ async function importGalleries(galleries: Row[], images: Row[]) {
       warn(`Galeri ${legacyId} yazılamadı: ${e?.message ?? e}`);
     }
   }
-  console.log(`  ${stats.galeri ?? 0} galeri · ${stats['galeri görseli'] ?? 0} görsel\n`);
+  console.log(
+    `  ${stats.galeri ?? 0} galeri · ${stats['galeri görseli'] ?? 0} görsel\n`,
+  );
 }
 
 // ── Haber içi galeri görselleri ───────────────────────────────────
 
-async function importArticleGalleries(rows: Row[], articleMap: Map<number, string>) {
+async function importArticleGalleries(
+  rows: Row[],
+  articleMap: Map<number, string>,
+) {
   console.log('Haber galerileri…');
 
   // Aynı görsel birden fazla haberde kullanılabiliyor; tek bir media satırını
@@ -821,7 +928,10 @@ async function importArticleGalleries(rows: Row[], articleMap: Map<number, strin
     const articleId = articleMap.get(asInt(r.HaberId));
     const url = media.file('habergaleri', asStr(r.Resim));
     if (!url) continue;
-    if (!articleId) { bump('haber galerisi (haberi eşleşmedi)'); continue; }
+    if (!articleId) {
+      bump('haber galerisi (haberi eşleşmedi)');
+      continue;
+    }
 
     bump('haber galeri görseli');
     if (!APPLY || articleId.startsWith('DRY-')) continue;
@@ -897,9 +1007,7 @@ async function buildMediaLibrary() {
   console.log('Medya kütüphanesi…');
 
   // (adres, ilk kullanım tarihi) — aynı görsel birden fazla kayıtta geçebilir.
-  const rows = await prisma.$queryRawUnsafe<
-    { url: string; at: Date | null }[]
-  >(
+  const rows = await prisma.$queryRawUnsafe<{ url: string; at: Date | null }[]>(
     `
     select url, min(at) as at from (
       select featured_image as url, published_at as at from articles
@@ -983,7 +1091,10 @@ async function importComments(rows: Row[], articleMap: Map<number, string>) {
     // `Tip` yorumun hangi içerik türüne ait olduğunu tutuyor; haber
     // dışındakiler (video/galeri) haber haritasında bulunamaz.
     const articleId = articleMap.get(asInt(r.VeriId));
-    if (!articleId) { bump('yorum (haber dışı içerik veya eşleşmedi)'); continue; }
+    if (!articleId) {
+      bump('yorum (haber dışı içerik veya eşleşmedi)');
+      continue;
+    }
 
     const name = firstText(r.AdSoyad) ?? 'Okuyucu';
     const content = firstText(r.Yorum);
@@ -1000,7 +1111,9 @@ async function importComments(rows: Row[], articleMap: Map<number, string>) {
           name,
           email: firstText(r.EMail) ?? 'bilinmiyor@example.com',
           content,
-          status: asBool(r.Onay) ? CommentStatus.APPROVED : CommentStatus.PENDING,
+          status: asBool(r.Onay)
+            ? CommentStatus.APPROVED
+            : CommentStatus.PENDING,
           ipAddress: firstText(r.IP),
           createdAt: asDate(r.Tarih) ?? undefined,
         },
@@ -1024,7 +1137,10 @@ async function importNotices(rows: Row[]) {
     const title = firstText(r.baslik);
     if (!title) continue;
     const slug = makeSlug(title, legacyId);
-    const publishedAt = asDate(r.yayin_baslangic_tarihi) ?? asDate(r.olusturulma_tarihi) ?? new Date();
+    const publishedAt =
+      asDate(r.yayin_baslangic_tarihi) ??
+      asDate(r.olusturulma_tarihi) ??
+      new Date();
     const expiresAt = asDate(r.yayin_bitis_tarihi);
     const content = media.rewriteHtml(asStr(r.aciklama));
     // dosya_yolu tek bir ek dosya tutuyor — yeni şemada ek listesi var.
@@ -1090,9 +1206,14 @@ async function importPages(rows: Row[]) {
 
   for (const r of rows) {
     const title = firstText(r.SayfaBaslik);
-    if (!title) { warn(`Sayfa ${asStr(r.Id)}: başlık boş, atlandı`); continue; }
+    if (!title) {
+      warn(`Sayfa ${asStr(r.Id)}: başlık boş, atlandı`);
+      continue;
+    }
 
-    const link = asStr(r.SayfaLinki).trim().replace(/^\/+|\/+$/g, '');
+    const link = asStr(r.SayfaLinki)
+      .trim()
+      .replace(/^\/+|\/+$/g, '');
     const slug = link || makeSlug(title, asStr(r.Id));
 
     bump('statik sayfa');
@@ -1138,7 +1259,7 @@ async function importPages(rows: Row[]) {
  * Site `/kunye` adresinde önce `pages` tablosuna bakıyor, bulamazsa
  * ayarlardan derlenmiş kısa bir özet gösteriyordu — artık gerçek künye var.
  */
-const IMPRINT_FIELDS: [keyof Row & string, string][] = [
+const IMPRINT_FIELDS: [keyof Row, string][] = [
   ['TicaretUnvani', 'Ticaret Unvanı'],
   ['Yayinci', 'Yayıncı'],
   ['TuzelKisiTemsilcisi', 'Tüzel Kişi Temsilcisi'],
@@ -1170,7 +1291,10 @@ const escHtml = (s: string) =>
 
 async function importImprint(rows: Row[]) {
   const r = rows[0];
-  if (!r) { console.log('Künye… kayıt yok, atlandı\n'); return; }
+  if (!r) {
+    console.log('Künye… kayıt yok, atlandı\n');
+    return;
+  }
   console.log('Künye…');
 
   const cells = IMPRINT_FIELDS.map(([col, label]) => {
@@ -1192,7 +1316,10 @@ async function importImprint(rows: Row[]) {
     extras ? `\n${extras}` : ''
   }`;
 
-  if (!APPLY) { console.log(`  ${cells.length} alan\n`); return; }
+  if (!APPLY) {
+    console.log(`  ${cells.length} alan\n`);
+    return;
+  }
 
   try {
     await prisma.page.upsert({
@@ -1215,7 +1342,10 @@ async function importImprint(rows: Row[]) {
 async function importSettings(rows: Row[]) {
   console.log('Site ayarları…');
   const r = rows[0];
-  if (!r) { console.log('  ayar satırı yok, atlandı\n'); return; }
+  if (!r) {
+    console.log('  ayar satırı yok, atlandı\n');
+    return;
+  }
 
   const storagePath = (v: unknown) => {
     const raw = asStr(v).trim();
@@ -1281,7 +1411,9 @@ async function importSettings(rows: Row[]) {
     });
   }
 
-  console.log(`  ${entries.length} ayar aktarıldı (site adı: ${values.siteTitle ?? '—'})\n`);
+  console.log(
+    `  ${entries.length} ayar aktarıldı (site adı: ${values.siteTitle ?? '—'})\n`,
+  );
 }
 
 function writeInvitesCsv(invites: Invite[]) {
@@ -1291,7 +1423,13 @@ function writeInvitesCsv(invites: Invite[]) {
 
   const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
   const csv = [
-    ['Ad Soyad', 'E-posta', 'Rol', 'Sifre Belirleme Linki', 'Son Gecerlilik'].join(','),
+    [
+      'Ad Soyad',
+      'E-posta',
+      'Rol',
+      'Sifre Belirleme Linki',
+      'Son Gecerlilik',
+    ].join(','),
     ...invites.map((i) =>
       [i.name, i.email, i.role, i.link, i.expires].map(esc).join(','),
     ),
@@ -1300,7 +1438,9 @@ function writeInvitesCsv(invites: Invite[]) {
   fs.writeFileSync(file, '﻿' + csv, 'utf8'); // BOM — Excel Türkçe karakterler
   console.log(`Davet CSV'si yazıldı: ${file}`);
   if (!APPLY) {
-    console.log('  ⚠️  KURU ÇALIŞMA — bu linkler geçerli DEĞİL, --apply ile yeniden üret.');
+    console.log(
+      '  ⚠️  KURU ÇALIŞMA — bu linkler geçerli DEĞİL, --apply ile yeniden üret.',
+    );
   }
   console.log();
 }
@@ -1349,7 +1489,9 @@ async function writeCoverlessCsv() {
   ].join('\n');
 
   fs.writeFileSync(file, '\ufeff' + csv, 'utf8'); // BOM — Excel Türkçe karakterler
-  console.log(`Kapaksız haber CSV'si yazıldı: ${file} (${rows.length} haber)\n`);
+  console.log(
+    `Kapaksız haber CSV'si yazıldı: ${file} (${rows.length} haber)\n`,
+  );
 }
 
 function report() {
