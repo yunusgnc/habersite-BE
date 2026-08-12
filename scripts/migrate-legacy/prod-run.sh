@@ -81,6 +81,16 @@ echo "  Docker ağı    : $NETWORK"
 # Adresi maskeleyerek göster — doğru veritabanı mı diye bakabilmek için.
 echo "  Veritabanı    : $(echo "$DB_URL" | sed -E 's#://[^@]*@#://***:***@#')"
 
+# Prisma'ya özgü parametreleri ayıklar. `?schema=public`, `pgbouncer`,
+# `connection_limit` gibi anahtarlar libpq tarafından tanınmıyor; pg_dump
+# doğrudan bu adresle çağrılırsa "invalid URI query parameter" der.
+# `sslmode` gibi gerçek libpq parametreleri korunur.
+pg_url() {
+  echo "$1" | sed -E \
+    -e 's/([?&])(schema|pgbouncer|connection_limit|pool_timeout|socket_timeout|statement_cache_size|sslidentity|sslpassword|sslaccept)=[^&]*/\1/g' \
+    -e 's/&&+/\&/g' -e 's/\?&/?/' -e 's/[?&]$//'
+}
+
 # ── 3. Yedek ──────────────────────────────────────────────────────
 if [ "$SKIP_BACKUP" = "1" ]; then
   echo ""
@@ -95,7 +105,7 @@ else
   for v in 17 16 15; do
     if docker run --rm --network "$NETWORK" \
         -v "$BACKUP_DIR:/yedek" \
-        -e PGURL="$DB_URL" \
+        -e PGURL="$(pg_url "$DB_URL")" \
         "postgres:${v}-alpine" \
         sh -c 'pg_dump "$PGURL" --format=custom -f /yedek/'"habersite-$STAMP.dump" 2>/tmp/pgdump.err; then
       BACKUP_OK=1; break
@@ -169,8 +179,12 @@ cat <<'SON'
        yazar-davetleri.csv    — 20 panel hesabı için şifre linkleri
        kapaksiz-haberler.csv  — kapağı olmayan 37 haber (editoryal iş)
 
-  4) Yedek ./yedek/ klasöründe. Sorun çıkarsa:
-       docker run --rm --network <ag> -v $(pwd)/yedek:/y postgres:17-alpine \
-         sh -c 'pg_restore -d "$PGURL" --clean --if-exists /y/<dosya>.dump'
+  4) Yedek ./yedek/ klasöründe. Geri yüklemek gerekirse aynı script'in
+     bulduğu değerlerle (PGURL'de ?schema=... OLMAMALI):
+
+       docker run --rm --network coolify -v $(pwd)/yedek:/y \
+         -e PGURL='postgres://KULLANICI:SIFRE@HOST:5432/postgres' \
+         postgres:17-alpine \
+         sh -c 'pg_restore -d "$PGURL" --clean --if-exists /y/DOSYA.dump'
 
 SON
