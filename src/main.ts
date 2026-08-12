@@ -1,11 +1,23 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Cloudflare arkasında çalışıyoruz. `trust proxy` açılmazsa Express `req.ip`'i
+  // Cloudflare edge sunucusunun IP'si olarak görüyor → rate-limit tüm
+  // ziyaretçileri aynı sayaçta topluyor, birkaç yüz istek sonrası herkese
+  // 429 dönüyor. Ayrıca yorumlarda kayıtlı IP hep aynı çıkıyordu.
+  //
+  // `1` değeri güvenli: sadece EN YAKIN vekilin (Cloudflare) yolladığı
+  // X-Forwarded-For son giriştirdiğini kabul ediyor. `true` yazmak IP
+  // sahtekârlığına açık kapı bırakırdı — istemci istediği IP'yi başlığa
+  // koyabilir ve rate-limit'i atlatabilir.
+  app.set('trust proxy', 1);
 
   // Güvenlik header'ları — XSS, clickjacking, MIME sniffing, HSTS.
   // API'nin görselleri kendi origin'inden serve etmesi gerektiği için
