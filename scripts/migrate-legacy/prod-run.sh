@@ -4,6 +4,11 @@
 #
 #   ./scripts/migrate-legacy/prod-run.sh --dump /root/aktarim/kayseritimes.sql
 #
+# Secenekler:
+#   --no-purge      mevcut icerigi silmeden yalnizca guncelle
+#   --skip-backup   yedek adimini atla
+#   --yes           onay sormadan devam et
+#
 # Sırayla: API container'ını bul → DATABASE_URL'i oku → yedek al →
 # kuru çalıştırma → onay → gerçek aktarım.
 #
@@ -19,12 +24,14 @@ DUMP=""
 API_CONTAINER=""
 SKIP_BACKUP=0
 YES=0
+NO_PURGE=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --dump) DUMP="${2:-}"; shift 2 ;;
     --api-container) API_CONTAINER="${2:-}"; shift 2 ;;
     --skip-backup) SKIP_BACKUP=1; shift ;;
+    --no-purge) NO_PURGE=1; shift ;;
     --yes) YES=1; shift ;;
     -h|--help)
       sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'
@@ -145,20 +152,31 @@ mkdir -p "$(pwd)/cikti"
 say "KURU ÇALIŞMA — hiçbir şey yazılmayacak"
 run_import "" || die "Kuru çalışma başarısız. Aktarım BAŞLATILMADI."
 
+# --no-purge: mevcut içeriği silmeden yalnızca güncelle. Küçük bir düzeltmeyi
+# (ör. tek bir ayar veya sayfa) canlıya taşımak için — purge kullanılırsa 43
+# bin haber silinip yeniden yazılacağı için site birkaç dakika eksik görünür.
+if [ "$NO_PURGE" = "1" ]; then
+  APPLY_ARGS="--apply"
+  PURGE_NOTE="mevcut içerik SİLİNMEYECEK, yalnızca güncellenecek (--no-purge)"
+else
+  APPLY_ARGS="--apply --purge"
+  PURGE_NOTE="mevcut haber / video / galeri / yazar / resmi ilan / kategori
+kayıtları SİLİNECEK (--purge). Kullanıcılar ve ayarlar kalır."
+fi
+
 if [ "$YES" != "1" ]; then
   echo ""
   echo "───────────────────────────────────────────────────────────"
-  echo "Yukarıdaki sayılar doğru mu? Devam edilirse bu tenant'taki"
-  echo "mevcut haber / video / galeri / yazar / resmi ilan / kategori"
-  echo "kayıtları SİLİNECEK (--purge). Kullanıcılar ve ayarlar kalır."
+  echo "Yukarıdaki sayılar doğru mu? Devam edilirse bu tenant'ta:"
+  echo "$PURGE_NOTE"
   echo "───────────────────────────────────────────────────────────"
   printf "Devam etmek için 'evet' yaz: "
   read -r ANSWER
   [ "$ANSWER" = "evet" ] || die "İptal edildi. Hiçbir şey değişmedi."
 fi
 
-say "GERÇEK AKTARIM (--apply --purge)"
-run_import "--apply --purge" || die "Aktarım hata verdi. Yedek: $(pwd)/yedek/"
+say "GERÇEK AKTARIM ($APPLY_ARGS)"
+run_import "$APPLY_ARGS" || die "Aktarım hata verdi. Yedek: $(pwd)/yedek/"
 
 cat <<'SON'
 
