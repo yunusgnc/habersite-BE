@@ -112,11 +112,16 @@ köşe yazısı                    1.087
 video                            128
 yazar                             53
 panel hesabı                      20
+künye alanı                       16
 site ayarı                        15
 kategori                          11
 resmi ilan                         4
+statik sayfa                       3
 galeri                             2
 ```
+
+`haber görseli MResim'den alındı 79`, `DResim'den 17`, `AMPWebp'den 1`
+satırları da görünür — kapak alanı boş olup manşet görseli olan haberler.
 
 `Tenant doğrulandı: ...` satırının doğru müşteriyi gösterdiğini kontrol et.
 
@@ -137,6 +142,10 @@ Süre: yerelde ~4 dakika. Sonunda `✅ Aktarım tamamlandı.` yazması gerekir.
 
 Yazar davet linkleri `/root/aktarim/cikti/yazar-davetleri.csv` dosyasına
 yazılır — 20 panel hesabı için şifre sıfırlama bağlantıları burada.
+
+Aynı klasöre `kapaksiz-haberler.csv` de çıkar: eski veritabanında hiçbir
+görsel kolonu dolu olmayan 37 yayında haber. Panelden elle kapak atanabilir,
+medya kütüphanesinde 41.926 görsel ve çalışan arama var.
 
 ---
 
