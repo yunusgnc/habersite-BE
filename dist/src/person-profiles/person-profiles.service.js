@@ -34,7 +34,7 @@ let PersonProfilesService = class PersonProfilesService {
                 skip: 1,
                 cursor: { id: options.cursor },
             }),
-            orderBy: { createdAt: 'desc' },
+            orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         });
         const hasMore = items.length === take;
         if (hasMore)

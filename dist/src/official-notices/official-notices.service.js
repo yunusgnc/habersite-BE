@@ -59,7 +59,7 @@ let OfficialNoticesService = class OfficialNoticesService {
             where,
             take: take + 1,
             ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
-            orderBy: { publishedAt: 'desc' },
+            orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
             select: {
                 id: true,
                 title: true,
@@ -118,7 +118,7 @@ let OfficialNoticesService = class OfficialNoticesService {
             where,
             take: take + 1,
             ...(opts.cursor ? { cursor: { id: opts.cursor }, skip: 1 } : {}),
-            orderBy: { publishedAt: 'desc' },
+            orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
         });
         const hasMore = items.length > take;
         return {

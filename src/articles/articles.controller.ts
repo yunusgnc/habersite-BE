@@ -60,6 +60,38 @@ export class ArticlesController {
     return this.articlesService.findById(tenantId, id);
   }
 
+  /**
+   * Sitemap üretimi için hafif bir uç nokta. Genel liste 50 satırla sınırlı;
+   * arama motoruna 42 binin üzerinde haber sunmak için 100 istek atmak
+   * makul değil. Burası yalnızca slug + tarih döner (kapak, spot, içerik
+   * yok) ve sayfa başına 5.000 kayıt verir.
+   *
+   * Herkese açık: taslakları göstermez, kimlik doğrulama gerektirmez.
+   */
+  @Get('sitemap')
+  sitemap(
+    @CurrentTenant() tenantId: string,
+    @Query('page') page?: string,
+    @Query('perPage') perPage?: string,
+  ) {
+    const p = Math.max(1, parseInt(page ?? '1', 10) || 1);
+    const pp = Math.min(5000, Math.max(1, parseInt(perPage ?? '5000', 10) || 5000));
+    return this.articlesService.sitemap(tenantId, p, pp);
+  }
+
+  /**
+   * Google News sitemap'i ve RSS için son 48 saatteki haberler. Herkese açık.
+   * Google News 2 günden eski haberi kabul etmediği için aralık sabit.
+   */
+  @Get('recent-for-news')
+  recentForNews(
+    @CurrentTenant() tenantId: string,
+    @Query('limit') limit?: string,
+  ) {
+    const n = Math.min(1000, Math.max(1, parseInt(limit ?? '1000', 10) || 1000));
+    return this.articlesService.recentForNews(tenantId, n);
+  }
+
   @Get('most-read')
   getMostRead(
     @CurrentTenant() tenantId: string,

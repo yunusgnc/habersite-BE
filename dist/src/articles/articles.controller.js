@@ -21,6 +21,8 @@ const query_articles_dto_1 = require("./dto/query-articles.dto");
 const bulk_article_dto_1 = require("./dto/bulk-article.dto");
 const tenant_guard_1 = require("../common/guards/tenant.guard");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
+const optional_jwt_auth_guard_1 = require("../auth/guards/optional-jwt-auth.guard");
+const client_1 = require("@prisma/client");
 const roles_guard_1 = require("../auth/guards/roles.guard");
 const tenant_decorator_1 = require("../common/decorators/tenant.decorator");
 const user_decorator_1 = require("../common/decorators/user.decorator");
@@ -29,11 +31,26 @@ let ArticlesController = class ArticlesController {
     constructor(articlesService) {
         this.articlesService = articlesService;
     }
-    findAll(tenantId, query) {
+    findAll(tenantId, query, user) {
+        if (!user) {
+            return this.articlesService.findAll(tenantId, {
+                ...query,
+                status: client_1.ArticleStatus.PUBLISHED,
+            });
+        }
         return this.articlesService.findAll(tenantId, query);
     }
     findById(tenantId, id) {
         return this.articlesService.findById(tenantId, id);
+    }
+    sitemap(tenantId, page, perPage) {
+        const p = Math.max(1, parseInt(page ?? '1', 10) || 1);
+        const pp = Math.min(5000, Math.max(1, parseInt(perPage ?? '5000', 10) || 5000));
+        return this.articlesService.sitemap(tenantId, p, pp);
+    }
+    recentForNews(tenantId, limit) {
+        const n = Math.min(1000, Math.max(1, parseInt(limit ?? '1000', 10) || 1000));
+        return this.articlesService.recentForNews(tenantId, n);
     }
     getMostRead(tenantId, limit) {
         return this.articlesService.getMostRead(tenantId, limit ? +limit : 10);
@@ -98,10 +115,12 @@ let ArticlesController = class ArticlesController {
 exports.ArticlesController = ArticlesController;
 __decorate([
     (0, common_1.Get)(),
+    (0, common_1.UseGuards)(optional_jwt_auth_guard_1.OptionalJwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)()),
+    __param(2, (0, user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, query_articles_dto_1.QueryArticlesDto]),
+    __metadata("design:paramtypes", [String, query_articles_dto_1.QueryArticlesDto, Object]),
     __metadata("design:returntype", void 0)
 ], ArticlesController.prototype, "findAll", null);
 __decorate([
@@ -112,6 +131,23 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], ArticlesController.prototype, "findById", null);
+__decorate([
+    (0, common_1.Get)('sitemap'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('page')),
+    __param(2, (0, common_1.Query)('perPage')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", void 0)
+], ArticlesController.prototype, "sitemap", null);
+__decorate([
+    (0, common_1.Get)('recent-for-news'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], ArticlesController.prototype, "recentForNews", null);
 __decorate([
     (0, common_1.Get)('most-read'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

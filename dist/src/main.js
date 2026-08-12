@@ -10,6 +10,7 @@ const app_module_1 = require("./app.module");
 const prisma_service_1 = require("./prisma/prisma.service");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    app.set('trust proxy', 1);
     app.use((0, helmet_1.default)({
         crossOriginResourcePolicy: { policy: 'cross-origin' },
         contentSecurityPolicy: false,

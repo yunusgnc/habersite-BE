@@ -1,6 +1,8 @@
 import { SettingsService } from './settings.service';
+import { PrismaService } from '../prisma/prisma.service';
 export declare class PublicSettingsController {
     private readonly settingsService;
-    constructor(settingsService: SettingsService);
+    private readonly prisma;
+    constructor(settingsService: SettingsService, prisma: PrismaService);
     getPublic(tenantId: string): Promise<Record<string, any>>;
 }

@@ -30,19 +30,19 @@ export declare class AuditService {
         items: ({
             user: {
                 id: string;
-                name: string;
                 email: string;
+                name: string;
             } | null;
         } & {
             id: string;
-            createdAt: Date;
             tenantId: string;
-            ipAddress: string | null;
+            createdAt: Date;
             userId: string | null;
             action: string;
             entity: string;
             entityId: string | null;
             changes: Prisma.JsonValue | null;
+            ipAddress: string | null;
         })[];
         nextCursor: string | null;
         total: number;
@@ -55,19 +55,19 @@ export declare class AuditService {
     }>;
     exportRows(params: ListParams): Promise<({
         user: {
-            name: string;
             email: string;
+            name: string;
         } | null;
     } & {
         id: string;
-        createdAt: Date;
         tenantId: string;
-        ipAddress: string | null;
+        createdAt: Date;
         userId: string | null;
         action: string;
         entity: string;
         entityId: string | null;
         changes: Prisma.JsonValue | null;
+        ipAddress: string | null;
     })[]>;
     private buildWhere;
 }

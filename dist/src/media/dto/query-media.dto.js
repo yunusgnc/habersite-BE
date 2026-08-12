@@ -17,6 +17,7 @@ class QueryMediaDto {
     cursor;
     limit = 30;
     type;
+    search;
 }
 exports.QueryMediaDto = QueryMediaDto;
 __decorate([
@@ -37,4 +38,9 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], QueryMediaDto.prototype, "type", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], QueryMediaDto.prototype, "search", void 0);
 //# sourceMappingURL=query-media.dto.js.map

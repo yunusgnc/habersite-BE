@@ -8,14 +8,14 @@ export declare class CategoriesController {
         children: ({
             children: {
                 id: string;
-                name: string;
                 slug: string;
+                name: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
+                description: string | null;
                 tenantId: string;
                 parentId: string | null;
-                description: string | null;
                 image: string | null;
                 color: string | null;
                 sortOrder: number;
@@ -24,14 +24,14 @@ export declare class CategoriesController {
             }[];
         } & {
             id: string;
-            name: string;
             slug: string;
+            name: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
+            description: string | null;
             tenantId: string;
             parentId: string | null;
-            description: string | null;
             image: string | null;
             color: string | null;
             sortOrder: number;
@@ -39,14 +39,14 @@ export declare class CategoriesController {
             seoDesc: string | null;
         })[];
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
         tenantId: string;
         parentId: string | null;
-        description: string | null;
         image: string | null;
         color: string | null;
         sortOrder: number;
@@ -56,14 +56,14 @@ export declare class CategoriesController {
     findBySlug(tenantId: string, slug: string): Promise<{
         parent: {
             id: string;
-            name: string;
             slug: string;
+            name: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
+            description: string | null;
             tenantId: string;
             parentId: string | null;
-            description: string | null;
             image: string | null;
             color: string | null;
             sortOrder: number;
@@ -72,14 +72,14 @@ export declare class CategoriesController {
         } | null;
         children: {
             id: string;
-            name: string;
             slug: string;
+            name: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
+            description: string | null;
             tenantId: string;
             parentId: string | null;
-            description: string | null;
             image: string | null;
             color: string | null;
             sortOrder: number;
@@ -88,14 +88,14 @@ export declare class CategoriesController {
         }[];
     } & {
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
         tenantId: string;
         parentId: string | null;
-        description: string | null;
         image: string | null;
         color: string | null;
         sortOrder: number;
@@ -105,14 +105,14 @@ export declare class CategoriesController {
     create(tenantId: string, dto: CreateCategoryDto): Promise<{
         children: {
             id: string;
-            name: string;
             slug: string;
+            name: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
+            description: string | null;
             tenantId: string;
             parentId: string | null;
-            description: string | null;
             image: string | null;
             color: string | null;
             sortOrder: number;
@@ -121,14 +121,14 @@ export declare class CategoriesController {
         }[];
     } & {
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
         tenantId: string;
         parentId: string | null;
-        description: string | null;
         image: string | null;
         color: string | null;
         sortOrder: number;
@@ -138,14 +138,14 @@ export declare class CategoriesController {
     update(tenantId: string, id: string, dto: UpdateCategoryDto): Promise<{
         children: {
             id: string;
-            name: string;
             slug: string;
+            name: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
+            description: string | null;
             tenantId: string;
             parentId: string | null;
-            description: string | null;
             image: string | null;
             color: string | null;
             sortOrder: number;
@@ -154,14 +154,14 @@ export declare class CategoriesController {
         }[];
     } & {
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
         tenantId: string;
         parentId: string | null;
-        description: string | null;
         image: string | null;
         color: string | null;
         sortOrder: number;
@@ -170,14 +170,14 @@ export declare class CategoriesController {
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
         tenantId: string;
         parentId: string | null;
-        description: string | null;
         image: string | null;
         color: string | null;
         sortOrder: number;

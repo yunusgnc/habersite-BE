@@ -96,11 +96,21 @@ let MediaService = class MediaService {
         if (query.type) {
             where.type = query.type;
         }
+        const q = query.search?.trim();
+        if (q) {
+            where.OR = [
+                { originalName: { contains: q, mode: 'insensitive' } },
+                { filename: { contains: q, mode: 'insensitive' } },
+                { title: { contains: q, mode: 'insensitive' } },
+                { alt: { contains: q, mode: 'insensitive' } },
+                { url: { contains: q, mode: 'insensitive' } },
+            ];
+        }
         const [items, total] = await Promise.all([
             this.prisma.media.findMany({
                 where,
                 take: limit + 1,
-                orderBy: { createdAt: 'desc' },
+                orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
                 ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
             }),
             this.prisma.media.count({ where }),

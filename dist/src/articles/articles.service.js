@@ -139,13 +139,13 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
         let orderBy;
         switch (sort) {
             case 'oldest':
-                orderBy = { publishedAt: 'asc' };
+                orderBy = [{ publishedAt: 'asc' }, { id: 'asc' }];
                 break;
             case 'popular':
-                orderBy = { viewCount: 'desc' };
+                orderBy = [{ viewCount: 'desc' }, { id: 'desc' }];
                 break;
             default:
-                orderBy = { publishedAt: 'desc' };
+                orderBy = [{ publishedAt: 'desc' }, { id: 'desc' }];
         }
         const usePageOffset = Boolean(page && page > 0);
         const [items, total] = await Promise.all([
@@ -182,6 +182,53 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
             page: usePageOffset ? page : undefined,
             totalPages: Math.max(1, Math.ceil(total / limit)),
             hasMore,
+        };
+    }
+    async recentForNews(tenantId, limit = 1000) {
+        const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+        return this.prisma.article.findMany({
+            where: {
+                tenantId,
+                status: client_1.ArticleStatus.PUBLISHED,
+                publishedAt: { gte: twoDaysAgo, not: null },
+            },
+            orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
+            take: Math.min(1000, Math.max(1, limit)),
+            select: {
+                slug: true,
+                title: true,
+                type: true,
+                publishedAt: true,
+                updatedAt: true,
+            },
+        });
+    }
+    async sitemap(tenantId, page, perPage) {
+        const where = {
+            tenantId,
+            status: client_1.ArticleStatus.PUBLISHED,
+        };
+        const [total, items] = await Promise.all([
+            this.prisma.article.count({ where }),
+            this.prisma.article.findMany({
+                where,
+                orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
+                skip: (page - 1) * perPage,
+                take: perPage,
+                select: {
+                    slug: true,
+                    type: true,
+                    publishedAt: true,
+                    updatedAt: true,
+                },
+            }),
+        ]);
+        return {
+            items,
+            page,
+            perPage,
+            total,
+            totalPages: Math.max(1, Math.ceil(total / perPage)),
         };
     }
     async archiveFacets(tenantId) {
@@ -708,7 +755,7 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
                 status: client_1.ArticleStatus.PUBLISHED,
                 categories: { some: { category: { slug: categorySlug } } },
             },
-            orderBy: { publishedAt: 'desc' },
+            orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
             take: limit + 1,
             ...(cursor && {
                 cursor: { id: cursor },

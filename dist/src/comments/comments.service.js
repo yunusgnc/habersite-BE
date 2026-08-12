@@ -50,7 +50,7 @@ let CommentsService = class CommentsService {
                     skip: 1,
                     cursor: { id: cursor },
                 }),
-                orderBy: { createdAt: 'desc' },
+                orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
             }),
             this.prisma.comment.count({ where }),
         ]);

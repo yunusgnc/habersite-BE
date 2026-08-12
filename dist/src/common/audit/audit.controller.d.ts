@@ -7,19 +7,19 @@ export declare class AuditController {
         items: ({
             user: {
                 id: string;
-                name: string;
                 email: string;
+                name: string;
             } | null;
         } & {
             id: string;
-            createdAt: Date;
             tenantId: string;
-            ipAddress: string | null;
+            createdAt: Date;
             userId: string | null;
             action: string;
             entity: string;
             entityId: string | null;
             changes: import("@prisma/client/runtime/client").JsonValue | null;
+            ipAddress: string | null;
         })[];
         nextCursor: string | null;
         total: number;

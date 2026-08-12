@@ -31,7 +31,7 @@ let GalleriesService = class GalleriesService {
             where.title = { contains: search, mode: 'insensitive' };
         const items = await this.prisma.gallery.findMany({
             where,
-            orderBy: { createdAt: 'desc' },
+            orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
             take: limit + 1,
             ...(cursor && {
                 cursor: { id: cursor },

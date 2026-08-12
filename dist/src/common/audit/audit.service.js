@@ -43,7 +43,7 @@ let AuditService = AuditService_1 = class AuditService {
         const [items, total] = await Promise.all([
             this.prisma.auditLog.findMany({
                 where,
-                orderBy: { createdAt: 'desc' },
+                orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
                 take: limit + 1,
                 ...(params.cursor && { cursor: { id: params.cursor }, skip: 1 }),
                 include: {

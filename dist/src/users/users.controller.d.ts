@@ -6,26 +6,26 @@ export declare class UsersController {
     findAll(tenantId: string, cursor?: string, limit?: string, search?: string, role?: string): Promise<{
         items: {
             id: string;
-            name: string;
-            active: boolean;
-            createdAt: Date;
             email: string;
+            name: string;
             avatar: string | null;
             role: import("@prisma/client").$Enums.UserRole;
+            active: boolean;
             lastLoginAt: Date | null;
+            createdAt: Date;
         }[];
         nextCursor: string | undefined;
         total: number;
     }>;
     findById(tenantId: string, id: string): Promise<{
         id: string;
-        name: string;
-        active: boolean;
-        createdAt: Date;
         email: string;
+        name: string;
         avatar: string | null;
         role: import("@prisma/client").$Enums.UserRole;
+        active: boolean;
         lastLoginAt: Date | null;
+        createdAt: Date;
     }>;
     create(tenantId: string, body: {
         name: string;
@@ -35,13 +35,13 @@ export declare class UsersController {
         active?: boolean;
     }): Promise<{
         id: string;
-        name: string;
-        active: boolean;
-        createdAt: Date;
         email: string;
+        name: string;
         avatar: string | null;
         role: import("@prisma/client").$Enums.UserRole;
+        active: boolean;
         lastLoginAt: Date | null;
+        createdAt: Date;
     }>;
     update(tenantId: string, id: string, body: {
         name?: string;
@@ -51,20 +51,20 @@ export declare class UsersController {
         active?: boolean;
     }): Promise<{
         id: string;
-        name: string;
-        active: boolean;
-        createdAt: Date;
         email: string;
+        name: string;
         avatar: string | null;
         role: import("@prisma/client").$Enums.UserRole;
+        active: boolean;
         lastLoginAt: Date | null;
+        createdAt: Date;
     }>;
     updateRole(tenantId: string, id: string, body: {
         role: UserRole;
     }): Promise<{
         id: string;
-        name: string;
         email: string;
+        name: string;
         role: import("@prisma/client").$Enums.UserRole;
     }>;
     toggleActive(tenantId: string, id: string): Promise<{
@@ -74,18 +74,18 @@ export declare class UsersController {
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
-        name: string;
-        active: boolean;
-        createdAt: Date;
-        updatedAt: Date;
         tenantId: string;
         email: string;
+        username: string | null;
         passwordHash: string;
+        name: string;
         avatar: string | null;
         role: import("@prisma/client").$Enums.UserRole;
+        active: boolean;
         lastLoginAt: Date | null;
-        username: string | null;
         passwordResetTokenHash: string | null;
         passwordResetExpiresAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
 }

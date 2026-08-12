@@ -31,7 +31,7 @@ let VideosService = class VideosService {
             where.title = { contains: search, mode: 'insensitive' };
         const items = await this.prisma.video.findMany({
             where,
-            orderBy: { createdAt: 'desc' },
+            orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
             take: limit + 1,
             ...(cursor && {
                 cursor: { id: cursor },

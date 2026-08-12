@@ -17,17 +17,32 @@ const common_1 = require("@nestjs/common");
 const tenant_guard_1 = require("../common/guards/tenant.guard");
 const tenant_decorator_1 = require("../common/decorators/tenant.decorator");
 const settings_service_1 = require("./settings.service");
+const prisma_service_1 = require("../prisma/prisma.service");
 const SENSITIVE_KEYS = ['oneSignalAppId', 'appStoreUrl', 'playStoreUrl'];
 let PublicSettingsController = class PublicSettingsController {
     settingsService;
-    constructor(settingsService) {
+    prisma;
+    constructor(settingsService, prisma) {
         this.settingsService = settingsService;
+        this.prisma = prisma;
     }
     async getPublic(tenantId) {
-        const all = await this.settingsService.getAll(tenantId);
+        const [all, tenant] = await Promise.all([
+            this.settingsService.getAll(tenantId),
+            this.prisma.tenant.findUnique({
+                where: { id: tenantId },
+                select: { name: true, locale: true, timezone: true },
+            }),
+        ]);
         for (const key of SENSITIVE_KEYS) {
             delete all[key];
         }
+        if (!all.siteTitle && tenant?.name)
+            all.siteTitle = tenant.name;
+        if (tenant?.locale)
+            all.locale = tenant.locale;
+        if (tenant?.timezone)
+            all.timezone = tenant.timezone;
         return all;
     }
 };
@@ -42,6 +57,7 @@ __decorate([
 exports.PublicSettingsController = PublicSettingsController = __decorate([
     (0, common_1.Controller)('api/public/settings'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),
-    __metadata("design:paramtypes", [settings_service_1.SettingsService])
+    __metadata("design:paramtypes", [settings_service_1.SettingsService,
+        prisma_service_1.PrismaService])
 ], PublicSettingsController);
 //# sourceMappingURL=public-settings.controller.js.map

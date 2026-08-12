@@ -18,36 +18,36 @@ export declare class OfficialNoticesService {
     findPublic(tenantId: string, query?: PublicNoticeQuery): Promise<{
         data: {
             id: string;
-            slug: string;
             title: string;
+            slug: string;
             publishedAt: Date;
             viewCount: number;
-            expiresAt: Date | null;
-            summary: string | null;
             attachments: Prisma.JsonValue;
             noticeType: import("@prisma/client").$Enums.NoticeType;
             institution: string;
             referenceNo: string | null;
+            summary: string | null;
+            expiresAt: Date | null;
         }[];
         nextCursor: string | null;
     }>;
     findBySlug(tenantId: string, slug: string): Promise<{
         id: string;
-        slug: string;
+        tenantId: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
-        title: string;
         content: string;
+        title: string;
+        slug: string;
         publishedAt: Date;
         viewCount: number;
-        expiresAt: Date | null;
-        summary: string | null;
         attachments: Prisma.JsonValue;
         noticeType: import("@prisma/client").$Enums.NoticeType;
         institution: string;
         referenceNo: string | null;
+        summary: string | null;
+        expiresAt: Date | null;
     }>;
     institutions(tenantId: string): Promise<{
         name: string;
@@ -61,41 +61,41 @@ export declare class OfficialNoticesService {
     }): Promise<{
         data: {
             id: string;
-            slug: string;
+            tenantId: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
-            tenantId: string;
-            title: string;
             content: string;
+            title: string;
+            slug: string;
             publishedAt: Date;
             viewCount: number;
-            expiresAt: Date | null;
-            summary: string | null;
             attachments: Prisma.JsonValue;
             noticeType: import("@prisma/client").$Enums.NoticeType;
             institution: string;
             referenceNo: string | null;
+            summary: string | null;
+            expiresAt: Date | null;
         }[];
         nextCursor: string | null;
     }>;
     findOne(tenantId: string, id: string): Promise<{
         id: string;
-        slug: string;
+        tenantId: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
-        title: string;
         content: string;
+        title: string;
+        slug: string;
         publishedAt: Date;
         viewCount: number;
-        expiresAt: Date | null;
-        summary: string | null;
         attachments: Prisma.JsonValue;
         noticeType: import("@prisma/client").$Enums.NoticeType;
         institution: string;
         referenceNo: string | null;
+        summary: string | null;
+        expiresAt: Date | null;
     }>;
     stats(tenantId: string): Promise<{
         total: number;
@@ -104,39 +104,39 @@ export declare class OfficialNoticesService {
     }>;
     create(tenantId: string, dto: CreateOfficialNoticeDto): Promise<{
         id: string;
-        slug: string;
+        tenantId: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
-        title: string;
         content: string;
+        title: string;
+        slug: string;
         publishedAt: Date;
         viewCount: number;
-        expiresAt: Date | null;
-        summary: string | null;
         attachments: Prisma.JsonValue;
         noticeType: import("@prisma/client").$Enums.NoticeType;
         institution: string;
         referenceNo: string | null;
+        summary: string | null;
+        expiresAt: Date | null;
     }>;
     update(tenantId: string, id: string, dto: UpdateOfficialNoticeDto): Promise<{
         id: string;
-        slug: string;
+        tenantId: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
-        title: string;
         content: string;
+        title: string;
+        slug: string;
         publishedAt: Date;
         viewCount: number;
-        expiresAt: Date | null;
-        summary: string | null;
         attachments: Prisma.JsonValue;
         noticeType: import("@prisma/client").$Enums.NoticeType;
         institution: string;
         referenceNo: string | null;
+        summary: string | null;
+        expiresAt: Date | null;
     }>;
     remove(tenantId: string, id: string): Promise<{
         deleted: boolean;

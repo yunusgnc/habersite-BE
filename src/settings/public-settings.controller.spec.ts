@@ -6,17 +6,20 @@ import { PrismaService } from '../prisma/prisma.service';
 describe('PublicSettingsController', () => {
   let controller: PublicSettingsController;
   let settingsService: jest.Mocked<SettingsService>;
+  let tenantFindUnique: jest.Mock;
 
   beforeEach(async () => {
-    const mockSettingsService = {
-      getAll: jest.fn(),
-    };
+    const mockSettingsService = { getAll: jest.fn() };
+    tenantFindUnique = jest
+      .fn()
+      .mockResolvedValue({ name: 'Test Tenant', locale: 'tr', timezone: 'Europe/Istanbul' });
+    const mockPrisma = { tenant: { findUnique: tenantFindUnique } };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [PublicSettingsController],
       providers: [
         { provide: SettingsService, useValue: mockSettingsService },
-        { provide: PrismaService, useValue: {} },
+        { provide: PrismaService, useValue: mockPrisma },
       ],
     }).compile();
 
@@ -29,7 +32,7 @@ describe('PublicSettingsController', () => {
   });
 
   describe('getPublic', () => {
-    it('returns all settings for the tenant', async () => {
+    it('returns all settings and injects tenant meta', async () => {
       settingsService.getAll.mockResolvedValue({
         siteTitle: 'Test Site',
         primaryColor: '#ff0000',
@@ -39,10 +42,12 @@ describe('PublicSettingsController', () => {
       const result = await controller.getPublic('tenant-1');
 
       expect(settingsService.getAll).toHaveBeenCalledWith('tenant-1');
-      expect(result).toEqual({
+      expect(result).toMatchObject({
         siteTitle: 'Test Site',
         primaryColor: '#ff0000',
         contactEmail: 'test@test.com',
+        locale: 'tr',
+        timezone: 'Europe/Istanbul',
       });
     });
 
@@ -64,20 +69,28 @@ describe('PublicSettingsController', () => {
       expect(result).not.toHaveProperty('playStoreUrl');
     });
 
-    it('returns empty object when no settings exist', async () => {
+    it('falls back to tenant name when siteTitle is empty', async () => {
       settingsService.getAll.mockResolvedValue({});
-
       const result = await controller.getPublic('tenant-1');
+      // Beyaz etikette bir müşteriye başka müşterinin markasını yansıtmamak
+      // için siteTitle boşsa tenant adına düşülür.
+      expect(result.siteTitle).toBe('Test Tenant');
+    });
 
-      expect(result).toEqual({});
+    it('keeps configured siteTitle even when tenant name differs', async () => {
+      settingsService.getAll.mockResolvedValue({ siteTitle: 'Elle Girilmiş Başlık' });
+      const result = await controller.getPublic('tenant-1');
+      expect(result.siteTitle).toBe('Elle Girilmiş Başlık');
     });
 
     it('passes the correct tenant ID to service', async () => {
       settingsService.getAll.mockResolvedValue({});
-
       await controller.getPublic('my-tenant-id');
-
       expect(settingsService.getAll).toHaveBeenCalledWith('my-tenant-id');
+      expect(tenantFindUnique).toHaveBeenCalledWith({
+        where: { id: 'my-tenant-id' },
+        select: { name: true, locale: true, timezone: true },
+      });
     });
   });
 });

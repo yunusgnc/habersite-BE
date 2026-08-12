@@ -238,6 +238,67 @@ export class ArticlesService {
    * Arşiv sayfasının takvim gezintisi için yıl/ay bazlı yayın sayıları.
    * Prisma groupBy tarih kırpma (date_trunc) desteklemediği için raw SQL.
    */
+  /**
+   * Google News sitemap'i ve RSS feed için son 48 saatteki haberler.
+   *
+   * Google News en fazla 1000 kayıt kabul ediyor ve yalnızca 2 gün önceye
+   * kadar bakıyor — daha eski haberi görürse geçersiz sayıp `sitemap-news`
+   * dosyasını hepten kabul etmiyor. Bu yüzden aralığı sabit 48 saat.
+   */
+  async recentForNews(tenantId: string, limit = 1000) {
+    const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    return this.prisma.article.findMany({
+      where: {
+        tenantId,
+        status: ArticleStatus.PUBLISHED,
+        publishedAt: { gte: twoDaysAgo, not: null },
+      },
+      orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
+      take: Math.min(1000, Math.max(1, limit)),
+      select: {
+        slug: true,
+        title: true,
+        type: true,
+        publishedAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  /**
+   * Sitemap üretimi için hafif liste. Deterministik sıra ((publishedAt, id))
+   * paginasyon sırasında satır kaymamasını garanti eder — 42 binin üzerinde
+   * kayıt gezileceği için bu şart. Yalnızca slug + tarih döner.
+   */
+  async sitemap(tenantId: string, page: number, perPage: number) {
+    const where = {
+      tenantId,
+      status: ArticleStatus.PUBLISHED,
+    } as const;
+    const [total, items] = await Promise.all([
+      this.prisma.article.count({ where }),
+      this.prisma.article.findMany({
+        where,
+        orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
+        skip: (page - 1) * perPage,
+        take: perPage,
+        select: {
+          slug: true,
+          type: true,
+          publishedAt: true,
+          updatedAt: true,
+        },
+      }),
+    ]);
+    return {
+      items,
+      page,
+      perPage,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / perPage)),
+    };
+  }
+
   async archiveFacets(tenantId: string) {
     const rows = await this.prisma.$queryRaw<
       Array<{ year: number; month: number; count: bigint }>
