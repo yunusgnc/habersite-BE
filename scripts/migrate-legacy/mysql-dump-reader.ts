@@ -13,7 +13,36 @@
  *  - Sayılar → number, geri kalan → string
  */
 import * as fs from 'fs';
-import * as readline from 'readline';
+import { StringDecoder } from 'string_decoder';
+
+/**
+ * Dosyayı satır satır verir — `readline` kullanmadan.
+ *
+ * Neden kendi ayırıcımız: bu dump'ta tek bir INSERT satırı 1 MB'ı aşıyor
+ * (extended insert). `readline` bu boyutta satırlarda Node sürümüne göre
+ * farklı davranıyor; ölçümle doğrulandı — aynı dosyada Node 22 doğru okurken
+ * Node 24 `haberler` tablosundan 37 satır düşürüyordu (41.976 yerine 41.939).
+ * Aktarımın çalıştığı Node sürümüne göre veri kaybetmesi kabul edilemez.
+ *
+ * Burada `\n` sınırlarını kendimiz buluyor ve kalanı taşıyoruz; davranış
+ * sürümden bağımsız. Satır sonundaki `\r` atılıyor (CRLF dump'ları).
+ */
+async function* readLines(dumpPath: string): AsyncGenerator<string> {
+  const stream = fs.createReadStream(dumpPath);
+  const decoder = new StringDecoder('utf8');
+  let rest = '';
+  for await (const chunk of stream) {
+    rest += decoder.write(chunk as Buffer);
+    let nl: number;
+    while ((nl = rest.indexOf('\n')) !== -1) {
+      const line = rest.slice(0, nl);
+      rest = rest.slice(nl + 1);
+      yield line.endsWith('\r') ? line.slice(0, -1) : line;
+    }
+  }
+  rest += decoder.end();
+  if (rest.length) yield rest.endsWith('\r') ? rest.slice(0, -1) : rest;
+}
 
 export type Row = Record<string, string | number | null>;
 
@@ -22,15 +51,11 @@ export async function readColumnOrder(
   dumpPath: string,
 ): Promise<Map<string, string[]>> {
   const result = new Map<string, string[]>();
-  const rl = readline.createInterface({
-    input: fs.createReadStream(dumpPath, { encoding: 'utf8' }),
-    crlfDelay: Infinity,
-  });
 
   let current: string | null = null;
   let cols: string[] = [];
 
-  for await (const line of rl) {
+  for await (const line of readLines(dumpPath)) {
     const create = line.match(/^CREATE TABLE `([^`]+)`/);
     if (create) {
       current = create[1];
@@ -51,7 +76,6 @@ export async function readColumnOrder(
     if (col) cols.push(col[1]);
   }
 
-  rl.close();
   return result;
 }
 
@@ -94,13 +118,26 @@ function parseValueGroups(segment: string): (string | number | null)[][] {
           // Kaçış dizisi — bir sonraki karakteri yorumla
           const next = segment[i + 1];
           switch (next) {
-            case 'n': buf += '\n'; break;
-            case 'r': buf += '\r'; break;
-            case 't': buf += '\t'; break;
-            case '0': buf += '\0'; break;
-            case 'b': buf += '\b'; break;
-            case 'Z': buf += '\x1a'; break;
-            default: buf += next; // \' \" \\ ve diğerleri birebir
+            case 'n':
+              buf += '\n';
+              break;
+            case 'r':
+              buf += '\r';
+              break;
+            case 't':
+              buf += '\t';
+              break;
+            case '0':
+              buf += '\0';
+              break;
+            case 'b':
+              buf += '\b';
+              break;
+            case 'Z':
+              buf += '\x1a';
+              break;
+            default:
+              buf += next; // \' \" \\ ve diğerleri birebir
           }
           i += 2;
           continue;
@@ -172,12 +209,7 @@ export async function* readRows(
   tables: Set<string>,
   columnOrder: Map<string, string[]>,
 ): AsyncGenerator<{ table: string; row: Row }> {
-  const rl = readline.createInterface({
-    input: fs.createReadStream(dumpPath, { encoding: 'utf8' }),
-    crlfDelay: Infinity,
-  });
-
-  for await (const line of rl) {
+  for await (const line of readLines(dumpPath)) {
     if (!line.startsWith('INSERT INTO')) continue;
 
     const m = line.match(/^INSERT INTO `([^`]+)` VALUES /);
@@ -198,8 +230,6 @@ export async function* readRows(
       yield { table, row };
     }
   }
-
-  rl.close();
 }
 
 /** Yardımcılar — dump değerleri tip olarak gevşek geldiği için. */
