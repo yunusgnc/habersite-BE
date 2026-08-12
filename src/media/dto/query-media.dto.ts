@@ -17,4 +17,9 @@ export class QueryMediaDto {
   @IsEnum(MediaType)
   @IsOptional()
   type?: MediaType;
+
+  /** Dosya adı, başlık, alt metin veya adreste arar. */
+  @IsString()
+  @IsOptional()
+  search?: string;
 }

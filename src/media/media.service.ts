@@ -67,6 +67,19 @@ export class MediaService {
     if (query.type) {
       where.type = query.type;
     }
+    // Arama sunucu tarafında yapılmalı: panel yalnızca 30'luk sayfalar
+    // yüklüyor, istemcide filtrelemek 41 bin dosyalık bir arşivde yüklenmemiş
+    // kayıtları hiç göremiyordu.
+    const q = query.search?.trim();
+    if (q) {
+      where.OR = [
+        { originalName: { contains: q, mode: 'insensitive' } },
+        { filename: { contains: q, mode: 'insensitive' } },
+        { title: { contains: q, mode: 'insensitive' } },
+        { alt: { contains: q, mode: 'insensitive' } },
+        { url: { contains: q, mode: 'insensitive' } },
+      ];
+    }
 
     const [items, total] = await Promise.all([
       this.prisma.media.findMany({
