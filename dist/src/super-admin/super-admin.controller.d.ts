@@ -11,16 +11,18 @@ export declare class SuperAdminController {
         articles: number;
     }>;
     findAll(): Promise<{
+        active: boolean;
         id: string;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         mediaBaseUrl: string | null;
         theme: string;
+        locale: string;
+        timezone: string;
         plan: string;
-        active: boolean;
         createdAt: Date;
         _count: {
             users: number;
@@ -30,11 +32,12 @@ export declare class SuperAdminController {
         };
     }[]>;
     findOne(id: string): Promise<{
+        active: boolean;
         id: string;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         mediaBaseUrl: string | null;
@@ -42,12 +45,11 @@ export declare class SuperAdminController {
         locale: string;
         timezone: string;
         plan: string;
-        active: boolean;
         createdAt: Date;
         users: {
+            active: boolean;
             id: string;
             name: string;
-            active: boolean;
             email: string;
             username: string | null;
             role: import("@prisma/client").$Enums.UserRole;
@@ -61,11 +63,12 @@ export declare class SuperAdminController {
         };
     }>;
     create(dto: CreateTenantDto): Promise<{
+        active: boolean;
         id: string;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         mediaBaseUrl: string | null;
@@ -73,12 +76,11 @@ export declare class SuperAdminController {
         locale: string;
         timezone: string;
         plan: string;
-        active: boolean;
         createdAt: Date;
         users: {
+            active: boolean;
             id: string;
             name: string;
-            active: boolean;
             email: string;
             username: string | null;
             role: import("@prisma/client").$Enums.UserRole;
@@ -92,11 +94,12 @@ export declare class SuperAdminController {
         };
     }>;
     update(id: string, dto: UpdateTenantDto): Promise<{
+        active: boolean;
         id: string;
+        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
-        name: string;
         logo: string | null;
         favicon: string | null;
         mediaBaseUrl: string | null;
@@ -104,12 +107,11 @@ export declare class SuperAdminController {
         locale: string;
         timezone: string;
         plan: string;
-        active: boolean;
         createdAt: Date;
         users: {
+            active: boolean;
             id: string;
             name: string;
-            active: boolean;
             email: string;
             username: string | null;
             role: import("@prisma/client").$Enums.UserRole;

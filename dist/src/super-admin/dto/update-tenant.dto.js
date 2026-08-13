@@ -21,6 +21,8 @@ class UpdateTenantDto {
     mediaBaseUrl;
     theme;
     plan;
+    locale;
+    timezone;
     active;
 }
 exports.UpdateTenantDto = UpdateTenantDto;
@@ -72,6 +74,19 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], UpdateTenantDto.prototype, "plan", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.Matches)(/^[a-z]{2}(?:-[A-Z]{2})?$/, {
+        message: 'locale ISO 639-1 formatında olmalı (ör. "tr", "en", "tr-TR")',
+    }),
+    __metadata("design:type", String)
+], UpdateTenantDto.prototype, "locale", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateTenantDto.prototype, "timezone", void 0);
 __decorate([
     (0, class_validator_1.IsBoolean)(),
     (0, class_validator_1.IsOptional)(),

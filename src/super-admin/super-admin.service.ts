@@ -21,6 +21,10 @@ const TENANT_LIST_SELECT = {
   mediaBaseUrl: true,
   plan: true,
   theme: true,
+  // locale/timezone panelde düzenlenebiliyor; listede de göründüğünden
+  // düzenleme formu tenant'ın kayıtlı değerini önceden dolduruyor.
+  locale: true,
+  timezone: true,
   active: true,
   createdAt: true,
   _count: {
@@ -316,6 +320,8 @@ export class SuperAdminService {
           }),
           ...(dto.theme !== undefined && { theme: dto.theme }),
           ...(dto.plan !== undefined && { plan: dto.plan }),
+          ...(dto.locale !== undefined && { locale: dto.locale }),
+          ...(dto.timezone !== undefined && { timezone: dto.timezone }),
           ...(dto.active !== undefined && { active: dto.active }),
         },
       });

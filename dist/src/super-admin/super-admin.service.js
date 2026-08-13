@@ -58,6 +58,8 @@ const TENANT_LIST_SELECT = {
     mediaBaseUrl: true,
     plan: true,
     theme: true,
+    locale: true,
+    timezone: true,
     active: true,
     createdAt: true,
     _count: {
@@ -324,6 +326,8 @@ let SuperAdminService = SuperAdminService_1 = class SuperAdminService {
                     }),
                     ...(dto.theme !== undefined && { theme: dto.theme }),
                     ...(dto.plan !== undefined && { plan: dto.plan }),
+                    ...(dto.locale !== undefined && { locale: dto.locale }),
+                    ...(dto.timezone !== undefined && { timezone: dto.timezone }),
                     ...(dto.active !== undefined && { active: dto.active }),
                 },
             });

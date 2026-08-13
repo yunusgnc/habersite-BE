@@ -8,6 +8,8 @@ export declare class UpdateTenantDto {
     mediaBaseUrl?: string | null;
     theme?: string;
     plan?: string;
+    locale?: string;
+    timezone?: string;
     active?: boolean;
 }
 export declare class ResetAdminPasswordDto {

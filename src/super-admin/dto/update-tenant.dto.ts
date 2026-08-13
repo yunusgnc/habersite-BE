@@ -41,6 +41,25 @@ export class UpdateTenantDto {
   @IsOptional()
   plan?: string;
 
+  /**
+   * ISO 639-1 iki harflik dil kodu. `html lang`, JSON-LD ve Google News
+   * sitemap için kritik — yanlış kod SEO hataları verir.
+   */
+  @IsString()
+  @IsOptional()
+  @Matches(/^[a-z]{2}(?:-[A-Z]{2})?$/, {
+    message: 'locale ISO 639-1 formatında olmalı (ör. "tr", "en", "tr-TR")',
+  })
+  locale?: string;
+
+  /**
+   * IANA timezone (ör. "Europe/Istanbul"). Tarih/saat gösteriminde ve
+   * cron zamanlamasında kullanılır.
+   */
+  @IsString()
+  @IsOptional()
+  timezone?: string;
+
   @IsBoolean()
   @IsOptional()
   active?: boolean;
