@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PersonProfilesController = void 0;
+const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const tenant_guard_1 = require("../common/guards/tenant.guard");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
@@ -51,8 +52,12 @@ let PersonProfilesController = class PersonProfilesController {
 };
 exports.PersonProfilesController = PersonProfilesController;
 __decorate([
+    openapi.ApiQuery({ name: "cursor", required: false }),
+    openapi.ApiQuery({ name: "limit", required: false }),
+    openapi.ApiQuery({ name: "search", required: false }),
     (0, common_1.Get)(),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('cursor')),
     __param(2, (0, common_1.Query)('limit')),
@@ -64,6 +69,7 @@ __decorate([
 __decorate([
     (0, common_1.Get)('slug/:slug'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('slug')),
     __metadata("design:type", Function),
@@ -73,6 +79,7 @@ __decorate([
 __decorate([
     (0, common_1.Get)(':id'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -83,6 +90,7 @@ __decorate([
     (0, common_1.Post)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN', 'EDITOR'),
+    openapi.ApiResponse({ status: 201 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -93,6 +101,7 @@ __decorate([
     (0, common_1.Patch)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN', 'EDITOR'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
@@ -104,6 +113,7 @@ __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),

@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = require("@nestjs/core");
 const common_1 = require("@nestjs/common");
 const helmet_1 = __importDefault(require("helmet"));
+const swagger_1 = require("@nestjs/swagger");
 const app_module_1 = require("./app.module");
 const prisma_service_1 = require("./prisma/prisma.service");
 async function bootstrap() {
@@ -73,6 +74,44 @@ async function bootstrap() {
         },
         credentials: true,
     });
+    const isProd = process.env.NODE_ENV === 'production';
+    const swaggerUser = process.env.SWAGGER_USER;
+    const swaggerPass = process.env.SWAGGER_PASSWORD;
+    const swaggerEnabled = !isProd || (swaggerUser && swaggerPass);
+    if (swaggerEnabled) {
+        if (isProd && swaggerUser && swaggerPass) {
+            app.use((req, res, next) => {
+                if (!req.path.startsWith('/api/docs'))
+                    return next();
+                const header = req.headers.authorization ?? '';
+                if (header.startsWith('Basic ')) {
+                    const decoded = Buffer.from(header.slice(6), 'base64').toString('utf-8');
+                    const [u, p] = decoded.split(':');
+                    if (u === swaggerUser && p === swaggerPass)
+                        return next();
+                }
+                res.setHeader('WWW-Authenticate', 'Basic realm="API Docs"');
+                res.status(401).send('Authentication required');
+            });
+        }
+        const swaggerConfig = new swagger_1.DocumentBuilder()
+            .setTitle('HaberSite API')
+            .setDescription('Çok-kiracılı haber CMS. Tüm endpoint\'ler tenant header ile çağrılır ' +
+            '(`x-tenant-id` veya `x-tenant-domain`).')
+            .setVersion('1.0')
+            .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' })
+            .addApiKey({ type: 'apiKey', name: 'x-tenant-domain', in: 'header' }, 'tenant-domain')
+            .addApiKey({ type: 'apiKey', name: 'x-tenant-id', in: 'header' }, 'tenant-id')
+            .build();
+        const document = swagger_1.SwaggerModule.createDocument(app, swaggerConfig);
+        swagger_1.SwaggerModule.setup('api/docs', app, document, {
+            swaggerOptions: { persistAuthorization: true },
+        });
+        console.log(`[Swagger] /api/docs açık${isProd ? ' (Basic Auth korumalı)' : ' (dev — public)'}`);
+    }
+    else {
+        console.log('[Swagger] devre dışı — prod\'da SWAGGER_USER/PASSWORD yok');
+    }
     const port = process.env.PORT ?? 4000;
     await app.listen(port);
     console.log(`HaberSite API running on http://localhost:${port}`);

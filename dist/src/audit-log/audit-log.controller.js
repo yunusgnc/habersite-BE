@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuditLogController = void 0;
+const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const audit_log_service_1 = require("./audit-log.service");
 const tenant_guard_1 = require("../common/guards/tenant.guard");
@@ -34,7 +35,11 @@ let AuditLogController = class AuditLogController {
 };
 exports.AuditLogController = AuditLogController;
 __decorate([
+    openapi.ApiQuery({ name: "cursor", required: false }),
+    openapi.ApiQuery({ name: "limit", required: false }),
+    openapi.ApiQuery({ name: "entity", required: false }),
     (0, common_1.Get)(),
+    openapi.ApiResponse({ status: 200, type: [Object] }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('cursor')),
     __param(2, (0, common_1.Query)('limit')),

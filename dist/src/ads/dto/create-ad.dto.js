@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateAdDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const client_1 = require("@prisma/client");
@@ -24,6 +25,9 @@ class CreateAdDto {
     startsAt;
     endsAt;
     sortOrder;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { name: { required: true, type: () => String }, position: { required: true, enum: ["HEADER_TOP", "FOOTER_BOTTOM", "SITE_TOWER_LEFT", "SITE_TOWER_RIGHT", "HOME_SLIDER_UNDER", "HOME_MIDDLE_1", "HOME_MIDDLE_2", "HOME_MIDDLE_3", "HOME_MIDDLE_4", "HOME_BOTTOM", "CATEGORY_MIDDLE_1", "CATEGORY_MIDDLE_2", "ARTICLE_TOP", "ARTICLE_IN_TEXT_1", "ARTICLE_BOTTOM", "ARTICLE_SIDEBAR_1", "ARTICLE_SIDEBAR_2", "VIDEO_LIST_TOP", "VIDEO_LIST_BOTTOM", "VIDEO_DETAIL_TOP"] }, code: { required: false, type: () => String }, imageUrl: { required: false, type: () => String }, mobileImageUrl: { required: false, type: () => String }, targetUrl: { required: false, type: () => String }, active: { required: false, type: () => Boolean }, startsAt: { required: false, type: () => String }, endsAt: { required: false, type: () => String }, sortOrder: { required: false, type: () => Number } };
+    }
 }
 exports.CreateAdDto = CreateAdDto;
 __decorate([

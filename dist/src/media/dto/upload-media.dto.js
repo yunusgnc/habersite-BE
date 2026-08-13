@@ -10,11 +10,15 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UploadMediaDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class UploadMediaDto {
     title;
     alt;
     credit;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { title: { required: false, type: () => String }, alt: { required: false, type: () => String }, credit: { required: false, type: () => String } };
+    }
 }
 exports.UploadMediaDto = UploadMediaDto;
 __decorate([

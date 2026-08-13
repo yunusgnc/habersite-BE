@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreatePersonProfileDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class CreatePersonProfileDto {
     name;
@@ -18,6 +19,9 @@ class CreatePersonProfileDto {
     birthDate;
     title;
     social;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { name: { required: true, type: () => String }, bio: { required: false, type: () => String }, image: { required: false, type: () => String }, birthDate: { required: false, type: () => String }, title: { required: false, type: () => String }, social: { required: false, type: "object", additionalProperties: true } };
+    }
 }
 exports.CreatePersonProfileDto = CreatePersonProfileDto;
 __decorate([

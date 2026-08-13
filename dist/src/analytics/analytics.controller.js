@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AnalyticsController = void 0;
+const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const analytics_service_1 = require("./analytics.service");
 const reports_service_1 = require("./reports.service");
@@ -96,12 +97,18 @@ let AnalyticsController = class AnalyticsController {
 exports.AnalyticsController = AnalyticsController;
 __decorate([
     (0, common_1.Get)('reports/meta'),
+    openapi.ApiResponse({ status: 200 }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], AnalyticsController.prototype, "reportsMeta", null);
 __decorate([
+    openapi.ApiQuery({ name: "search", required: false }),
+    openapi.ApiQuery({ name: "from", required: false }),
+    openapi.ApiQuery({ name: "to", required: false }),
+    openapi.ApiQuery({ name: "status", required: false }),
     (0, common_1.Get)('reports/:type'),
+    openapi.ApiResponse({ status: 200, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('type')),
     __param(2, (0, common_1.Query)('search')),
@@ -113,7 +120,13 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], AnalyticsController.prototype, "runReport", null);
 __decorate([
+    openapi.ApiQuery({ name: "search", required: false }),
+    openapi.ApiQuery({ name: "from", required: false }),
+    openapi.ApiQuery({ name: "to", required: false }),
+    openapi.ApiQuery({ name: "status", required: false }),
+    openapi.ApiQuery({ name: "columns", required: false }),
     (0, common_1.Get)('reports/:type/export.csv'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('type')),
     __param(2, (0, common_1.Query)('search')),
@@ -127,7 +140,9 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "exportReport", null);
 __decorate([
+    openapi.ApiQuery({ name: "range", required: false }),
     (0, common_1.Get)('overview'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('range')),
     __metadata("design:type", Function),
@@ -135,7 +150,10 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], AnalyticsController.prototype, "overview", null);
 __decorate([
+    openapi.ApiQuery({ name: "range", required: false }),
+    openapi.ApiQuery({ name: "limit", required: false }),
     (0, common_1.Get)('top-articles'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('range')),
     __param(2, (0, common_1.Query)('limit')),
@@ -145,6 +163,7 @@ __decorate([
 ], AnalyticsController.prototype, "topArticles", null);
 __decorate([
     (0, common_1.Get)('by-category'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -152,6 +171,7 @@ __decorate([
 ], AnalyticsController.prototype, "byCategory", null);
 __decorate([
     (0, common_1.Get)('by-author'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -159,6 +179,7 @@ __decorate([
 ], AnalyticsController.prototype, "byAuthor", null);
 __decorate([
     (0, common_1.Get)('by-status'),
+    openapi.ApiResponse({ status: 200, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -166,13 +187,16 @@ __decorate([
 ], AnalyticsController.prototype, "byStatus", null);
 __decorate([
     (0, common_1.Get)('comment-breakdown'),
+    openapi.ApiResponse({ status: 200, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], AnalyticsController.prototype, "commentBreakdown", null);
 __decorate([
+    openapi.ApiQuery({ name: "range", required: false }),
     (0, common_1.Get)('publish-timeseries'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('range')),
     __metadata("design:type", Function),
@@ -180,7 +204,10 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], AnalyticsController.prototype, "publishTimeSeries", null);
 __decorate([
+    openapi.ApiOperation({ summary: "Download a CSV export for a single report.\nGET /api/analytics/export/top-articles?range=30d" }),
+    openapi.ApiQuery({ name: "range", required: false }),
     (0, common_1.Get)('export/:report'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('report')),
     __param(2, (0, common_1.Query)('range')),

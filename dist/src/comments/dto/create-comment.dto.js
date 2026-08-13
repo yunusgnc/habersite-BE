@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateCommentDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class CreateCommentDto {
     articleId;
@@ -17,6 +18,9 @@ class CreateCommentDto {
     email;
     content;
     parentId;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { articleId: { required: true, type: () => String }, name: { required: true, type: () => String }, email: { required: true, type: () => String, format: "email" }, content: { required: true, type: () => String, minLength: 3 }, parentId: { required: false, type: () => String } };
+    }
 }
 exports.CreateCommentDto = CreateCommentDto;
 __decorate([

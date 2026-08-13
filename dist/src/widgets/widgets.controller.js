@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WidgetsController = void 0;
+const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const widgets_service_1 = require("./widgets.service");
 const widget_feeder_service_1 = require("./widget-feeder.service");
@@ -51,6 +52,7 @@ __decorate([
     (0, common_1.Post)(':type/refresh'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN'),
+    openapi.ApiResponse({ status: 201 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('type')),
     __metadata("design:type", Function),
@@ -59,6 +61,7 @@ __decorate([
 ], WidgetsController.prototype, "refresh", null);
 __decorate([
     (0, common_1.Get)(),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -68,6 +71,7 @@ __decorate([
     (0, common_1.Get)('all'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -75,6 +79,7 @@ __decorate([
 ], WidgetsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':type'),
+    openapi.ApiResponse({ status: 200, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('type')),
     __metadata("design:type", Function),
@@ -85,6 +90,7 @@ __decorate([
     (0, common_1.Put)(':type'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('type')),
     __param(2, (0, common_1.Body)()),
@@ -96,6 +102,7 @@ __decorate([
     (0, common_1.Delete)(':type'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('type')),
     __metadata("design:type", Function),

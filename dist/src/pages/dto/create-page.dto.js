@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdatePageDto = exports.CreatePageDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class CreatePageDto {
     title;
@@ -18,6 +19,9 @@ class CreatePageDto {
     seoTitle;
     seoDesc;
     published;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { title: { required: true, type: () => String, minLength: 2 }, slug: { required: false, type: () => String, description: "URL slug. If omitted, the service auto-generates one from `title`." }, content: { required: true, type: () => Object, description: "Rich content. Accepts a Tiptap HTML string OR a structured JSON object \u2014\nthe service stores whatever it receives in a `content` Json column." }, seoTitle: { required: false, type: () => String }, seoDesc: { required: false, type: () => String }, published: { required: false, type: () => Boolean } };
+    }
 }
 exports.CreatePageDto = CreatePageDto;
 __decorate([
@@ -56,6 +60,9 @@ class UpdatePageDto {
     seoTitle;
     seoDesc;
     published;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { title: { required: false, type: () => String, minLength: 2 }, slug: { required: false, type: () => String }, content: { required: false, type: () => Object }, seoTitle: { required: false, type: () => String }, seoDesc: { required: false, type: () => String }, published: { required: false, type: () => Boolean } };
+    }
 }
 exports.UpdatePageDto = UpdatePageDto;
 __decorate([

@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateVideoDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const client_1 = require("@prisma/client");
@@ -31,6 +32,9 @@ class CreateVideoDto {
     seoTitle;
     seoDesc;
     seoKeywords;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { title: { required: true, type: () => String }, headline: { required: false, type: () => String }, slug: { required: false, type: () => String }, description: { required: false, type: () => String }, coverImage: { required: false, type: () => String }, videoUrl: { required: false, type: () => String }, embedCode: { required: false, type: () => String }, source: { required: false, type: () => String, default: "upload" }, duration: { required: false, type: () => Number }, fileSize: { required: false, type: () => Number }, categoryId: { required: false, type: () => String }, status: { required: false, enum: ["DRAFT", "SCHEDULED", "PUBLISHED", "ARCHIVED", "IN_REVIEW"] }, publishedAt: { required: false, type: () => String }, sortOrder: { required: false, type: () => Number }, seoTitle: { required: false, type: () => String }, seoDesc: { required: false, type: () => String }, seoKeywords: { required: false, type: () => String } };
+    }
 }
 exports.CreateVideoDto = CreateVideoDto;
 __decorate([

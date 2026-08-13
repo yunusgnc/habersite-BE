@@ -10,11 +10,15 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BulkArticleDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const client_1 = require("@prisma/client");
 class BulkArticleDto {
     ids;
     status;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { ids: { required: true, type: () => [String] }, status: { required: true, enum: ["DRAFT", "SCHEDULED", "PUBLISHED", "ARCHIVED", "IN_REVIEW"] } };
+    }
 }
 exports.BulkArticleDto = BulkArticleDto;
 __decorate([

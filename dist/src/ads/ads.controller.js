@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdsController = void 0;
+const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const ads_service_1 = require("./ads.service");
 const create_ad_dto_1 = require("./dto/create-ad.dto");
@@ -51,8 +52,10 @@ let AdsController = class AdsController {
 };
 exports.AdsController = AdsController;
 __decorate([
+    openapi.ApiParam({ name: "position", enum: ["HEADER_TOP", "FOOTER_BOTTOM", "SITE_TOWER_LEFT", "SITE_TOWER_RIGHT", "HOME_SLIDER_UNDER", "HOME_MIDDLE_1", "HOME_MIDDLE_2", "HOME_MIDDLE_3", "HOME_MIDDLE_4", "HOME_BOTTOM", "CATEGORY_MIDDLE_1", "CATEGORY_MIDDLE_2", "ARTICLE_TOP", "ARTICLE_IN_TEXT_1", "ARTICLE_BOTTOM", "ARTICLE_SIDEBAR_1", "ARTICLE_SIDEBAR_2", "VIDEO_LIST_TOP", "VIDEO_LIST_BOTTOM", "VIDEO_DETAIL_TOP"] }),
     (0, common_1.Get)('position/:position'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('position')),
     __metadata("design:type", Function),
@@ -63,6 +66,7 @@ __decorate([
     (0, common_1.Get)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -72,6 +76,7 @@ __decorate([
     (0, common_1.Post)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN'),
+    openapi.ApiResponse({ status: 201 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -82,6 +87,7 @@ __decorate([
     (0, common_1.Patch)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
@@ -93,6 +99,7 @@ __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -102,6 +109,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)(':id/impression'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),
+    openapi.ApiResponse({ status: 201 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -111,6 +119,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)(':id/click'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),
+    openapi.ApiResponse({ status: 201 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),

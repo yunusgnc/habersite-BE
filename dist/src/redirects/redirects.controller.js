@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RedirectsController = void 0;
+const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const redirects_service_1 = require("./redirects.service");
 const tenant_guard_1 = require("../common/guards/tenant.guard");
@@ -40,6 +41,7 @@ let RedirectsController = class RedirectsController {
 exports.RedirectsController = RedirectsController;
 __decorate([
     (0, common_1.Get)(),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -47,6 +49,7 @@ __decorate([
 ], RedirectsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Post)(),
+    openapi.ApiResponse({ status: 201 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -56,6 +59,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)('bulk'),
     (0, roles_guard_1.Roles)('ADMIN'),
+    openapi.ApiResponse({ status: 201, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -64,6 +68,7 @@ __decorate([
 ], RedirectsController.prototype, "createMany", null);
 __decorate([
     (0, common_1.Delete)(':id'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),

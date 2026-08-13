@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateMenuDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 const update_menu_dto_1 = require("./update-menu.dto");
@@ -17,6 +18,9 @@ class CreateMenuDto {
     location;
     label;
     items;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { location: { required: true, type: () => String }, label: { required: false, type: () => String, maxLength: 100 }, items: { required: true, type: () => [require("./update-menu.dto").MenuItemDto] } };
+    }
 }
 exports.CreateMenuDto = CreateMenuDto;
 __decorate([

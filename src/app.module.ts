@@ -40,6 +40,8 @@ import { OfficialNoticesModule } from './official-notices/official-notices.modul
 import { AuditModule } from './common/audit/audit.module';
 import { SeoModule } from './seo/seo.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { RssImportModule } from './rss-import/rss-import.module';
+import { ReadersModule } from './readers/readers.module';
 
 @Module({
   imports: [
@@ -86,6 +88,8 @@ import { NotificationsModule } from './notifications/notifications.module';
     AuditModule,
     SeoModule,
     NotificationsModule,
+    RssImportModule,
+    ReadersModule,
   ],
   providers: [
     // Global rate limit: 100 istek/dakika default, endpoint bazlı @Throttle ile

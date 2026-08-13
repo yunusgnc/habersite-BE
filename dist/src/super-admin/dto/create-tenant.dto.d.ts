@@ -12,4 +12,6 @@ export declare class CreateTenantDto {
     adminUsername?: string;
     adminPassword: string;
     bootstrapDefaults?: boolean;
+    locale?: string;
+    timezone?: string;
 }

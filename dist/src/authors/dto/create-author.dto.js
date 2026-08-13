@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateAuthorDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class CreateAuthorDto {
     name;
@@ -19,6 +20,9 @@ class CreateAuthorDto {
     social;
     active;
     sortOrder;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { name: { required: true, type: () => String, minLength: 1 }, bio: { required: false, type: () => String }, avatar: { required: false, type: () => String }, email: { required: false, type: () => String, format: "email" }, social: { required: false, type: "object", additionalProperties: { type: "string" } }, active: { required: false, type: () => Boolean }, sortOrder: { required: false, type: () => Number } };
+    }
 }
 exports.CreateAuthorDto = CreateAuthorDto;
 __decorate([

@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateCategoryDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class CreateCategoryDto {
     name;
@@ -20,6 +21,9 @@ class CreateCategoryDto {
     sortOrder;
     seoTitle;
     seoDesc;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { name: { required: true, type: () => String, minLength: 1 }, parentId: { required: false, type: () => String }, description: { required: false, type: () => String }, image: { required: false, type: () => String }, color: { required: false, type: () => String }, sortOrder: { required: false, type: () => Number }, seoTitle: { required: false, type: () => String }, seoDesc: { required: false, type: () => String } };
+    }
 }
 exports.CreateCategoryDto = CreateCategoryDto;
 __decorate([

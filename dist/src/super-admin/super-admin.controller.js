@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SuperAdminController = void 0;
+const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const roles_guard_1 = require("../auth/guards/roles.guard");
@@ -49,18 +50,21 @@ let SuperAdminController = class SuperAdminController {
 exports.SuperAdminController = SuperAdminController;
 __decorate([
     (0, common_1.Get)('overview'),
+    openapi.ApiResponse({ status: 200 }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], SuperAdminController.prototype, "overview", null);
 __decorate([
     (0, common_1.Get)('tenants'),
+    openapi.ApiResponse({ status: 200 }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], SuperAdminController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)('tenants/:id'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -68,6 +72,7 @@ __decorate([
 ], SuperAdminController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Post)('tenants'),
+    openapi.ApiResponse({ status: 201 }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_tenant_dto_1.CreateTenantDto]),
@@ -75,6 +80,7 @@ __decorate([
 ], SuperAdminController.prototype, "create", null);
 __decorate([
     (0, common_1.Patch)('tenants/:id'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -83,6 +89,7 @@ __decorate([
 ], SuperAdminController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)('tenants/:id'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
@@ -91,6 +98,7 @@ __decorate([
 ], SuperAdminController.prototype, "remove", null);
 __decorate([
     (0, common_1.Post)('tenants/:id/reset-password'),
+    openapi.ApiResponse({ status: 201 }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),

@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateBreakingNewsDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 class CreateBreakingNewsDto {
@@ -17,6 +18,9 @@ class CreateBreakingNewsDto {
     url;
     sortOrder;
     expiresAt;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { title: { required: true, type: () => String }, url: { required: false, type: () => String, format: "uri" }, sortOrder: { required: false, type: () => Number }, expiresAt: { required: false, type: () => String } };
+    }
 }
 exports.CreateBreakingNewsDto = CreateBreakingNewsDto;
 __decorate([

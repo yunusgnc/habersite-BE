@@ -46,6 +46,9 @@ model Tenant {
   contactMessages ContactMessage[]
   popups         Popup[]
   newsletters    NewsletterSubscriber[]
+  newsletterCampaigns NewsletterCampaign[]
+  rssSources     RssSource[]
+  readers        Reader[]
   widgets          Widget[]
   pages            Page[]
   galleries        Gallery[]
@@ -236,6 +239,7 @@ model Article {
   gallery    ArticleMedia[]
   persons    ArticlePerson[]
   revisions  ArticleRevision[]
+  bookmarks  Bookmark[]
 
   @@unique([tenantId, slug])
   @@index([tenantId, status, publishedAt(sort: Desc)])
@@ -555,6 +559,133 @@ model NewsletterSubscriber {
 
   @@unique([tenantId, email])
   @@map("newsletter_subscribers")
+}
+
+// ─── READER (Okuyucu hesabı) ───
+//
+// Okuyucular platform kullanıcılarından (`User`) ayrı — farklı yaşam döngüsü:
+// personel rolleri, izinler ve tenant-arası SUPER_ADMIN yok. Okuyucu tek
+// tenant'la ilişkili; farklı sitede aynı e-posta ile kayıt olabilir.
+
+model Reader {
+  id             String   @id @default(cuid())
+  tenantId       String   @map("tenant_id")
+  email          String
+  passwordHash   String   @map("password_hash")
+  name           String
+  active         Boolean  @default(true)
+  emailVerified  Boolean  @default(false) @map("email_verified")
+  /// Şifre sıfırlama — SMTP kurulunca aktive edilecek.
+  passwordResetTokenHash String?   @map("password_reset_token_hash")
+  passwordResetExpiresAt DateTime? @map("password_reset_expires_at")
+  lastLoginAt    DateTime? @map("last_login_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  bookmarks Bookmark[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@map("readers")
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  readerId  String   @map("reader_id")
+  articleId String   @map("article_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  reader  Reader  @relation(fields: [readerId], references: [id], onDelete: Cascade)
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([readerId, articleId])
+  @@index([articleId])
+  @@map("bookmarks")
+}
+
+// ─── RSS IMPORT (Ajans/kaynak beslemesi) ───
+
+model RssSource {
+  id                   String   @id @default(cuid())
+  tenantId             String   @map("tenant_id")
+  name                 String
+  url                  String
+  /// Yeni haberlerin varsayılan kategorisi — boşsa ilk kategoriye düşer.
+  defaultCategoryId    String?  @map("default_category_id")
+  /// Otomatik import edilen haberler bu yazara atanır (istenirse).
+  defaultAuthorName    String?  @map("default_author_name")
+  active               Boolean  @default(true)
+  /// Kaç dakikada bir çekilecek. Default 30 dk; cron her 5 dk kontrol eder.
+  fetchIntervalMinutes Int      @default(30) @map("fetch_interval_minutes")
+  lastFetchedAt        DateTime? @map("last_fetched_at")
+  lastFetchStatus      String?   @map("last_fetch_status")
+  itemsImported        Int      @default(0) @map("items_imported")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  items  RssImportedItem[]
+
+  @@index([tenantId, active])
+  @@map("rss_sources")
+}
+
+/// İmport edilmiş her item için GUID/link kaydı — tekrar çekimlerde dedup için.
+/// Kaynak silinirse cascade ile temizlenir.
+model RssImportedItem {
+  id         String   @id @default(cuid())
+  sourceId   String   @map("source_id")
+  tenantId   String   @map("tenant_id")
+  /// Feed'in verdiği <guid> ya da <link>. Aynı source'ta tekrar gelirse skip.
+  guid       String
+  articleId  String?  @map("article_id")
+  importedAt DateTime @default(now()) @map("imported_at")
+
+  source RssSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, guid])
+  @@index([tenantId])
+  @@map("rss_imported_items")
+}
+
+// ─── NEWSLETTER CAMPAIGN (Bülten kampanyası) ───
+
+enum NewsletterCampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  FAILED
+}
+
+model NewsletterCampaign {
+  id           String   @id @default(cuid())
+  tenantId     String   @map("tenant_id")
+  subject      String
+  preheader    String?
+  /// HTML gövde; TipTap/wysiwyg çıkışı. `null` seçiciyle DRAFT olarak kaydedilebilir.
+  htmlBody     String   @map("html_body")
+  /// Otomatik türetilebilir düz metin — spam filtresi için lazım. Boşsa gönderim
+  /// katmanı HTML'den strip eder.
+  textBody     String?  @map("text_body")
+  status       NewsletterCampaignStatus @default(DRAFT)
+  /// Zamanlanmış tarih — SCHEDULED durumundaysa cron bunu bekler.
+  scheduledAt  DateTime? @map("scheduled_at")
+  sentAt       DateTime? @map("sent_at")
+  /// Snapshot istatistikleri — gönderim bittiğinde doldurulur (recipients =
+  /// kuyruğa yazılan abone sayısı; failed = SMTP hatası dönmüş).
+  recipients   Int      @default(0)
+  failed       Int      @default(0)
+  createdBy    String?  @map("created_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+  @@map("newsletter_campaigns")
 }
 
 // ─── WIDGET (Hava Durumu, Namaz Vakti, Döviz vb.) ───

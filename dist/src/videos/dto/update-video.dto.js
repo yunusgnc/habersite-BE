@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateVideoDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const client_1 = require("@prisma/client");
@@ -25,6 +26,9 @@ class UpdateVideoDto {
     status;
     publishedAt;
     sortOrder;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { title: { required: false, type: () => String }, slug: { required: false, type: () => String }, description: { required: false, type: () => String }, coverImage: { required: false, type: () => String }, videoUrl: { required: false, type: () => String }, source: { required: false, type: () => String }, duration: { required: false, type: () => Number }, categoryId: { required: false, type: () => String }, status: { required: false, enum: ["DRAFT", "SCHEDULED", "PUBLISHED", "ARCHIVED", "IN_REVIEW"] }, publishedAt: { required: false, type: () => String }, sortOrder: { required: false, type: () => Number } };
+    }
 }
 exports.UpdateVideoDto = UpdateVideoDto;
 __decorate([

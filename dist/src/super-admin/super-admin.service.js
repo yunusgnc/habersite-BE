@@ -145,6 +145,8 @@ let SuperAdminService = SuperAdminService_1 = class SuperAdminService {
                     subdomain: dto.subdomain?.trim() || null,
                     logo: dto.logo?.trim() || null,
                     plan: dto.plan ?? 'starter',
+                    locale: dto.locale ?? 'tr',
+                    timezone: dto.timezone ?? 'Europe/Istanbul',
                     settings: { city },
                 },
             });
@@ -295,6 +297,64 @@ let SuperAdminService = SuperAdminService_1 = class SuperAdminService {
                 for (const [i, cat] of categories.entries()) {
                     await tx.category.create({
                         data: { tenantId: created.id, ...cat, sortOrder: i },
+                    });
+                }
+                await tx.menu.create({
+                    data: {
+                        tenantId: created.id,
+                        location: 'footer-kategoriler',
+                        label: 'Kategoriler',
+                        items: categories.map((c, i) => ({
+                            label: c.name,
+                            url: `/${c.slug}`,
+                            order: i,
+                        })),
+                    },
+                });
+                const pages = [
+                    {
+                        slug: 'hakkimizda',
+                        title: 'Hakkımızda',
+                        body: `${dto.name} olarak güncel haberleri okurlarımıza ulaştırıyoruz. Bu sayfayı Panel > Sayfalar bölümünden düzenleyebilirsiniz.`,
+                    },
+                    {
+                        slug: 'kunye',
+                        title: 'Künye',
+                        body: `Yayın Sahibi: ${dto.name}\nGenel Yayın Yönetmeni: ${dto.adminName}\n\nİletişim: ${dto.adminEmail}`,
+                    },
+                    {
+                        slug: 'iletisim',
+                        title: 'İletişim',
+                        body: `E-posta: ${dto.adminEmail}\n\nBu sayfaya iletişim bilgilerinizi ve harita ekleyebilirsiniz.`,
+                    },
+                    {
+                        slug: 'gizlilik',
+                        title: 'Gizlilik Politikası',
+                        body: 'Kişisel verilerin işlenmesi ve KVKK uyum metnini bu sayfada yayınlayın.',
+                    },
+                    {
+                        slug: 'reklam',
+                        title: 'Reklam',
+                        body: 'Reklam ve iş birliği talepleri için iletişim bilgilerinizi bu sayfada paylaşın.',
+                    },
+                ];
+                for (const p of pages) {
+                    await tx.page.create({
+                        data: {
+                            tenantId: created.id,
+                            slug: p.slug,
+                            title: p.title,
+                            content: {
+                                type: 'doc',
+                                content: [
+                                    {
+                                        type: 'paragraph',
+                                        content: [{ type: 'text', text: p.body }],
+                                    },
+                                ],
+                            },
+                            published: true,
+                        },
                     });
                 }
             }

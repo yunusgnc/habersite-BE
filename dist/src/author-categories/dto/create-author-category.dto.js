@@ -10,12 +10,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateAuthorCategoryDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 class CreateAuthorCategoryDto {
     name;
     sortOrder;
     active;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { name: { required: true, type: () => String }, sortOrder: { required: false, type: () => Number }, active: { required: false, type: () => Boolean } };
+    }
 }
 exports.CreateAuthorCategoryDto = CreateAuthorCategoryDto;
 __decorate([

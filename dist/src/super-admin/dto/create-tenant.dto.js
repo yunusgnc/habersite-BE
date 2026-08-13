@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateTenantDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class CreateTenantDto {
     name;
@@ -25,6 +26,11 @@ class CreateTenantDto {
     adminUsername;
     adminPassword;
     bootstrapDefaults;
+    locale;
+    timezone;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { name: { required: true, type: () => String, description: "M\u00FC\u015Fterinin site ad\u0131 \u2014 \u00F6r. \"Kayseri G\u00FCndem\"", minLength: 2 }, slug: { required: true, type: () => String, description: "URL-dostu benzersiz kimlik \u2014 \u00F6r. \"kayseri-gundem\"", pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" }, domain: { required: false, type: () => String, description: "M\u00FC\u015Fterinin kendi domaini \u2014 \u00F6r. \"www.kayserigundem.com\"" }, subdomain: { required: false, type: () => String, description: "Platform alt alan ad\u0131 \u2014 \u00F6r. \"kayserigundem\" (kayserigundem.habersite.com)" }, logo: { required: false, type: () => String }, plan: { required: false, type: () => String }, city: { required: false, type: () => String, description: "Widget'lar i\u00E7in varsay\u0131lan \u015Fehir" }, primaryColor: { required: false, type: () => String, description: "Tema ana rengi \u2014 \u00F6r. \"#bc1010\"" }, adminName: { required: true, type: () => String, minLength: 2 }, adminEmail: { required: true, type: () => String, format: "email" }, adminUsername: { required: false, type: () => String, pattern: "^[a-z0-9._-]+$" }, adminPassword: { required: true, type: () => String, minLength: 8 }, bootstrapDefaults: { required: false, type: () => Boolean, description: "Varsay\u0131lan i\u00E7erikleri (widget, ayar) otomatik olu\u015Ftur" }, locale: { required: false, type: () => String, description: "ISO 639-1 dil kodu \u2014 html lang, JSON-LD ve OG i\u00E7in", pattern: "^[a-z]{2}(?:-[A-Z]{2})?$" }, timezone: { required: false, type: () => String, description: "IANA timezone \u2014 \u00F6r. \"Europe/Istanbul\"" } };
+    }
 }
 exports.CreateTenantDto = CreateTenantDto;
 __decorate([
@@ -96,4 +102,17 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Boolean)
 ], CreateTenantDto.prototype, "bootstrapDefaults", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.Matches)(/^[a-z]{2}(?:-[A-Z]{2})?$/, {
+        message: 'locale ISO 639-1 formatında olmalı (ör. "tr", "en", "tr-TR")',
+    }),
+    __metadata("design:type", String)
+], CreateTenantDto.prototype, "locale", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateTenantDto.prototype, "timezone", void 0);
 //# sourceMappingURL=create-tenant.dto.js.map

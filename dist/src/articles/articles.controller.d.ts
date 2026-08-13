@@ -10,45 +10,22 @@ export declare class ArticlesController {
         id: string;
     }): Promise<{
         items: ({
-            author: {
-                id: string;
-                tenantId: string;
-                slug: string;
-                createdAt: Date;
-                updatedAt: Date;
-                email: string | null;
-                name: string;
-                avatar: string | null;
-                active: boolean;
-                bio: string | null;
-                social: import("@prisma/client/runtime/client").JsonValue;
-                sortOrder: number;
-            } | null;
-            createdBy: {
-                id: string;
-                email: string;
-                name: string;
-            };
-            approvedBy: {
-                id: string;
-                name: string;
-            } | null;
             categories: ({
                 category: {
                     id: string;
-                    tenantId: string;
+                    name: string;
                     slug: string;
-                    seoTitle: string | null;
-                    seoDesc: string | null;
+                    active: boolean;
                     createdAt: Date;
                     updatedAt: Date;
-                    name: string;
-                    active: boolean;
-                    sortOrder: number;
+                    tenantId: string;
                     parentId: string | null;
                     description: string | null;
                     image: string | null;
                     color: string | null;
+                    sortOrder: number;
+                    seoTitle: string | null;
+                    seoDesc: string | null;
                 };
             } & {
                 articleId: string;
@@ -58,20 +35,47 @@ export declare class ArticlesController {
             tags: ({
                 tag: {
                     id: string;
-                    tenantId: string;
-                    slug: string;
                     name: string;
+                    slug: string;
+                    tenantId: string;
                 };
             } & {
                 articleId: string;
                 tagId: string;
             })[];
+            author: {
+                id: string;
+                name: string;
+                slug: string;
+                active: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+                tenantId: string;
+                email: string | null;
+                avatar: string | null;
+                sortOrder: number;
+                bio: string | null;
+                social: import("@prisma/client/runtime/client").JsonValue;
+            } | null;
+            createdBy: {
+                id: string;
+                name: string;
+                email: string;
+            };
+            approvedBy: {
+                id: string;
+                name: string;
+            } | null;
         } & {
             id: string;
+            slug: string;
+            createdAt: Date;
+            updatedAt: Date;
             tenantId: string;
+            seoTitle: string | null;
+            seoDesc: string | null;
             type: import("@prisma/client").$Enums.ArticleType;
             title: string;
-            slug: string;
             spot: string | null;
             content: import("@prisma/client/runtime/client").JsonValue;
             featuredImage: string | null;
@@ -81,29 +85,25 @@ export declare class ArticlesController {
             authorId: string | null;
             createdById: string;
             approvedById: string | null;
-            assignedToId: string | null;
-            deadline: Date | null;
-            submittedAt: Date | null;
-            reviewedAt: Date | null;
-            reviewNote: string | null;
             viewCount: number;
             commentCount: number;
             readingTime: number | null;
             featured: boolean;
             breakingLabel: string | null;
-            seoTitle: string | null;
-            seoDesc: string | null;
             canonicalUrl: string | null;
             ogImage: string | null;
             source: string | null;
             sourceUrl: string | null;
+            assignedToId: string | null;
+            deadline: Date | null;
+            submittedAt: Date | null;
+            reviewedAt: Date | null;
+            reviewNote: string | null;
             headlineTitle: string | null;
             headlineImage: string | null;
             headlineFontSize: number | null;
             headlineFontFamily: string | null;
             nationalFeatured: boolean;
-            createdAt: Date;
-            updatedAt: Date;
         })[];
         nextCursor: string | undefined;
         total: number;
@@ -112,50 +112,22 @@ export declare class ArticlesController {
         hasMore: boolean;
     }>;
     findById(tenantId: string, id: string): Promise<{
-        author: {
-            id: string;
-            tenantId: string;
-            slug: string;
-            createdAt: Date;
-            updatedAt: Date;
-            email: string | null;
-            name: string;
-            avatar: string | null;
-            active: boolean;
-            bio: string | null;
-            social: import("@prisma/client/runtime/client").JsonValue;
-            sortOrder: number;
-        } | null;
-        createdBy: {
-            id: string;
-            email: string;
-            name: string;
-        };
-        approvedBy: {
-            id: string;
-            name: string;
-        } | null;
-        assignedTo: {
-            id: string;
-            email: string;
-            name: string;
-        } | null;
         categories: ({
             category: {
                 id: string;
-                tenantId: string;
+                name: string;
                 slug: string;
-                seoTitle: string | null;
-                seoDesc: string | null;
+                active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
-                name: string;
-                active: boolean;
-                sortOrder: number;
+                tenantId: string;
                 parentId: string | null;
                 description: string | null;
                 image: string | null;
                 color: string | null;
+                sortOrder: number;
+                seoTitle: string | null;
+                seoDesc: string | null;
             };
         } & {
             articleId: string;
@@ -165,20 +137,52 @@ export declare class ArticlesController {
         tags: ({
             tag: {
                 id: string;
-                tenantId: string;
-                slug: string;
                 name: string;
+                slug: string;
+                tenantId: string;
             };
         } & {
             articleId: string;
             tagId: string;
         })[];
+        author: {
+            id: string;
+            name: string;
+            slug: string;
+            active: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+            tenantId: string;
+            email: string | null;
+            avatar: string | null;
+            sortOrder: number;
+            bio: string | null;
+            social: import("@prisma/client/runtime/client").JsonValue;
+        } | null;
+        createdBy: {
+            id: string;
+            name: string;
+            email: string;
+        };
+        approvedBy: {
+            id: string;
+            name: string;
+        } | null;
+        assignedTo: {
+            id: string;
+            name: string;
+            email: string;
+        } | null;
     } & {
         id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
         tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
         type: import("@prisma/client").$Enums.ArticleType;
         title: string;
-        slug: string;
         spot: string | null;
         content: import("@prisma/client/runtime/client").JsonValue;
         featuredImage: string | null;
@@ -188,36 +192,32 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
         featured: boolean;
         breakingLabel: string | null;
-        seoTitle: string | null;
-        seoDesc: string | null;
         canonicalUrl: string | null;
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         nationalFeatured: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     sitemap(tenantId: string, page?: string, perPage?: string): Promise<{
         items: {
-            type: import("@prisma/client").$Enums.ArticleType;
             slug: string;
-            publishedAt: Date | null;
             updatedAt: Date;
+            type: import("@prisma/client").$Enums.ArticleType;
+            publishedAt: Date | null;
         }[];
         page: number;
         perPage: number;
@@ -225,55 +225,59 @@ export declare class ArticlesController {
         totalPages: number;
     }>;
     recentForNews(tenantId: string, limit?: string): Promise<{
+        slug: string;
+        updatedAt: Date;
         type: import("@prisma/client").$Enums.ArticleType;
         title: string;
-        slug: string;
         publishedAt: Date | null;
-        updatedAt: Date;
     }[]>;
     getMostRead(tenantId: string, limit?: number): Promise<({
-        author: {
-            id: string;
-            tenantId: string;
-            slug: string;
-            createdAt: Date;
-            updatedAt: Date;
-            email: string | null;
-            name: string;
-            avatar: string | null;
-            active: boolean;
-            bio: string | null;
-            social: import("@prisma/client/runtime/client").JsonValue;
-            sortOrder: number;
-        } | null;
         categories: ({
             category: {
                 id: string;
-                tenantId: string;
+                name: string;
                 slug: string;
-                seoTitle: string | null;
-                seoDesc: string | null;
+                active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
-                name: string;
-                active: boolean;
-                sortOrder: number;
+                tenantId: string;
                 parentId: string | null;
                 description: string | null;
                 image: string | null;
                 color: string | null;
+                sortOrder: number;
+                seoTitle: string | null;
+                seoDesc: string | null;
             };
         } & {
             articleId: string;
             categoryId: string;
             primary: boolean;
         })[];
+        author: {
+            id: string;
+            name: string;
+            slug: string;
+            active: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+            tenantId: string;
+            email: string | null;
+            avatar: string | null;
+            sortOrder: number;
+            bio: string | null;
+            social: import("@prisma/client/runtime/client").JsonValue;
+        } | null;
     } & {
         id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
         tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
         type: import("@prisma/client").$Enums.ArticleType;
         title: string;
-        slug: string;
         spot: string | null;
         content: import("@prisma/client/runtime/client").JsonValue;
         featuredImage: string | null;
@@ -283,73 +287,73 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
         featured: boolean;
         breakingLabel: string | null;
-        seoTitle: string | null;
-        seoDesc: string | null;
         canonicalUrl: string | null;
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         nationalFeatured: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     })[]>;
     getTrending(tenantId: string, limit?: number): Promise<({
-        author: {
-            id: string;
-            tenantId: string;
-            slug: string;
-            createdAt: Date;
-            updatedAt: Date;
-            email: string | null;
-            name: string;
-            avatar: string | null;
-            active: boolean;
-            bio: string | null;
-            social: import("@prisma/client/runtime/client").JsonValue;
-            sortOrder: number;
-        } | null;
         categories: ({
             category: {
                 id: string;
-                tenantId: string;
+                name: string;
                 slug: string;
-                seoTitle: string | null;
-                seoDesc: string | null;
+                active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
-                name: string;
-                active: boolean;
-                sortOrder: number;
+                tenantId: string;
                 parentId: string | null;
                 description: string | null;
                 image: string | null;
                 color: string | null;
+                sortOrder: number;
+                seoTitle: string | null;
+                seoDesc: string | null;
             };
         } & {
             articleId: string;
             categoryId: string;
             primary: boolean;
         })[];
+        author: {
+            id: string;
+            name: string;
+            slug: string;
+            active: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+            tenantId: string;
+            email: string | null;
+            avatar: string | null;
+            sortOrder: number;
+            bio: string | null;
+            social: import("@prisma/client/runtime/client").JsonValue;
+        } | null;
     } & {
         id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
         tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
         type: import("@prisma/client").$Enums.ArticleType;
         title: string;
-        slug: string;
         spot: string | null;
         content: import("@prisma/client/runtime/client").JsonValue;
         featuredImage: string | null;
@@ -359,29 +363,25 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
         featured: boolean;
         breakingLabel: string | null;
-        seoTitle: string | null;
-        seoDesc: string | null;
         canonicalUrl: string | null;
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         nationalFeatured: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     })[]>;
     archiveFacets(tenantId: string): Promise<{
         years: {
@@ -395,40 +395,44 @@ export declare class ArticlesController {
         }[];
     }>;
     getRelated(tenantId: string, id: string, limit?: number): Promise<({
-        author: {
-            id: string;
-            slug: string;
-            name: string;
-            avatar: string | null;
-        } | null;
         categories: ({
             category: {
                 id: string;
-                tenantId: string;
+                name: string;
                 slug: string;
-                seoTitle: string | null;
-                seoDesc: string | null;
+                active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
-                name: string;
-                active: boolean;
-                sortOrder: number;
+                tenantId: string;
                 parentId: string | null;
                 description: string | null;
                 image: string | null;
                 color: string | null;
+                sortOrder: number;
+                seoTitle: string | null;
+                seoDesc: string | null;
             };
         } & {
             articleId: string;
             categoryId: string;
             primary: boolean;
         })[];
+        author: {
+            id: string;
+            name: string;
+            slug: string;
+            avatar: string | null;
+        } | null;
     } & {
         id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
         tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
         type: import("@prisma/client").$Enums.ArticleType;
         title: string;
-        slug: string;
         spot: string | null;
         content: import("@prisma/client/runtime/client").JsonValue;
         featuredImage: string | null;
@@ -438,74 +442,74 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
         featured: boolean;
         breakingLabel: string | null;
-        seoTitle: string | null;
-        seoDesc: string | null;
         canonicalUrl: string | null;
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         nationalFeatured: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     })[]>;
     findBySlug(tenantId: string, slug: string): Promise<{
         relatedArticles: ({
-            author: {
-                id: string;
-                tenantId: string;
-                slug: string;
-                createdAt: Date;
-                updatedAt: Date;
-                email: string | null;
-                name: string;
-                avatar: string | null;
-                active: boolean;
-                bio: string | null;
-                social: import("@prisma/client/runtime/client").JsonValue;
-                sortOrder: number;
-            } | null;
             categories: ({
                 category: {
                     id: string;
-                    tenantId: string;
+                    name: string;
                     slug: string;
-                    seoTitle: string | null;
-                    seoDesc: string | null;
+                    active: boolean;
                     createdAt: Date;
                     updatedAt: Date;
-                    name: string;
-                    active: boolean;
-                    sortOrder: number;
+                    tenantId: string;
                     parentId: string | null;
                     description: string | null;
                     image: string | null;
                     color: string | null;
+                    sortOrder: number;
+                    seoTitle: string | null;
+                    seoDesc: string | null;
                 };
             } & {
                 articleId: string;
                 categoryId: string;
                 primary: boolean;
             })[];
+            author: {
+                id: string;
+                name: string;
+                slug: string;
+                active: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+                tenantId: string;
+                email: string | null;
+                avatar: string | null;
+                sortOrder: number;
+                bio: string | null;
+                social: import("@prisma/client/runtime/client").JsonValue;
+            } | null;
         } & {
             id: string;
+            slug: string;
+            createdAt: Date;
+            updatedAt: Date;
             tenantId: string;
+            seoTitle: string | null;
+            seoDesc: string | null;
             type: import("@prisma/client").$Enums.ArticleType;
             title: string;
-            slug: string;
             spot: string | null;
             content: import("@prisma/client/runtime/client").JsonValue;
             featuredImage: string | null;
@@ -515,91 +519,91 @@ export declare class ArticlesController {
             authorId: string | null;
             createdById: string;
             approvedById: string | null;
-            assignedToId: string | null;
-            deadline: Date | null;
-            submittedAt: Date | null;
-            reviewedAt: Date | null;
-            reviewNote: string | null;
             viewCount: number;
             commentCount: number;
             readingTime: number | null;
             featured: boolean;
             breakingLabel: string | null;
-            seoTitle: string | null;
-            seoDesc: string | null;
             canonicalUrl: string | null;
             ogImage: string | null;
             source: string | null;
             sourceUrl: string | null;
+            assignedToId: string | null;
+            deadline: Date | null;
+            submittedAt: Date | null;
+            reviewedAt: Date | null;
+            reviewNote: string | null;
             headlineTitle: string | null;
             headlineImage: string | null;
             headlineFontSize: number | null;
             headlineFontFamily: string | null;
             nationalFeatured: boolean;
-            createdAt: Date;
-            updatedAt: Date;
+        })[];
+        categories: ({
+            category: {
+                id: string;
+                name: string;
+                slug: string;
+                active: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+                tenantId: string;
+                parentId: string | null;
+                description: string | null;
+                image: string | null;
+                color: string | null;
+                sortOrder: number;
+                seoTitle: string | null;
+                seoDesc: string | null;
+            };
+        } & {
+            articleId: string;
+            categoryId: string;
+            primary: boolean;
+        })[];
+        tags: ({
+            tag: {
+                id: string;
+                name: string;
+                slug: string;
+                tenantId: string;
+            };
+        } & {
+            articleId: string;
+            tagId: string;
         })[];
         author: {
             id: string;
-            tenantId: string;
+            name: string;
             slug: string;
+            active: boolean;
             createdAt: Date;
             updatedAt: Date;
+            tenantId: string;
             email: string | null;
-            name: string;
             avatar: string | null;
-            active: boolean;
+            sortOrder: number;
             bio: string | null;
             social: import("@prisma/client/runtime/client").JsonValue;
-            sortOrder: number;
         } | null;
         createdBy: {
             id: string;
-            email: string;
             name: string;
+            email: string;
         };
         approvedBy: {
             id: string;
             name: string;
         } | null;
-        categories: ({
-            category: {
-                id: string;
-                tenantId: string;
-                slug: string;
-                seoTitle: string | null;
-                seoDesc: string | null;
-                createdAt: Date;
-                updatedAt: Date;
-                name: string;
-                active: boolean;
-                sortOrder: number;
-                parentId: string | null;
-                description: string | null;
-                image: string | null;
-                color: string | null;
-            };
-        } & {
-            articleId: string;
-            categoryId: string;
-            primary: boolean;
-        })[];
-        tags: ({
-            tag: {
-                id: string;
-                tenantId: string;
-                slug: string;
-                name: string;
-            };
-        } & {
-            articleId: string;
-            tagId: string;
-        })[];
         id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
         tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
         type: import("@prisma/client").$Enums.ArticleType;
         title: string;
-        slug: string;
         spot: string | null;
         content: import("@prisma/client/runtime/client").JsonValue;
         featuredImage: string | null;
@@ -609,61 +613,43 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
         featured: boolean;
         breakingLabel: string | null;
-        seoTitle: string | null;
-        seoDesc: string | null;
         canonicalUrl: string | null;
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         nationalFeatured: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     create(tenantId: string, user: any, dto: CreateArticleDto): Promise<{
-        author: {
-            id: string;
-            tenantId: string;
-            slug: string;
-            createdAt: Date;
-            updatedAt: Date;
-            email: string | null;
-            name: string;
-            avatar: string | null;
-            active: boolean;
-            bio: string | null;
-            social: import("@prisma/client/runtime/client").JsonValue;
-            sortOrder: number;
-        } | null;
         categories: ({
             category: {
                 id: string;
-                tenantId: string;
+                name: string;
                 slug: string;
-                seoTitle: string | null;
-                seoDesc: string | null;
+                active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
-                name: string;
-                active: boolean;
-                sortOrder: number;
+                tenantId: string;
                 parentId: string | null;
                 description: string | null;
                 image: string | null;
                 color: string | null;
+                sortOrder: number;
+                seoTitle: string | null;
+                seoDesc: string | null;
             };
         } & {
             articleId: string;
@@ -673,20 +659,38 @@ export declare class ArticlesController {
         tags: ({
             tag: {
                 id: string;
-                tenantId: string;
-                slug: string;
                 name: string;
+                slug: string;
+                tenantId: string;
             };
         } & {
             articleId: string;
             tagId: string;
         })[];
+        author: {
+            id: string;
+            name: string;
+            slug: string;
+            active: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+            tenantId: string;
+            email: string | null;
+            avatar: string | null;
+            sortOrder: number;
+            bio: string | null;
+            social: import("@prisma/client/runtime/client").JsonValue;
+        } | null;
     } & {
         id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
         tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
         type: import("@prisma/client").$Enums.ArticleType;
         title: string;
-        slug: string;
         spot: string | null;
         content: import("@prisma/client/runtime/client").JsonValue;
         featuredImage: string | null;
@@ -696,61 +700,43 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
         featured: boolean;
         breakingLabel: string | null;
-        seoTitle: string | null;
-        seoDesc: string | null;
         canonicalUrl: string | null;
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         nationalFeatured: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     update(tenantId: string, id: string, dto: UpdateArticleDto, user: any): Promise<{
-        author: {
-            id: string;
-            tenantId: string;
-            slug: string;
-            createdAt: Date;
-            updatedAt: Date;
-            email: string | null;
-            name: string;
-            avatar: string | null;
-            active: boolean;
-            bio: string | null;
-            social: import("@prisma/client/runtime/client").JsonValue;
-            sortOrder: number;
-        } | null;
         categories: ({
             category: {
                 id: string;
-                tenantId: string;
+                name: string;
                 slug: string;
-                seoTitle: string | null;
-                seoDesc: string | null;
+                active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
-                name: string;
-                active: boolean;
-                sortOrder: number;
+                tenantId: string;
                 parentId: string | null;
                 description: string | null;
                 image: string | null;
                 color: string | null;
+                sortOrder: number;
+                seoTitle: string | null;
+                seoDesc: string | null;
             };
         } & {
             articleId: string;
@@ -760,20 +746,38 @@ export declare class ArticlesController {
         tags: ({
             tag: {
                 id: string;
-                tenantId: string;
-                slug: string;
                 name: string;
+                slug: string;
+                tenantId: string;
             };
         } & {
             articleId: string;
             tagId: string;
         })[];
+        author: {
+            id: string;
+            name: string;
+            slug: string;
+            active: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+            tenantId: string;
+            email: string | null;
+            avatar: string | null;
+            sortOrder: number;
+            bio: string | null;
+            social: import("@prisma/client/runtime/client").JsonValue;
+        } | null;
     } & {
         id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
         tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
         type: import("@prisma/client").$Enums.ArticleType;
         title: string;
-        slug: string;
         spot: string | null;
         content: import("@prisma/client/runtime/client").JsonValue;
         featuredImage: string | null;
@@ -783,81 +787,63 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
         featured: boolean;
         breakingLabel: string | null;
-        seoTitle: string | null;
-        seoDesc: string | null;
         canonicalUrl: string | null;
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         nationalFeatured: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     listRevisions(tenantId: string, id: string): Promise<({
         editedBy: {
             id: string;
-            email: string;
             name: string;
+            email: string;
         } | null;
     } & {
         id: string;
-        tenantId: string;
-        title: string;
         slug: string;
+        createdAt: Date;
+        tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
+        title: string;
         spot: string | null;
         content: import("@prisma/client/runtime/client").JsonValue;
         featuredImage: string | null;
-        seoTitle: string | null;
-        seoDesc: string | null;
-        createdAt: Date;
         articleId: string;
         editedById: string | null;
     })[]>;
     restoreRevision(tenantId: string, id: string, revisionId: string, user: any): Promise<{
-        author: {
-            id: string;
-            tenantId: string;
-            slug: string;
-            createdAt: Date;
-            updatedAt: Date;
-            email: string | null;
-            name: string;
-            avatar: string | null;
-            active: boolean;
-            bio: string | null;
-            social: import("@prisma/client/runtime/client").JsonValue;
-            sortOrder: number;
-        } | null;
         categories: ({
             category: {
                 id: string;
-                tenantId: string;
+                name: string;
                 slug: string;
-                seoTitle: string | null;
-                seoDesc: string | null;
+                active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
-                name: string;
-                active: boolean;
-                sortOrder: number;
+                tenantId: string;
                 parentId: string | null;
                 description: string | null;
                 image: string | null;
                 color: string | null;
+                sortOrder: number;
+                seoTitle: string | null;
+                seoDesc: string | null;
             };
         } & {
             articleId: string;
@@ -867,20 +853,38 @@ export declare class ArticlesController {
         tags: ({
             tag: {
                 id: string;
-                tenantId: string;
-                slug: string;
                 name: string;
+                slug: string;
+                tenantId: string;
             };
         } & {
             articleId: string;
             tagId: string;
         })[];
+        author: {
+            id: string;
+            name: string;
+            slug: string;
+            active: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+            tenantId: string;
+            email: string | null;
+            avatar: string | null;
+            sortOrder: number;
+            bio: string | null;
+            social: import("@prisma/client/runtime/client").JsonValue;
+        } | null;
     } & {
         id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
         tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
         type: import("@prisma/client").$Enums.ArticleType;
         title: string;
-        slug: string;
         spot: string | null;
         content: import("@prisma/client/runtime/client").JsonValue;
         featuredImage: string | null;
@@ -890,36 +894,36 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
         featured: boolean;
         breakingLabel: string | null;
-        seoTitle: string | null;
-        seoDesc: string | null;
         canonicalUrl: string | null;
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         nationalFeatured: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     remove(tenantId: string, id: string, user: any): Promise<{
         id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
         tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
         type: import("@prisma/client").$Enums.ArticleType;
         title: string;
-        slug: string;
         spot: string | null;
         content: import("@prisma/client/runtime/client").JsonValue;
         featuredImage: string | null;
@@ -929,29 +933,25 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
         featured: boolean;
         breakingLabel: string | null;
-        seoTitle: string | null;
-        seoDesc: string | null;
         canonicalUrl: string | null;
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         nationalFeatured: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     bulkUpdateStatus(tenantId: string, dto: BulkArticleDto): Promise<import("@prisma/client").Prisma.BatchPayload>;
     bulkUpdateCategory(tenantId: string, dto: {
@@ -972,10 +972,14 @@ export declare class ArticlesController {
         } | null;
     } & {
         id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
         tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
         type: import("@prisma/client").$Enums.ArticleType;
         title: string;
-        slug: string;
         spot: string | null;
         content: import("@prisma/client/runtime/client").JsonValue;
         featuredImage: string | null;
@@ -985,29 +989,25 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
         featured: boolean;
         breakingLabel: string | null;
-        seoTitle: string | null;
-        seoDesc: string | null;
         canonicalUrl: string | null;
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         nationalFeatured: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     })[]>;
     reviewQueue(tenantId: string): Promise<({
         author: {
@@ -1016,8 +1016,8 @@ export declare class ArticlesController {
         } | null;
         createdBy: {
             id: string;
-            email: string;
             name: string;
+            email: string;
         };
         assignedTo: {
             id: string;
@@ -1025,10 +1025,14 @@ export declare class ArticlesController {
         } | null;
     } & {
         id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
         tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
         type: import("@prisma/client").$Enums.ArticleType;
         title: string;
-        slug: string;
         spot: string | null;
         content: import("@prisma/client/runtime/client").JsonValue;
         featuredImage: string | null;
@@ -1038,56 +1042,56 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
         featured: boolean;
         breakingLabel: string | null;
-        seoTitle: string | null;
-        seoDesc: string | null;
         canonicalUrl: string | null;
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         nationalFeatured: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     })[]>;
     submitForReview(tenantId: string, id: string, user: any): Promise<{
         author: {
             id: string;
-            tenantId: string;
+            name: string;
             slug: string;
+            active: boolean;
             createdAt: Date;
             updatedAt: Date;
+            tenantId: string;
             email: string | null;
-            name: string;
             avatar: string | null;
-            active: boolean;
+            sortOrder: number;
             bio: string | null;
             social: import("@prisma/client/runtime/client").JsonValue;
-            sortOrder: number;
         } | null;
         assignedTo: {
             id: string;
-            email: string;
             name: string;
+            email: string;
         } | null;
     } & {
         id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
         tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
         type: import("@prisma/client").$Enums.ArticleType;
         title: string;
-        slug: string;
         spot: string | null;
         content: import("@prisma/client/runtime/client").JsonValue;
         featuredImage: string | null;
@@ -1097,36 +1101,36 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
         featured: boolean;
         breakingLabel: string | null;
-        seoTitle: string | null;
-        seoDesc: string | null;
         canonicalUrl: string | null;
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         nationalFeatured: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     approve(tenantId: string, id: string, user: any): Promise<{
         id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
         tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
         type: import("@prisma/client").$Enums.ArticleType;
         title: string;
-        slug: string;
         spot: string | null;
         content: import("@prisma/client/runtime/client").JsonValue;
         featuredImage: string | null;
@@ -1136,38 +1140,38 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
         featured: boolean;
         breakingLabel: string | null;
-        seoTitle: string | null;
-        seoDesc: string | null;
         canonicalUrl: string | null;
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         nationalFeatured: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     reject(tenantId: string, id: string, body: {
         note: string;
     }, user: any): Promise<{
         id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
         tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
         type: import("@prisma/client").$Enums.ArticleType;
         title: string;
-        slug: string;
         spot: string | null;
         content: import("@prisma/client/runtime/client").JsonValue;
         featuredImage: string | null;
@@ -1177,29 +1181,25 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
         featured: boolean;
         breakingLabel: string | null;
-        seoTitle: string | null;
-        seoDesc: string | null;
         canonicalUrl: string | null;
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         nationalFeatured: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     assign(tenantId: string, id: string, body: {
         assignedToId: string | null;
@@ -1207,15 +1207,19 @@ export declare class ArticlesController {
     }, user: any): Promise<{
         assignedTo: {
             id: string;
-            email: string;
             name: string;
+            email: string;
         } | null;
     } & {
         id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
         tenantId: string;
+        seoTitle: string | null;
+        seoDesc: string | null;
         type: import("@prisma/client").$Enums.ArticleType;
         title: string;
-        slug: string;
         spot: string | null;
         content: import("@prisma/client/runtime/client").JsonValue;
         featuredImage: string | null;
@@ -1225,28 +1229,24 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
         featured: boolean;
         breakingLabel: string | null;
-        seoTitle: string | null;
-        seoDesc: string | null;
         canonicalUrl: string | null;
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         nationalFeatured: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
 }

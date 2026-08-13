@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateArticleDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const client_1 = require("@prisma/client");
 class CreateArticleDto {
@@ -38,6 +39,9 @@ class CreateArticleDto {
     assignedToId;
     deadline;
     reviewNote;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { title: { required: true, type: () => String, minLength: 3 }, content: { required: true, type: "object", additionalProperties: true }, type: { required: false, default: client_1.ArticleType.NEWS, enum: ["NEWS", "COLUMN", "PHOTO_GALLERY", "VIDEO"] }, spot: { required: false, type: () => String }, featuredImage: { required: false, type: () => String }, status: { required: false, enum: ["DRAFT", "SCHEDULED", "PUBLISHED", "ARCHIVED", "IN_REVIEW"] }, categoryIds: { required: false, type: () => [String] }, tagNames: { required: false, type: () => [String] }, authorId: { required: false, type: () => String }, seoTitle: { required: false, type: () => String }, seoDesc: { required: false, type: () => String }, source: { required: false, type: () => String }, sourceUrl: { required: false, type: () => String }, featured: { required: false, type: () => Boolean }, nationalFeatured: { required: false, type: () => Boolean, description: "\u0130kinci man\u015Fet paneli \u2014 ULUSAL man\u015Fet i\u00E7in ayr\u0131 bir \u00F6ne \u00E7\u0131karma." }, headlineTitle: { required: false, type: () => String, description: "Man\u015Fette g\u00F6sterilecek \u00F6zel ba\u015Fl\u0131k \u2014 bo\u015F ise `title` kullan\u0131l\u0131r." }, headlineImage: { required: false, type: () => String, description: "Man\u015Fette g\u00F6sterilecek \u00F6zel g\u00F6rsel \u2014 bo\u015F ise `featuredImage` kullan\u0131l\u0131r." }, headlineFontSize: { required: false, type: () => Number, minimum: 12 }, headlineFontFamily: { required: false, type: () => String }, publishedAt: { required: false, type: () => String }, scheduledAt: { required: false, type: () => String }, breakingLabel: { required: false, type: () => String, nullable: true, description: "Son dakika \u015Feridi ba\u015Fl\u0131\u011F\u0131 \u2014 null ile temizlenebilir." }, assignedToId: { required: false, type: () => String, nullable: true }, deadline: { required: false, type: () => String, nullable: true }, reviewNote: { required: false, type: () => String, nullable: true } };
+    }
 }
 exports.CreateArticleDto = CreateArticleDto;
 __decorate([

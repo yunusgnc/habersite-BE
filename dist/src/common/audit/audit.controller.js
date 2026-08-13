@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuditController = void 0;
+const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const audit_service_1 = require("./audit.service");
 const tenant_decorator_1 = require("../decorators/tenant.decorator");
@@ -97,7 +98,17 @@ let AuditController = class AuditController {
 };
 exports.AuditController = AuditController;
 __decorate([
+    openapi.ApiQuery({ name: "entity", required: false }),
+    openapi.ApiQuery({ name: "entityId", required: false }),
+    openapi.ApiQuery({ name: "userId", required: false }),
+    openapi.ApiQuery({ name: "action", required: false }),
+    openapi.ApiQuery({ name: "search", required: false }),
+    openapi.ApiQuery({ name: "from", required: false }),
+    openapi.ApiQuery({ name: "to", required: false }),
+    openapi.ApiQuery({ name: "cursor", required: false }),
+    openapi.ApiQuery({ name: "limit", required: false }),
     (0, common_1.Get)(),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('entity')),
     __param(2, (0, common_1.Query)('entityId')),
@@ -113,7 +124,14 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], AuditController.prototype, "list", null);
 __decorate([
+    openapi.ApiQuery({ name: "entity", required: false }),
+    openapi.ApiQuery({ name: "userId", required: false }),
+    openapi.ApiQuery({ name: "action", required: false }),
+    openapi.ApiQuery({ name: "from", required: false }),
+    openapi.ApiQuery({ name: "to", required: false }),
+    openapi.ApiQuery({ name: "search", required: false }),
     (0, common_1.Get)('summary'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('entity')),
     __param(2, (0, common_1.Query)('userId')),
@@ -126,7 +144,14 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], AuditController.prototype, "summary", null);
 __decorate([
+    openapi.ApiQuery({ name: "entity", required: false }),
+    openapi.ApiQuery({ name: "userId", required: false }),
+    openapi.ApiQuery({ name: "action", required: false }),
+    openapi.ApiQuery({ name: "search", required: false }),
+    openapi.ApiQuery({ name: "from", required: false }),
+    openapi.ApiQuery({ name: "to", required: false }),
     (0, common_1.Get)('export.csv'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('entity')),
     __param(2, (0, common_1.Query)('userId')),

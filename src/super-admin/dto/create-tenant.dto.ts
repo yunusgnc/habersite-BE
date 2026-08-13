@@ -71,4 +71,17 @@ export class CreateTenantDto {
   @IsBoolean()
   @IsOptional()
   bootstrapDefaults?: boolean;
+
+  /** ISO 639-1 dil kodu — html lang, JSON-LD ve OG için */
+  @IsString()
+  @IsOptional()
+  @Matches(/^[a-z]{2}(?:-[A-Z]{2})?$/, {
+    message: 'locale ISO 639-1 formatında olmalı (ör. "tr", "en", "tr-TR")',
+  })
+  locale?: string;
+
+  /** IANA timezone — ör. "Europe/Istanbul" */
+  @IsString()
+  @IsOptional()
+  timezone?: string;
 }

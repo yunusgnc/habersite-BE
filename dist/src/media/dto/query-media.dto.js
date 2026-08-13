@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.QueryMediaDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const client_1 = require("@prisma/client");
@@ -18,6 +19,9 @@ class QueryMediaDto {
     limit = 30;
     type;
     search;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { cursor: { required: false, type: () => String }, limit: { required: false, type: () => Number, default: 30, minimum: 1, maximum: 100 }, type: { required: false, enum: ["VIDEO", "IMAGE", "DOCUMENT"] }, search: { required: false, type: () => String, description: "Dosya ad\u0131, ba\u015Fl\u0131k, alt metin veya adreste arar." } };
+    }
 }
 exports.QueryMediaDto = QueryMediaDto;
 __decorate([

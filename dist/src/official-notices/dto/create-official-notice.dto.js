@@ -10,12 +10,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateOfficialNoticeDto = exports.NoticeAttachmentDto = void 0;
+const openapi = require("@nestjs/swagger");
 const client_1 = require("@prisma/client");
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 class NoticeAttachmentDto {
     url;
     name;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { url: { required: true, type: () => String, maxLength: 1000 }, name: { required: false, type: () => String, maxLength: 200 } };
+    }
 }
 exports.NoticeAttachmentDto = NoticeAttachmentDto;
 __decorate([
@@ -41,6 +45,9 @@ class CreateOfficialNoticeDto {
     publishedAt;
     expiresAt;
     active;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { title: { required: true, type: () => String, minLength: 3, maxLength: 300 }, slug: { required: false, type: () => String, maxLength: 300 }, noticeType: { required: false, enum: ["TENDER", "AUCTION", "RECRUITMENT", "ZONING", "COURT", "ANNOUNCEMENT", "OTHER"] }, institution: { required: true, type: () => String, minLength: 2, maxLength: 200 }, referenceNo: { required: false, type: () => String, maxLength: 120 }, summary: { required: false, type: () => String, maxLength: 600 }, content: { required: true, type: () => String, minLength: 3 }, attachments: { required: false, type: () => [require("./create-official-notice.dto").NoticeAttachmentDto] }, publishedAt: { required: false, type: () => String }, expiresAt: { required: false, type: () => String, nullable: true }, active: { required: false, type: () => Boolean } };
+    }
 }
 exports.CreateOfficialNoticeDto = CreateOfficialNoticeDto;
 __decorate([

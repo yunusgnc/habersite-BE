@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PublicSettingsController = void 0;
+const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const tenant_guard_1 = require("../common/guards/tenant.guard");
 const tenant_decorator_1 = require("../common/decorators/tenant.decorator");
@@ -48,7 +49,9 @@ let PublicSettingsController = class PublicSettingsController {
 };
 exports.PublicSettingsController = PublicSettingsController;
 __decorate([
+    openapi.ApiOperation({ summary: "Herkese a\u00E7\u0131k ayarlar. Tenant'\u0131n meta bilgisini de (locale, timezone,\nname) buraya kat\u0131yoruz \u2014 site taraf\u0131 `html lang`, JSON-LD ve Google\nNews sitemap i\u00E7in ihtiya\u00E7 duyuyor. Bu de\u011Ferler `Tenant` modelinde ayr\u0131\nkolonlar olarak duruyor, `settings` tablosunda de\u011Fil.\n\nHassas anahtarlar (oneSignal, ma\u011Faza URL'leri) \u00E7\u0131kar\u0131l\u0131r." }),
     (0, common_1.Get)(),
+    openapi.ApiResponse({ status: 200, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),

@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ContactMessagesController = void 0;
+const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const throttler_1 = require("@nestjs/throttler");
 const tenant_guard_1 = require("../common/guards/tenant.guard");
@@ -66,6 +67,7 @@ exports.ContactMessagesController = ContactMessagesController;
 __decorate([
     (0, common_1.Post)(),
     (0, common_1.UseGuards)(throttler_1.ThrottlerGuard),
+    openapi.ApiResponse({ status: 201 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.Ip)()),
@@ -75,9 +77,16 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ContactMessagesController.prototype, "create", null);
 __decorate([
+    openapi.ApiQuery({ name: "limit", required: false }),
+    openapi.ApiQuery({ name: "cursor", required: false }),
+    openapi.ApiQuery({ name: "unreadOnly", required: false }),
+    openapi.ApiQuery({ name: "type", required: false }),
+    openapi.ApiQuery({ name: "status", required: false }),
+    openapi.ApiQuery({ name: "search", required: false }),
     (0, common_1.Get)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN', 'SUPER_ADMIN', 'EDITOR'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('limit')),
     __param(2, (0, common_1.Query)('cursor')),
@@ -93,6 +102,7 @@ __decorate([
     (0, common_1.Get)('stats'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN', 'SUPER_ADMIN', 'EDITOR'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -102,6 +112,7 @@ __decorate([
     (0, common_1.Patch)(':id/read'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN', 'SUPER_ADMIN', 'EDITOR'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)('read')),
@@ -113,6 +124,7 @@ __decorate([
     (0, common_1.Patch)(':id/status'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN', 'SUPER_ADMIN', 'EDITOR'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
@@ -124,6 +136,7 @@ __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN', 'SUPER_ADMIN'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),

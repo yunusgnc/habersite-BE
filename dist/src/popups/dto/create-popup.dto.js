@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreatePopupDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 class CreatePopupDto {
@@ -22,6 +23,9 @@ class CreatePopupDto {
     active;
     startsAt;
     endsAt;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { title: { required: true, type: () => String }, content: { required: false, type: () => String }, imageUrl: { required: false, type: () => String }, targetUrl: { required: false, type: () => String }, trigger: { required: false, type: () => String }, delayMs: { required: false, type: () => Number }, active: { required: false, type: () => Boolean }, startsAt: { required: false, type: () => String }, endsAt: { required: false, type: () => String } };
+    }
 }
 exports.CreatePopupDto = CreatePopupDto;
 __decorate([

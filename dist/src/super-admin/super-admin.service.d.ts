@@ -14,19 +14,19 @@ export declare class SuperAdminService {
         articles: number;
     }>;
     findAll(): Promise<{
-        active: boolean;
         id: string;
         name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
         logo: string | null;
-        mediaBaseUrl: string | null;
         theme: string;
         locale: string;
         timezone: string;
         plan: string;
+        active: boolean;
         createdAt: Date;
+        mediaBaseUrl: string | null;
         _count: {
             users: number;
             categories: number;
@@ -35,7 +35,6 @@ export declare class SuperAdminService {
         };
     }[]>;
     findOne(id: string): Promise<{
-        active: boolean;
         id: string;
         name: string;
         slug: string;
@@ -43,20 +42,21 @@ export declare class SuperAdminService {
         subdomain: string | null;
         logo: string | null;
         favicon: string | null;
-        mediaBaseUrl: string | null;
         theme: string;
         locale: string;
         timezone: string;
         plan: string;
+        active: boolean;
         createdAt: Date;
+        mediaBaseUrl: string | null;
         users: {
-            active: boolean;
             id: string;
             name: string;
+            active: boolean;
             email: string;
-            username: string | null;
             role: import("@prisma/client").$Enums.UserRole;
             lastLoginAt: Date | null;
+            username: string | null;
         }[];
         _count: {
             users: number;
@@ -66,7 +66,6 @@ export declare class SuperAdminService {
         };
     }>;
     create(dto: CreateTenantDto): Promise<{
-        active: boolean;
         id: string;
         name: string;
         slug: string;
@@ -74,20 +73,21 @@ export declare class SuperAdminService {
         subdomain: string | null;
         logo: string | null;
         favicon: string | null;
-        mediaBaseUrl: string | null;
         theme: string;
         locale: string;
         timezone: string;
         plan: string;
+        active: boolean;
         createdAt: Date;
+        mediaBaseUrl: string | null;
         users: {
-            active: boolean;
             id: string;
             name: string;
+            active: boolean;
             email: string;
-            username: string | null;
             role: import("@prisma/client").$Enums.UserRole;
             lastLoginAt: Date | null;
+            username: string | null;
         }[];
         _count: {
             users: number;
@@ -97,7 +97,6 @@ export declare class SuperAdminService {
         };
     }>;
     update(id: string, dto: UpdateTenantDto): Promise<{
-        active: boolean;
         id: string;
         name: string;
         slug: string;
@@ -105,20 +104,21 @@ export declare class SuperAdminService {
         subdomain: string | null;
         logo: string | null;
         favicon: string | null;
-        mediaBaseUrl: string | null;
         theme: string;
         locale: string;
         timezone: string;
         plan: string;
+        active: boolean;
         createdAt: Date;
+        mediaBaseUrl: string | null;
         users: {
-            active: boolean;
             id: string;
             name: string;
+            active: boolean;
             email: string;
-            username: string | null;
             role: import("@prisma/client").$Enums.UserRole;
             lastLoginAt: Date | null;
+            username: string | null;
         }[];
         _count: {
             users: number;

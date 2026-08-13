@@ -49,6 +49,8 @@ const official_notices_module_1 = require("./official-notices/official-notices.m
 const audit_module_1 = require("./common/audit/audit.module");
 const seo_module_1 = require("./seo/seo.module");
 const notifications_module_1 = require("./notifications/notifications.module");
+const rss_import_module_1 = require("./rss-import/rss-import.module");
+const readers_module_1 = require("./readers/readers.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -98,6 +100,8 @@ exports.AppModule = AppModule = __decorate([
             audit_module_1.AuditModule,
             seo_module_1.SeoModule,
             notifications_module_1.NotificationsModule,
+            rss_import_module_1.RssImportModule,
+            readers_module_1.ReadersModule,
         ],
         providers: [
             { provide: core_1.APP_GUARD, useClass: throttler_1.ThrottlerGuard },

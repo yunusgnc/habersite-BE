@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateContactMessageDto = void 0;
+const openapi = require("@nestjs/swagger");
 const client_1 = require("@prisma/client");
 const class_validator_1 = require("class-validator");
 class CreateContactMessageDto {
@@ -22,6 +23,9 @@ class CreateContactMessageDto {
     targetUrl;
     district;
     attachments;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { type: { required: false, enum: ["CONTACT", "TIP", "REMOVAL_REQUEST"] }, name: { required: true, type: () => String, minLength: 2, maxLength: 120 }, email: { required: true, type: () => String, format: "email" }, phone: { required: false, type: () => String, maxLength: 40 }, subject: { required: false, type: () => String, maxLength: 200 }, message: { required: true, type: () => String, minLength: 5, maxLength: 5000 }, targetUrl: { required: false, type: () => String, maxLength: 500, format: "uri" }, district: { required: false, type: () => String, maxLength: 120 }, attachments: { required: false, type: () => [String], maxItems: 6 } };
+    }
 }
 exports.CreateContactMessageDto = CreateContactMessageDto;
 __decorate([

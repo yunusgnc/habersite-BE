@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ResetAdminPasswordDto = exports.UpdateTenantDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class UpdateTenantDto {
     name;
@@ -24,6 +25,9 @@ class UpdateTenantDto {
     locale;
     timezone;
     active;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { name: { required: false, type: () => String }, slug: { required: false, type: () => String, pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" }, domain: { required: false, type: () => String, nullable: true }, subdomain: { required: false, type: () => String, nullable: true }, logo: { required: false, type: () => String, nullable: true }, favicon: { required: false, type: () => String, nullable: true }, mediaBaseUrl: { required: false, type: () => String, nullable: true, description: "M\u00FC\u015Fteriye \u00F6zel medya CDN adresi \u2014 \u00F6r. \"https://cdn.kayseritimes.com\"" }, theme: { required: false, type: () => String }, plan: { required: false, type: () => String }, locale: { required: false, type: () => String, description: "ISO 639-1 iki harflik dil kodu. `html lang`, JSON-LD ve Google News\nsitemap i\u00E7in kritik \u2014 yanl\u0131\u015F kod SEO hatalar\u0131 verir.", pattern: "^[a-z]{2}(?:-[A-Z]{2})?$" }, timezone: { required: false, type: () => String, description: "IANA timezone (\u00F6r. \"Europe/Istanbul\"). Tarih/saat g\u00F6steriminde ve\ncron zamanlamas\u0131nda kullan\u0131l\u0131r." }, active: { required: false, type: () => Boolean } };
+    }
 }
 exports.UpdateTenantDto = UpdateTenantDto;
 __decorate([
@@ -95,6 +99,9 @@ __decorate([
 class ResetAdminPasswordDto {
     userId;
     password;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { userId: { required: false, type: () => String }, password: { required: true, type: () => String } };
+    }
 }
 exports.ResetAdminPasswordDto = ResetAdminPasswordDto;
 __decorate([

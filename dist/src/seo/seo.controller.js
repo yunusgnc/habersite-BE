@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SeoController = void 0;
+const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const tenant_guard_1 = require("../common/guards/tenant.guard");
 const tenant_decorator_1 = require("../common/decorators/tenant.decorator");
@@ -36,6 +37,7 @@ __decorate([
     (0, common_1.Get)('sitemap.xml'),
     (0, common_1.Header)('Content-Type', 'application/xml; charset=utf-8'),
     (0, common_1.Header)('Cache-Control', 'public, max-age=1800, s-maxage=1800'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
@@ -46,6 +48,7 @@ __decorate([
     (0, common_1.Get)('rss.xml'),
     (0, common_1.Header)('Content-Type', 'application/rss+xml; charset=utf-8'),
     (0, common_1.Header)('Cache-Control', 'public, max-age=600, s-maxage=600'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),

@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.QueryGalleriesDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const client_1 = require("@prisma/client");
@@ -18,6 +19,9 @@ class QueryGalleriesDto {
     limit = 20;
     status;
     search;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { cursor: { required: false, type: () => String }, limit: { required: false, type: () => Number, default: 20, minimum: 1, maximum: 50 }, status: { required: false, enum: ["DRAFT", "SCHEDULED", "PUBLISHED", "ARCHIVED", "IN_REVIEW"] }, search: { required: false, type: () => String } };
+    }
 }
 exports.QueryGalleriesDto = QueryGalleriesDto;
 __decorate([

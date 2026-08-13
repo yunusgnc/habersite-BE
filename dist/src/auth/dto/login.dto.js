@@ -10,11 +10,15 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LoginDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class LoginDto {
     identifier;
     password;
     rememberMe;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { identifier: { required: true, type: () => String, minLength: 3 }, password: { required: true, type: () => String, minLength: 6 }, rememberMe: { required: false, type: () => Boolean } };
+    }
 }
 exports.LoginDto = LoginDto;
 __decorate([

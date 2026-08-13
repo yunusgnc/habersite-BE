@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.QueryCommentsDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const client_1 = require("@prisma/client");
@@ -18,6 +19,9 @@ class QueryCommentsDto {
     status;
     cursor;
     limit = 20;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { articleId: { required: false, type: () => String }, status: { required: false, enum: ["PENDING", "APPROVED", "SPAM", "REJECTED"] }, cursor: { required: false, type: () => String }, limit: { required: false, type: () => Number, default: 20, minimum: 1, maximum: 50 } };
+    }
 }
 exports.QueryCommentsDto = QueryCommentsDto;
 __decorate([

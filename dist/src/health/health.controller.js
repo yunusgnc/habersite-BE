@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HealthController = void 0;
+const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 let HealthController = class HealthController {
@@ -44,13 +45,17 @@ let HealthController = class HealthController {
 };
 exports.HealthController = HealthController;
 __decorate([
+    openapi.ApiOperation({ summary: "Basit liveness \u2014 process ayakta m\u0131. Load balancer i\u00E7in." }),
     (0, common_1.Get)(),
+    openapi.ApiResponse({ status: 200 }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], HealthController.prototype, "check", null);
 __decorate([
+    openapi.ApiOperation({ summary: "Readiness \u2014 DB'ye ula\u015Fabiliyor mu. Deploy pipeline'\u0131 i\u00E7in." }),
     (0, common_1.Get)('ready'),
+    openapi.ApiResponse({ status: 200 }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)

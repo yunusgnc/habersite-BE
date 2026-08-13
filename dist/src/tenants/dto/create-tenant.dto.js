@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateTenantDto = exports.CreateTenantDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class CreateTenantDto {
     name;
@@ -19,6 +20,9 @@ class CreateTenantDto {
     favicon;
     theme;
     plan;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { name: { required: true, type: () => String, minLength: 2 }, domain: { required: false, type: () => String }, subdomain: { required: false, type: () => String }, logo: { required: false, type: () => String }, favicon: { required: false, type: () => String }, theme: { required: false, type: () => String }, plan: { required: false, type: () => String } };
+    }
 }
 exports.CreateTenantDto = CreateTenantDto;
 __decorate([
@@ -66,6 +70,9 @@ class UpdateTenantDto {
     plan;
     settings;
     active;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { name: { required: false, type: () => String, minLength: 2 }, domain: { required: false, type: () => String }, subdomain: { required: false, type: () => String }, logo: { required: false, type: () => String }, favicon: { required: false, type: () => String }, theme: { required: false, type: () => String }, plan: { required: false, type: () => String }, settings: { required: false, type: "object", additionalProperties: true }, active: { required: false, type: () => Boolean } };
+    }
 }
 exports.UpdateTenantDto = UpdateTenantDto;
 __decorate([

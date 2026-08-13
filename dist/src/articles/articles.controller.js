@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ArticlesController = void 0;
+const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const articles_service_1 = require("./articles.service");
 const create_article_dto_1 = require("./dto/create-article.dto");
@@ -114,8 +115,10 @@ let ArticlesController = class ArticlesController {
 };
 exports.ArticlesController = ArticlesController;
 __decorate([
+    openapi.ApiOperation({ summary: "Bu u\u00E7 noktay\u0131 hem panel hem de herkese a\u00E7\u0131k site kullan\u0131yor. Panel b\u00FCt\u00FCn\ndurumlar\u0131 g\u00F6rmek zorunda (taslak listesi, \"T\u00FCm\u00FC\" sekmesi), ziyaret\u00E7i ise\nyaln\u0131zca yay\u0131nlanm\u0131\u015Flar\u0131 g\u00F6rmeli. Ayr\u0131m kimlik do\u011Frulamayla yap\u0131l\u0131yor:\ntoken yoksa `status` iste\u011Fe bak\u0131lmaks\u0131z\u0131n PUBLISHED'a sabitlenir.\n\nDaha \u00F6nce filtre yoktu; taslak haberler ana sayfada man\u015Fete kadar\n\u00E7\u0131k\u0131yordu." }),
     (0, common_1.Get)(),
     (0, common_1.UseGuards)(optional_jwt_auth_guard_1.OptionalJwtAuthGuard),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)()),
     __param(2, (0, user_decorator_1.CurrentUser)()),
@@ -125,6 +128,7 @@ __decorate([
 ], ArticlesController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id/detail'),
+    openapi.ApiResponse({ status: 200, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -132,7 +136,11 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ArticlesController.prototype, "findById", null);
 __decorate([
+    openapi.ApiOperation({ summary: "Sitemap \u00FCretimi i\u00E7in hafif bir u\u00E7 nokta. Genel liste 50 sat\u0131rla s\u0131n\u0131rl\u0131;\narama motoruna 42 binin \u00FCzerinde haber sunmak i\u00E7in 100 istek atmak\nmakul de\u011Fil. Buras\u0131 yaln\u0131zca slug + tarih d\u00F6ner (kapak, spot, i\u00E7erik\nyok) ve sayfa ba\u015F\u0131na 5.000 kay\u0131t verir.\n\nHerkese a\u00E7\u0131k: taslaklar\u0131 g\u00F6stermez, kimlik do\u011Frulama gerektirmez." }),
+    openapi.ApiQuery({ name: "page", required: false }),
+    openapi.ApiQuery({ name: "perPage", required: false }),
     (0, common_1.Get)('sitemap'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('page')),
     __param(2, (0, common_1.Query)('perPage')),
@@ -141,7 +149,10 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ArticlesController.prototype, "sitemap", null);
 __decorate([
+    openapi.ApiOperation({ summary: "Google News sitemap'i ve RSS i\u00E7in son 48 saatteki haberler. Herkese a\u00E7\u0131k.\nGoogle News 2 g\u00FCnden eski haberi kabul etmedi\u011Fi i\u00E7in aral\u0131k sabit." }),
+    openapi.ApiQuery({ name: "limit", required: false }),
     (0, common_1.Get)('recent-for-news'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
@@ -149,7 +160,9 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ArticlesController.prototype, "recentForNews", null);
 __decorate([
+    openapi.ApiQuery({ name: "limit", required: false }),
     (0, common_1.Get)('most-read'),
+    openapi.ApiResponse({ status: 200, type: [Object] }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
@@ -157,7 +170,9 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ArticlesController.prototype, "getMostRead", null);
 __decorate([
+    openapi.ApiQuery({ name: "limit", required: false }),
     (0, common_1.Get)('trending'),
+    openapi.ApiResponse({ status: 200, type: [Object] }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
@@ -166,13 +181,16 @@ __decorate([
 ], ArticlesController.prototype, "getTrending", null);
 __decorate([
     (0, common_1.Get)('archive-facets'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], ArticlesController.prototype, "archiveFacets", null);
 __decorate([
+    openapi.ApiQuery({ name: "limit", required: false }),
     (0, common_1.Get)(':id/related'),
+    openapi.ApiResponse({ status: 200, type: [Object] }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Query)('limit')),
@@ -182,6 +200,7 @@ __decorate([
 ], ArticlesController.prototype, "getRelated", null);
 __decorate([
     (0, common_1.Get)(':slug'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('slug')),
     __metadata("design:type", Function),
@@ -192,6 +211,7 @@ __decorate([
     (0, common_1.Post)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('COLUMNIST'),
+    openapi.ApiResponse({ status: 201, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, user_decorator_1.CurrentUser)()),
     __param(2, (0, common_1.Body)()),
@@ -203,6 +223,7 @@ __decorate([
     (0, common_1.Patch)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('COLUMNIST'),
+    openapi.ApiResponse({ status: 200, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
@@ -215,6 +236,7 @@ __decorate([
     (0, common_1.Get)(':id/revisions'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('EDITOR'),
+    openapi.ApiResponse({ status: 200, type: [Object] }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -225,6 +247,7 @@ __decorate([
     (0, common_1.Post)(':id/revisions/:revisionId/restore'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('EDITOR'),
+    openapi.ApiResponse({ status: 201, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Param)('revisionId')),
@@ -237,6 +260,7 @@ __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN', 'EDITOR'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, user_decorator_1.CurrentUser)()),
@@ -248,6 +272,7 @@ __decorate([
     (0, common_1.Patch)('bulk/status'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN', 'EDITOR'),
+    openapi.ApiResponse({ status: 200, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -258,6 +283,7 @@ __decorate([
     (0, common_1.Patch)('bulk/category'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN', 'EDITOR'),
+    openapi.ApiResponse({ status: 200, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -268,6 +294,7 @@ __decorate([
     (0, common_1.Delete)('bulk'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN', 'EDITOR'),
+    openapi.ApiResponse({ status: 200, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -278,6 +305,7 @@ __decorate([
     (0, common_1.Get)('workflow/my-tasks'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('COLUMNIST'),
+    openapi.ApiResponse({ status: 200, type: [Object] }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -288,6 +316,7 @@ __decorate([
     (0, common_1.Get)('workflow/review-queue'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('EDITOR'),
+    openapi.ApiResponse({ status: 200, type: [Object] }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -297,6 +326,7 @@ __decorate([
     (0, common_1.Post)(':id/submit'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('COLUMNIST'),
+    openapi.ApiResponse({ status: 201, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, user_decorator_1.CurrentUser)()),
@@ -308,6 +338,7 @@ __decorate([
     (0, common_1.Post)(':id/approve'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('EDITOR'),
+    openapi.ApiResponse({ status: 201 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, user_decorator_1.CurrentUser)()),
@@ -319,6 +350,7 @@ __decorate([
     (0, common_1.Post)(':id/reject'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('EDITOR'),
+    openapi.ApiResponse({ status: 201 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
@@ -331,6 +363,7 @@ __decorate([
     (0, common_1.Patch)(':id/assign'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('EDITOR'),
+    openapi.ApiResponse({ status: 200, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),

@@ -10,9 +10,13 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BulkUpdateSettingsDto = exports.UpdateSettingDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class UpdateSettingDto {
     value;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { value: { required: true, type: () => Object } };
+    }
 }
 exports.UpdateSettingDto = UpdateSettingDto;
 __decorate([
@@ -21,6 +25,9 @@ __decorate([
 ], UpdateSettingDto.prototype, "value", void 0);
 class BulkUpdateSettingsDto {
     settings;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { settings: { required: true, type: "object", additionalProperties: true } };
+    }
 }
 exports.BulkUpdateSettingsDto = BulkUpdateSettingsDto;
 __decorate([

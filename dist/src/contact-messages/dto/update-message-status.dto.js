@@ -10,11 +10,15 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateMessageStatusDto = void 0;
+const openapi = require("@nestjs/swagger");
 const client_1 = require("@prisma/client");
 const class_validator_1 = require("class-validator");
 class UpdateMessageStatusDto {
     status;
     adminNote;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { status: { required: true, enum: ["REJECTED", "IN_REVIEW", "NEW", "RESOLVED"] }, adminNote: { required: false, type: () => String, maxLength: 2000 } };
+    }
 }
 exports.UpdateMessageStatusDto = UpdateMessageStatusDto;
 __decorate([
