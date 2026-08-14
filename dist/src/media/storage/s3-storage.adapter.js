@@ -94,6 +94,7 @@ let S3StorageAdapter = S3StorageAdapter_1 = class S3StorageAdapter {
             Body: body,
             ContentType: opts.mimeType,
             ContentLength: contentLength,
+            CacheControl: process.env.S3_CACHE_CONTROL ?? 'public, max-age=31536000, immutable',
             ...(process.env.S3_ACL
                 ? { ACL: process.env.S3_ACL }
                 : {}),

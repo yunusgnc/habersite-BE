@@ -91,6 +91,16 @@ export class S3StorageAdapter implements StorageAdapter {
         Body: body,
         ContentType: opts.mimeType,
         ContentLength: contentLength,
+        // Anahtar UUID içerdiği için bir nesnenin içeriği ASLA değişmez —
+        // yeni yükleme her zaman yeni bir key üretir. Dolayısıyla `immutable`
+        // güvenli. Bu başlık üç yerde birden çalışır:
+        //   1) tarayıcı önbelleği,
+        //   2) önündeki Cloudflare CDN'in edge TTL'i,
+        //   3) Next.js image optimizer — üstteki max-age yoksa 60 sn'lik
+        //      varsayılana düşüp orijinali dakikada bir yeniden çekiyor.
+        // Başlıksız bırakmak R2 okuma (Class B) işlemlerinin ana kaynağıydı.
+        CacheControl:
+          process.env.S3_CACHE_CONTROL ?? 'public, max-age=31536000, immutable',
         // Cloudflare R2 ACL DESTEKLEMEZ — parametre gönderilirse istek
         // reddedilir. R2'de erişim bucket'ın public/custom domain ayarıyla
         // verilir. Gerçek S3 kullananlar S3_ACL=public-read tanımlayabilir.
