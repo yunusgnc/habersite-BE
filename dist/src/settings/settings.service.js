@@ -78,6 +78,8 @@ let SettingsService = class SettingsService {
         return out;
     }
     prepareValue(key, value) {
+        if (value === null || value === undefined)
+            return { value: null, remove: true };
         if (!(0, secret_settings_1.isSecretSettingKey)(key))
             return { value, remove: false };
         const plain = typeof value === 'string' ? value.trim() : '';

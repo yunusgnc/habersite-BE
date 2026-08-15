@@ -101,6 +101,11 @@ export class SettingsService {
    *   yazmak en kötü sonuç olurdu: kullanıcı korunduğunu sanır.
    */
   private prepareValue(key: string, value: any): { value: any; remove: boolean } {
+    // `null`/`undefined` her ayar için silme demek. Kolona null yazmak
+    // veritabanı hatası olurdu; "ayar yok" ile "ayar null" arasında da anlamlı
+    // bir fark yok — ikisi de varsayılanın kullanılacağı anlamına geliyor.
+    if (value === null || value === undefined) return { value: null, remove: true };
+
     if (!isSecretSettingKey(key)) return { value, remove: false };
 
     const plain = typeof value === 'string' ? value.trim() : '';
