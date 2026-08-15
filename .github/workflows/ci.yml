@@ -50,8 +50,12 @@ jobs:
       - name: Prisma migrate deploy
         run: npx prisma migrate deploy
 
+      # `--passWithNoTests` kasıtlı olarak KALDIRILDI. O bayrak dururken test
+      # adımı hiç test olmadan da yeşil yanıyordu — koruma varmış gibi görünüp
+      # hiçbir şey doğrulamıyordu. Artık testler silinirse ya da bulunamazsa CI
+      # kırılır.
       - name: Unit tests
-        run: npm test -- --ci --passWithNoTests
+        run: npm test -- --ci
 
       - name: Build
         run: npm run build
