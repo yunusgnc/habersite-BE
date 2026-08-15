@@ -39,6 +39,12 @@ let AiService = AiService_1 = class AiService {
             ? new openai_adapter_1.OpenAiAdapter(apiKey, override || openai_adapter_1.OPENAI_DEFAULT_MODEL)
             : new anthropic_adapter_1.AnthropicAdapter(apiKey, override || anthropic_adapter_1.ANTHROPIC_DEFAULT_MODEL);
     }
+    async status(tenantId) {
+        const all = await this.settings.getAll(tenantId);
+        const provider = (0, secret_settings_1.normalizeAiProvider)(all[secret_settings_1.AI_PROVIDER_SETTING_KEY]);
+        const key = await this.settings.getSecret(tenantId, secret_settings_1.AI_PROVIDER_KEY_SETTING[provider]);
+        return { enabled: !!key, provider };
+    }
     async assist(tenantId, task, input) {
         const spec = ai_tasks_1.AI_TASKS[task];
         if (!spec)

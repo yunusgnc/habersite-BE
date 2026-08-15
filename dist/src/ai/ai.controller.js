@@ -26,6 +26,9 @@ let AiController = class AiController {
     constructor(ai) {
         this.ai = ai;
     }
+    status(tenantId) {
+        return this.ai.status(tenantId);
+    }
     assist(tenantId, dto) {
         return this.ai.assist(tenantId, dto.task, {
             title: dto.title,
@@ -35,6 +38,16 @@ let AiController = class AiController {
     }
 };
 exports.AiController = AiController;
+__decorate([
+    openapi.ApiOperation({ summary: "Yard\u0131mc\u0131lar a\u00E7\u0131k m\u0131 \u2014 panel butonlar\u0131 buna g\u00F6re g\u00F6steriliyor.\n\nOran s\u0131n\u0131r\u0131n\u0131n d\u0131\u015F\u0131nda tutuldu: sayfa a\u00E7\u0131l\u0131\u015F\u0131nda \u00E7a\u011Fr\u0131l\u0131yor ve sa\u011Flay\u0131c\u0131ya\ngitmiyor, yaln\u0131zca ayara bak\u0131yor. As\u0131l s\u0131n\u0131r `assist` \u00FCzerinde." }),
+    (0, common_1.Get)('status'),
+    (0, throttler_1.Throttle)({ default: { limit: 60, ttl: 60_000 } }),
+    openapi.ApiResponse({ status: 200 }),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], AiController.prototype, "status", null);
 __decorate([
     (0, common_1.Post)('assist'),
     openapi.ApiResponse({ status: 201, type: Object }),

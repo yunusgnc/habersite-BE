@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TenantGuard } from '../common/guards/tenant.guard';
@@ -21,6 +21,18 @@ import { AssistDto } from './dto/assist.dto';
 @Throttle({ default: { limit: 20, ttl: 60_000 } })
 export class AiController {
   constructor(private readonly ai: AiService) {}
+
+  /**
+   * Yardımcılar açık mı — panel butonları buna göre gösteriliyor.
+   *
+   * Oran sınırının dışında tutuldu: sayfa açılışında çağrılıyor ve sağlayıcıya
+   * gitmiyor, yalnızca ayara bakıyor. Asıl sınır `assist` üzerinde.
+   */
+  @Get('status')
+  @Throttle({ default: { limit: 60, ttl: 60_000 } })
+  status(@CurrentTenant() tenantId: string) {
+    return this.ai.status(tenantId);
+  }
 
   @Post('assist')
   assist(@CurrentTenant() tenantId: string, @Body() dto: AssistDto) {

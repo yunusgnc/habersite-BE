@@ -63,6 +63,26 @@ export class AiService {
       : new AnthropicAdapter(apiKey, override || ANTHROPIC_DEFAULT_MODEL);
   }
 
+  /**
+   * Yardımcılar kullanılabilir mi — panel butonları buna göre gösteriliyor.
+   *
+   * Anahtarın kendisi değil yalnızca varlığı dönüyor. Ayrı bir uç olmasının
+   * sebebi: "AI özelliği açık mı" sorusunun cevabı sağlayıcı tercihi + o
+   * sağlayıcının anahtarı birlikte demek. Bu mantığı panelde tekrarlamak
+   * yerine sunucuda tek yerde tutuyoruz.
+   */
+  async status(
+    tenantId: string,
+  ): Promise<{ enabled: boolean; provider: AiProvider }> {
+    const all = await this.settings.getAll(tenantId);
+    const provider = normalizeAiProvider(all[AI_PROVIDER_SETTING_KEY]);
+    const key = await this.settings.getSecret(
+      tenantId,
+      AI_PROVIDER_KEY_SETTING[provider],
+    );
+    return { enabled: !!key, provider };
+  }
+
   async assist(
     tenantId: string,
     task: AiTaskName,
