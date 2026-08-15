@@ -4,3 +4,9 @@ node_modules
 
 /generated/prisma
 migration-output/
+
+# Yüklenen medya — depoya girmemeli.
+# Üretimde bu klasör kalıcı bir volume (docker-compose: api_uploads) ve imaj
+# onu kopyalamıyor; prod ayrıca R2/S3 sürücüsünü kullanıyor. Yani buradaki
+# dosyalar hiçbir dağıtıma ulaşmıyordu, yalnızca depoyu şişiriyordu.
+uploads/
