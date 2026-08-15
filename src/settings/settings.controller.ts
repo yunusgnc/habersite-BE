@@ -25,6 +25,21 @@ export class SettingsController {
     return this.settingsService.getAll(tenantId);
   }
 
+  /**
+   * Gizli ayarların yalnızca DURUMU — değerleri değil.
+   *
+   * `getAll` sırları hiç döndürmediği için panelin "API anahtarı kayıtlı mı"
+   * sorusuna cevap verecek ayrı bir uca ihtiyacı var. Dönen tek şey
+   * `{ configured, hint }`; anahtarın kendisi tarayıcıya inmiyor.
+   *
+   * `:key` rotasından ÖNCE tanımlı olmalı — aksi halde "secret-status" bir
+   * ayar adı sanılıp oraya düşer.
+   */
+  @Get('secret-status')
+  getSecretStatus(@CurrentTenant() tenantId: string) {
+    return this.settingsService.getSecretStatus(tenantId);
+  }
+
   @Get(':key')
   get(
     @CurrentTenant() tenantId: string,

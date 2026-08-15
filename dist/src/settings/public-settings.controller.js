@@ -19,6 +19,7 @@ const tenant_guard_1 = require("../common/guards/tenant.guard");
 const tenant_decorator_1 = require("../common/decorators/tenant.decorator");
 const settings_service_1 = require("./settings.service");
 const prisma_service_1 = require("../prisma/prisma.service");
+const secret_settings_1 = require("./secret-settings");
 const SENSITIVE_KEYS = ['oneSignalAppId', 'appStoreUrl', 'playStoreUrl'];
 let PublicSettingsController = class PublicSettingsController {
     settingsService;
@@ -36,6 +37,9 @@ let PublicSettingsController = class PublicSettingsController {
             }),
         ]);
         for (const key of SENSITIVE_KEYS) {
+            delete all[key];
+        }
+        for (const key of secret_settings_1.SECRET_SETTING_KEYS) {
             delete all[key];
         }
         if (!all.siteTitle && tenant?.name)

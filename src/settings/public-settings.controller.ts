@@ -4,6 +4,16 @@ import { CurrentTenant } from '../common/decorators/tenant.decorator';
 import { SettingsService } from './settings.service';
 import { PrismaService } from '../prisma/prisma.service';
 
+import { SECRET_SETTING_KEYS } from './secret-settings';
+
+/**
+ * Herkese açık olmaması gereken ama sır da olmayan anahtarlar.
+ *
+ * Gerçek sırlar (API anahtarları) buraya YAZILMAZ — onlar `SettingsService.
+ * getAll()` sonucuna zaten hiç girmiyor (bkz. secret-settings.ts). Aşağıdaki
+ * ikinci temizlik yalnızca kuşak ve kemer: biri ileride `getAll`'ı değiştirse
+ * bile sır buradan geçemesin.
+ */
 const SENSITIVE_KEYS = ['oneSignalAppId', 'appStoreUrl', 'playStoreUrl'];
 
 @Controller('api/public/settings')
@@ -32,6 +42,10 @@ export class PublicSettingsController {
       }),
     ]);
     for (const key of SENSITIVE_KEYS) {
+      delete all[key];
+    }
+    // Kuşak ve kemer — sırlar `getAll`'dan zaten çıkmıyor.
+    for (const key of SECRET_SETTING_KEYS) {
       delete all[key];
     }
     // `siteTitle` set edilmemişse tenant adına düşülür — beyaz etikette bir

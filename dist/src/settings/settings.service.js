@@ -13,6 +13,8 @@ exports.SettingsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const revalidation_service_1 = require("../common/revalidation/revalidation.service");
+const secret_box_1 = require("../common/crypto/secret-box");
+const secret_settings_1 = require("./secret-settings");
 let SettingsService = class SettingsService {
     prisma;
     revalidation;
@@ -25,11 +27,16 @@ let SettingsService = class SettingsService {
             where: { tenantId },
         });
         return settings.reduce((acc, setting) => {
+            if ((0, secret_settings_1.isSecretSettingKey)(setting.key))
+                return acc;
             acc[setting.key] = setting.value;
             return acc;
         }, {});
     }
     async get(tenantId, key) {
+        if ((0, secret_settings_1.isSecretSettingKey)(key)) {
+            return null;
+        }
         const setting = await this.prisma.setting.findUnique({
             where: {
                 tenantId_key: { tenantId, key },
@@ -37,28 +44,90 @@ let SettingsService = class SettingsService {
         });
         return setting?.value ?? null;
     }
+    async getSecret(tenantId, key) {
+        const setting = await this.prisma.setting.findUnique({
+            where: { tenantId_key: { tenantId, key } },
+        });
+        const raw = setting?.value;
+        if (typeof raw !== 'string' || !raw)
+            return null;
+        try {
+            return (0, secret_box_1.decryptSecret)(raw);
+        }
+        catch {
+            return null;
+        }
+    }
+    async getSecretStatus(tenantId) {
+        const rows = await this.prisma.setting.findMany({ where: { tenantId } });
+        const out = {};
+        for (const row of rows) {
+            if (!(0, secret_settings_1.isSecretSettingKey)(row.key))
+                continue;
+            let hint = null;
+            if (typeof row.value === 'string' && row.value) {
+                try {
+                    hint = (0, secret_settings_1.secretHint)((0, secret_box_1.decryptSecret)(row.value));
+                }
+                catch {
+                    hint = null;
+                }
+            }
+            out[row.key] = { configured: hint !== null, hint };
+        }
+        return out;
+    }
+    prepareValue(key, value) {
+        if (!(0, secret_settings_1.isSecretSettingKey)(key))
+            return { value, remove: false };
+        const plain = typeof value === 'string' ? value.trim() : '';
+        if (!plain)
+            return { value: null, remove: true };
+        if (!(0, secret_box_1.isEncryptionConfigured)()) {
+            throw new common_1.BadRequestException('Sunucuda SETTINGS_ENCRYPTION_KEY tanımlı olmadığı için API anahtarı ' +
+                'kaydedilemiyor. Şifrelenmeden saklamıyoruz. Üretmek için: openssl rand -hex 32');
+        }
+        return { value: (0, secret_box_1.encryptSecret)(plain), remove: false };
+    }
     async upsert(tenantId, key, value) {
+        const prepared = this.prepareValue(key, value);
+        if (prepared.remove) {
+            await this.prisma.setting.deleteMany({ where: { tenantId, key } });
+            this.revalidation.revalidateTenant(tenantId, ['settings']);
+            return { tenantId, key, removed: true };
+        }
         const result = await this.prisma.setting.upsert({
             where: {
                 tenantId_key: { tenantId, key },
             },
-            update: { value },
-            create: { tenantId, key, value },
+            update: { value: prepared.value },
+            create: { tenantId, key, value: prepared.value },
         });
         this.revalidation.revalidateTenant(tenantId, ['settings']);
-        return result;
+        return (0, secret_settings_1.isSecretSettingKey)(key) ? { tenantId, key, saved: true } : result;
     }
     async bulkUpsert(tenantId, settings) {
-        const operations = Object.entries(settings).map(([key, value]) => this.prisma.setting.upsert({
-            where: {
-                tenantId_key: { tenantId, key },
-            },
-            update: { value },
-            create: { tenantId, key, value },
-        }));
-        const result = await this.prisma.$transaction(operations);
+        const removals = [];
+        const writes = [];
+        for (const [key, value] of Object.entries(settings)) {
+            const prepared = this.prepareValue(key, value);
+            if (prepared.remove)
+                removals.push(key);
+            else
+                writes.push({ key, value: prepared.value });
+        }
+        await this.prisma.$transaction([
+            ...removals.map((key) => this.prisma.setting.deleteMany({ where: { tenantId, key } })),
+            ...writes.map(({ key, value }) => this.prisma.setting.upsert({
+                where: {
+                    tenantId_key: { tenantId, key },
+                },
+                update: { value },
+                create: { tenantId, key, value },
+            })),
+        ]);
         this.revalidation.revalidateTenant(tenantId, ['settings']);
-        return result;
+        return { updated: writes.map((w) => w.key), removed: removals };
     }
 };
 exports.SettingsService = SettingsService;

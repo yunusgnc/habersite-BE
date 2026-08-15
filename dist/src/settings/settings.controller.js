@@ -30,6 +30,9 @@ let SettingsController = class SettingsController {
     getAll(tenantId) {
         return this.settingsService.getAll(tenantId);
     }
+    getSecretStatus(tenantId) {
+        return this.settingsService.getSecretStatus(tenantId);
+    }
     get(tenantId, key) {
         return this.settingsService.get(tenantId, key);
     }
@@ -50,6 +53,15 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], SettingsController.prototype, "getAll", null);
 __decorate([
+    openapi.ApiOperation({ summary: "Gizli ayarlar\u0131n yaln\u0131zca DURUMU \u2014 de\u011Ferleri de\u011Fil.\n\n`getAll` s\u0131rlar\u0131 hi\u00E7 d\u00F6nd\u00FCrmedi\u011Fi i\u00E7in panelin \"API anahtar\u0131 kay\u0131tl\u0131 m\u0131\"\nsorusuna cevap verecek ayr\u0131 bir uca ihtiyac\u0131 var. D\u00F6nen tek \u015Fey\n`{ configured, hint }`; anahtar\u0131n kendisi taray\u0131c\u0131ya inmiyor.\n\n`:key` rotas\u0131ndan \u00D6NCE tan\u0131ml\u0131 olmal\u0131 \u2014 aksi halde \"secret-status\" bir\nayar ad\u0131 san\u0131l\u0131p oraya d\u00FC\u015Fer." }),
+    (0, common_1.Get)('secret-status'),
+    openapi.ApiResponse({ status: 200, type: Object }),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], SettingsController.prototype, "getSecretStatus", null);
+__decorate([
     (0, common_1.Get)(':key'),
     openapi.ApiResponse({ status: 200, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
@@ -69,7 +81,7 @@ __decorate([
 ], SettingsController.prototype, "bulkUpsert", null);
 __decorate([
     (0, common_1.Put)(':key'),
-    openapi.ApiResponse({ status: 200 }),
+    openapi.ApiResponse({ status: 200, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('key')),
     __param(2, (0, common_1.Body)()),
