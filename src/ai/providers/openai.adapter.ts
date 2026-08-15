@@ -4,6 +4,7 @@ import {
   AiProviderAdapter,
   AiProviderError,
 } from '../ai.types';
+import { describeProviderError } from './describe-error';
 
 /**
  * OpenAI adaptörü.
@@ -53,7 +54,10 @@ export class OpenAiAdapter implements AiProviderAdapter {
       });
       raw = completion.choices[0]?.message?.content;
     } catch (err: any) {
-      throw new AiProviderError(this.describe(err), this.name);
+      throw new AiProviderError(
+        describeProviderError(err, this.name, this.model),
+        this.name,
+      );
     }
 
     if (!raw) {
@@ -68,17 +72,5 @@ export class OpenAiAdapter implements AiProviderAdapter {
         this.name,
       );
     }
-  }
-
-  private describe(err: any): string {
-    const status = err?.status;
-    if (status === 401) return 'API anahtarı geçersiz. Ayarlardan kontrol edin.';
-    if (status === 403) return 'API anahtarının bu model için yetkisi yok.';
-    if (status === 404)
-      return `"${this.model}" modeli bulunamadı. Ayarlardan model adını güncelleyin.`;
-    if (status === 429)
-      return 'Sağlayıcı istek sınırına ulaşıldı ya da kotanız bitti. Biraz bekleyip tekrar deneyin.';
-    if (status >= 500) return 'Sağlayıcıda geçici bir sorun var. Tekrar deneyin.';
-    return err?.message ?? 'Sağlayıcıya bağlanılamadı.';
   }
 }

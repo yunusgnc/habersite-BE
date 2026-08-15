@@ -4,15 +4,18 @@ import {
   AiProviderAdapter,
   AiProviderError,
 } from '../ai.types';
+import { describeProviderError } from './describe-error';
 
 /**
  * Anthropic (Claude) adaptörü.
  *
- * Model notu: `claude-opus-5` sabit kimlik, tarih eki almıyor. Tenant
- * `aiModel` ayarıyla başka bir model yazabilir — sağlayıcı model adlarını
- * emekliye ayırdığında kod değişikliği beklemeden geçiş yapılabilsin.
+ * Varsayılan neden en güçlü model değil: bu yardımcılar spot çıkarıyor, etiket
+ * öneriyor, başlık türetiyor — hiçbiri derin akıl yürütme istemiyor. Küçük model
+ * hem kat kat ucuz hem de yeni API hesaplarının düşük kullanım sınırlarına
+ * takılmıyor; üst seviye modeller ilk kademede sık sık istek sınırı hatası
+ * veriyor. Daha iyi sonuç isteyen Ayarlar → Yapay Zekâ'dan modeli değiştirebilir.
  */
-export const ANTHROPIC_DEFAULT_MODEL = 'claude-opus-5';
+export const ANTHROPIC_DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
 
 export class AnthropicAdapter implements AiProviderAdapter {
   readonly name = 'anthropic';
@@ -43,7 +46,10 @@ export class AnthropicAdapter implements AiProviderAdapter {
         messages: [{ role: 'user', content: req.user }],
       });
     } catch (err: any) {
-      throw new AiProviderError(this.describe(err), this.name);
+      throw new AiProviderError(
+        describeProviderError(err, this.name, this.model),
+        this.name,
+      );
     }
 
     // Güvenlik sınıflandırıcıları isteği reddedebilir: HTTP 200 döner ama
@@ -69,18 +75,5 @@ export class AnthropicAdapter implements AiProviderAdapter {
         this.name,
       );
     }
-  }
-
-  /** SDK hatasını kullanıcının ne yapacağını anlayacağı bir cümleye çevirir. */
-  private describe(err: any): string {
-    const status = err?.status;
-    if (status === 401) return 'API anahtarı geçersiz. Ayarlardan kontrol edin.';
-    if (status === 403) return 'API anahtarının bu model için yetkisi yok.';
-    if (status === 404)
-      return `"${this.model}" modeli bulunamadı. Ayarlardan model adını güncelleyin.`;
-    if (status === 429)
-      return 'Sağlayıcı istek sınırına ulaşıldı ya da kotanız bitti. Biraz bekleyip tekrar deneyin.';
-    if (status >= 500) return 'Sağlayıcıda geçici bir sorun var. Tekrar deneyin.';
-    return err?.message ?? 'Sağlayıcıya bağlanılamadı.';
   }
 }

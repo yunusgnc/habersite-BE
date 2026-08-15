@@ -6,7 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AnthropicAdapter = exports.ANTHROPIC_DEFAULT_MODEL = void 0;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const ai_types_1 = require("../ai.types");
-exports.ANTHROPIC_DEFAULT_MODEL = 'claude-opus-5';
+const describe_error_1 = require("./describe-error");
+exports.ANTHROPIC_DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
 class AnthropicAdapter {
     apiKey;
     model;
@@ -32,7 +33,7 @@ class AnthropicAdapter {
             });
         }
         catch (err) {
-            throw new ai_types_1.AiProviderError(this.describe(err), this.name);
+            throw new ai_types_1.AiProviderError((0, describe_error_1.describeProviderError)(err, this.name, this.model), this.name);
         }
         if (response.stop_reason === 'refusal') {
             throw new ai_types_1.AiProviderError('Sağlayıcı bu içerik için isteği reddetti. Metni gözden geçirip tekrar deneyin.', this.name);
@@ -47,20 +48,6 @@ class AnthropicAdapter {
         catch {
             throw new ai_types_1.AiProviderError('Sağlayıcı beklenen biçimde yanıt vermedi.', this.name);
         }
-    }
-    describe(err) {
-        const status = err?.status;
-        if (status === 401)
-            return 'API anahtarı geçersiz. Ayarlardan kontrol edin.';
-        if (status === 403)
-            return 'API anahtarının bu model için yetkisi yok.';
-        if (status === 404)
-            return `"${this.model}" modeli bulunamadı. Ayarlardan model adını güncelleyin.`;
-        if (status === 429)
-            return 'Sağlayıcı istek sınırına ulaşıldı ya da kotanız bitti. Biraz bekleyip tekrar deneyin.';
-        if (status >= 500)
-            return 'Sağlayıcıda geçici bir sorun var. Tekrar deneyin.';
-        return err?.message ?? 'Sağlayıcıya bağlanılamadı.';
     }
 }
 exports.AnthropicAdapter = AnthropicAdapter;

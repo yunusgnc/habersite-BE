@@ -7,5 +7,4 @@ export declare class OpenAiAdapter implements AiProviderAdapter {
     readonly defaultModel = "gpt-4o-mini";
     constructor(apiKey: string, model: string);
     complete(req: AiCompletionRequest): Promise<Record<string, any>>;
-    private describe;
 }
