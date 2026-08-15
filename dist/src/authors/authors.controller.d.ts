@@ -6,8 +6,8 @@ export declare class AuthorsController {
     constructor(authorsService: AuthorsService);
     findAll(tenantId: string): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -28,15 +28,15 @@ export declare class AuthorsController {
             publishedAt: Date | null;
         } | null;
         id: string;
-        name: string;
         slug: string;
+        name: string;
         avatar: string | null;
         bio: string | null;
     }[]>;
     findBySlug(tenantId: string, slug: string): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -49,8 +49,8 @@ export declare class AuthorsController {
     }>;
     create(tenantId: string, dto: CreateAuthorDto): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -63,8 +63,8 @@ export declare class AuthorsController {
     }>;
     update(tenantId: string, id: string, dto: UpdateAuthorDto): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -77,8 +77,8 @@ export declare class AuthorsController {
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;

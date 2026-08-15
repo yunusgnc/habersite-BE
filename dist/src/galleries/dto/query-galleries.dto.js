@@ -20,7 +20,7 @@ class QueryGalleriesDto {
     status;
     search;
     static _OPENAPI_METADATA_FACTORY() {
-        return { cursor: { required: false, type: () => String }, limit: { required: false, type: () => Number, default: 20, minimum: 1, maximum: 50 }, status: { required: false, enum: ["DRAFT", "SCHEDULED", "PUBLISHED", "ARCHIVED", "IN_REVIEW"] }, search: { required: false, type: () => String } };
+        return { cursor: { required: false, type: () => String }, limit: { required: false, type: () => Number, default: 20, minimum: 1, maximum: 50 }, status: { required: false, enum: ["DRAFT", "IN_REVIEW", "SCHEDULED", "PUBLISHED", "ARCHIVED"] }, search: { required: false, type: () => String } };
     }
 }
 exports.QueryGalleriesDto = QueryGalleriesDto;

@@ -48,16 +48,16 @@ export declare class ReadersService {
         article: {
             id: string;
             slug: string;
+            categories: {
+                category: {
+                    slug: string;
+                    name: string;
+                };
+            }[];
             title: string;
             spot: string | null;
             featuredImage: string | null;
             publishedAt: Date | null;
-            categories: {
-                category: {
-                    name: string;
-                    slug: string;
-                };
-            }[];
         };
     } & {
         id: string;

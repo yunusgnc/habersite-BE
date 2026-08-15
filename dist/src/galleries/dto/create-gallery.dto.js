@@ -65,7 +65,7 @@ class CreateGalleryDto {
     seoDesc;
     seoKeywords;
     static _OPENAPI_METADATA_FACTORY() {
-        return { title: { required: true, type: () => String }, headline: { required: false, type: () => String }, slug: { required: false, type: () => String }, description: { required: false, type: () => String }, coverImage: { required: false, type: () => String }, categoryId: { required: false, type: () => String }, status: { required: false, enum: ["DRAFT", "SCHEDULED", "PUBLISHED", "ARCHIVED", "IN_REVIEW"] }, publishedAt: { required: false, type: () => String }, sortOrder: { required: false, type: () => Number }, images: { required: false, type: () => [require("./create-gallery.dto").CreateGalleryImageDto] }, seoTitle: { required: false, type: () => String }, seoDesc: { required: false, type: () => String }, seoKeywords: { required: false, type: () => String } };
+        return { title: { required: true, type: () => String }, headline: { required: false, type: () => String }, slug: { required: false, type: () => String }, description: { required: false, type: () => String }, coverImage: { required: false, type: () => String }, categoryId: { required: false, type: () => String }, status: { required: false, enum: ["DRAFT", "IN_REVIEW", "SCHEDULED", "PUBLISHED", "ARCHIVED"] }, publishedAt: { required: false, type: () => String }, sortOrder: { required: false, type: () => Number }, images: { required: false, type: () => [require("./create-gallery.dto").CreateGalleryImageDto] }, seoTitle: { required: false, type: () => String }, seoDesc: { required: false, type: () => String }, seoKeywords: { required: false, type: () => String } };
     }
 }
 exports.CreateGalleryDto = CreateGalleryDto;
