@@ -28,6 +28,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { GalleriesModule } from './galleries/galleries.module';
 import { VideosModule } from './videos/videos.module';
 import { SettingsModule } from './settings/settings.module';
+import { AiModule } from './ai/ai.module';
 import { PopupsModule } from './popups/popups.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { AuthorCategoriesModule } from './author-categories/author-categories.module';
@@ -76,6 +77,7 @@ import { ReadersModule } from './readers/readers.module';
     GalleriesModule,
     VideosModule,
     SettingsModule,
+    AiModule,
     PopupsModule,
     AnnouncementsModule,
     AuthorCategoriesModule,

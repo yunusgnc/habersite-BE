@@ -37,6 +37,7 @@ const analytics_module_1 = require("./analytics/analytics.module");
 const galleries_module_1 = require("./galleries/galleries.module");
 const videos_module_1 = require("./videos/videos.module");
 const settings_module_1 = require("./settings/settings.module");
+const ai_module_1 = require("./ai/ai.module");
 const popups_module_1 = require("./popups/popups.module");
 const announcements_module_1 = require("./announcements/announcements.module");
 const author_categories_module_1 = require("./author-categories/author-categories.module");
@@ -88,6 +89,7 @@ exports.AppModule = AppModule = __decorate([
             galleries_module_1.GalleriesModule,
             videos_module_1.VideosModule,
             settings_module_1.SettingsModule,
+            ai_module_1.AiModule,
             popups_module_1.PopupsModule,
             announcements_module_1.AnnouncementsModule,
             author_categories_module_1.AuthorCategoriesModule,
