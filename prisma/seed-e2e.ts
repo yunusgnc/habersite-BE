@@ -14,13 +14,23 @@ import 'dotenv/config';
  * kullanıcısı B'nin haberini göremiyor" iddiasını kanıtlamak için ortada iki
  * kiracı olması gerekiyor, biri yetmiyor.
  *
- * ŞİFRE KODA YAZILMIYOR. `E2E_PASSWORD` ortam değişkeninden okunuyor; tanımlı
- * değilse betik çalışmayı reddediyor. Varsayılan bir şifre koymak, o şifrenin
- * er geç bir üretim veritabanında belirmesi demektir.
+ * ŞİFRE: yerelde uğraştırmasın diye sabit bir varsayılan var. Bu bir test
+ * verisi — kullanıcılar `@test.local` adresli, kiracılar `e2e-a`/`e2e-b`, ve
+ * betik `NODE_ENV=production` iken çalışmayı REDDEDİYOR. CI'da ya da paylaşımlı
+ * bir ortamda `E2E_PASSWORD` ile ezilmeli.
  *
  * Çalıştırma:
- *   E2E_PASSWORD='...' npx ts-node prisma/seed-e2e.ts
+ *   npx ts-node prisma/seed-e2e.ts              (yerel, varsayılan şifre)
+ *   E2E_PASSWORD='...' npx ts-node prisma/seed-e2e.ts   (CI)
  */
+
+/**
+ * Yerel varsayılan test şifresi.
+ *
+ * Panel tarafındaki `e2e/sabitler.ts` ile AYNI olmak zorunda; ikisi ayrı
+ * depoda olduğu için tekrar ediliyor.
+ */
+export const VARSAYILAN_E2E_SIFRE = 'e2e-yerel-test-2026';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -81,19 +91,16 @@ async function kiracıKur(
 }
 
 async function main() {
-  const sifre = process.env.E2E_PASSWORD?.trim();
-  if (!sifre || sifre.length < 12) {
-    throw new Error(
-      'E2E_PASSWORD tanımlı değil ya da 12 karakterden kısa. ' +
-        'Varsayılan şifre koymuyoruz — o şifre er geç bir üretim veritabanında belirir.',
-    );
-  }
+  // Üretim kontrolü ÖNCE: varsayılan şifrenin canlı bir veritabanına ulaşma
+  // ihtimalini tamamen kapatıyor.
   if (process.env.NODE_ENV === 'production') {
     throw new Error(
       'Bu tohum betiği üretimde çalıştırılamaz: test kullanıcıları canlı ' +
         'veritabanına yazılmamalı.',
     );
   }
+
+  const sifre = process.env.E2E_PASSWORD?.trim() || VARSAYILAN_E2E_SIFRE;
 
   const hash = await bcrypt.hash(sifre, 10);
 

@@ -33,11 +33,12 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.E2E = void 0;
+exports.E2E = exports.VARSAYILAN_E2E_SIFRE = void 0;
 const client_1 = require("@prisma/client");
 const adapter_pg_1 = require("@prisma/adapter-pg");
 const bcrypt = __importStar(require("bcryptjs"));
 require("dotenv/config");
+exports.VARSAYILAN_E2E_SIFRE = 'e2e-yerel-test-2026';
 const adapter = new adapter_pg_1.PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new client_1.PrismaClient({ adapter });
 exports.E2E = {
@@ -84,15 +85,11 @@ async function kiracıKur(bilgi, sifreHash, kullanicilar) {
     return kiracı;
 }
 async function main() {
-    const sifre = process.env.E2E_PASSWORD?.trim();
-    if (!sifre || sifre.length < 12) {
-        throw new Error('E2E_PASSWORD tanımlı değil ya da 12 karakterden kısa. ' +
-            'Varsayılan şifre koymuyoruz — o şifre er geç bir üretim veritabanında belirir.');
-    }
     if (process.env.NODE_ENV === 'production') {
         throw new Error('Bu tohum betiği üretimde çalıştırılamaz: test kullanıcıları canlı ' +
             'veritabanına yazılmamalı.');
     }
+    const sifre = process.env.E2E_PASSWORD?.trim() || exports.VARSAYILAN_E2E_SIFRE;
     const hash = await bcrypt.hash(sifre, 10);
     const a = await kiracıKur(exports.E2E.kiracıA, hash, [
         { email: exports.E2E.adminEposta, name: 'E2E Admin', role: client_1.UserRole.ADMIN },
