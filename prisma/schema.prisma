@@ -224,6 +224,10 @@ model Article {
   headlineImage       String?  @map("headline_image")
   headlineFontSize    Int?     @map("headline_font_size")
   headlineFontFamily  String?  @map("headline_font_family")
+  /// Manşet slider'ı ve öne çıkan haber alanında görselin üzerine başlık +
+  /// özet bindirilmesini kapatır. Görselin kendisi yazı taşıyorsa (afiş,
+  /// infografik, pankart) bindirme okunaklılığı bozuyor.
+  hideHeadlineOverlay Boolean  @default(false) @map("hide_headline_overlay")
   nationalFeatured    Boolean  @default(false) @map("national_featured")
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")

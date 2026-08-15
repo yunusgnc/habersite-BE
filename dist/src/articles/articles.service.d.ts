@@ -107,6 +107,7 @@ export declare class ArticlesService {
             headlineImage: string | null;
             headlineFontSize: number | null;
             headlineFontFamily: string | null;
+            hideHeadlineOverlay: boolean;
             nationalFeatured: boolean;
         })[];
         nextCursor: string | undefined;
@@ -220,6 +221,7 @@ export declare class ArticlesService {
             headlineImage: string | null;
             headlineFontSize: number | null;
             headlineFontFamily: string | null;
+            hideHeadlineOverlay: boolean;
             nationalFeatured: boolean;
         })[];
         categories: ({
@@ -314,6 +316,7 @@ export declare class ArticlesService {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     findById(tenantId: string, id: string): Promise<{
@@ -415,6 +418,7 @@ export declare class ArticlesService {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     create(tenantId: string, userId: string, dto: CreateArticleDto, userRole?: string): Promise<{
@@ -502,6 +506,7 @@ export declare class ArticlesService {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     update(tenantId: string, id: string, dto: UpdateArticleDto, userId?: string, userRole?: string): Promise<{
@@ -589,6 +594,7 @@ export declare class ArticlesService {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     remove(tenantId: string, id: string, userId?: string): Promise<{
@@ -628,6 +634,7 @@ export declare class ArticlesService {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     submitForReview(tenantId: string, id: string, userId: string): Promise<{
@@ -687,6 +694,7 @@ export declare class ArticlesService {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     approve(tenantId: string, id: string, userId: string, userRole: string): Promise<{
@@ -726,6 +734,7 @@ export declare class ArticlesService {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     reject(tenantId: string, id: string, userId: string, userRole: string, note: string): Promise<{
@@ -765,6 +774,7 @@ export declare class ArticlesService {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     assign(tenantId: string, id: string, userId: string, userRole: string, payload: {
@@ -813,6 +823,7 @@ export declare class ArticlesService {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     myTasks(tenantId: string, userId: string): Promise<({
@@ -861,6 +872,7 @@ export declare class ArticlesService {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     })[]>;
     reviewQueue(tenantId: string): Promise<({
@@ -914,6 +926,7 @@ export declare class ArticlesService {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     })[]>;
     listRevisions(tenantId: string, id: string): Promise<({
@@ -1021,6 +1034,7 @@ export declare class ArticlesService {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     incrementViewCount(tenantId: string, id: string): Promise<{
@@ -1060,6 +1074,7 @@ export declare class ArticlesService {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     getRelated(tenantId: string, articleId: string, limit?: number): Promise<({
@@ -1128,6 +1143,7 @@ export declare class ArticlesService {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     })[]>;
     getMostRead(tenantId: string, limit?: number): Promise<({
@@ -1204,6 +1220,7 @@ export declare class ArticlesService {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     })[]>;
     getByCategory(tenantId: string, categorySlug: string, cursor?: string, limit?: number): Promise<{
@@ -1292,6 +1309,7 @@ export declare class ArticlesService {
             headlineImage: string | null;
             headlineFontSize: number | null;
             headlineFontFamily: string | null;
+            hideHeadlineOverlay: boolean;
             nationalFeatured: boolean;
         })[];
         nextCursor: string | undefined;

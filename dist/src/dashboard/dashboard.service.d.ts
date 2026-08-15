@@ -55,6 +55,7 @@ export declare class DashboardService {
             headlineImage: string | null;
             headlineFontSize: number | null;
             headlineFontFamily: string | null;
+            hideHeadlineOverlay: boolean;
             nationalFeatured: boolean;
         }[];
         recentComments: ({

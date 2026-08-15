@@ -103,6 +103,7 @@ export declare class ArticlesController {
             headlineImage: string | null;
             headlineFontSize: number | null;
             headlineFontFamily: string | null;
+            hideHeadlineOverlay: boolean;
             nationalFeatured: boolean;
         })[];
         nextCursor: string | undefined;
@@ -210,6 +211,7 @@ export declare class ArticlesController {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     sitemap(tenantId: string, page?: string, perPage?: string): Promise<{
@@ -305,6 +307,7 @@ export declare class ArticlesController {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     })[]>;
     getTrending(tenantId: string, limit?: number): Promise<({
@@ -381,6 +384,7 @@ export declare class ArticlesController {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     })[]>;
     archiveFacets(tenantId: string): Promise<{
@@ -460,6 +464,7 @@ export declare class ArticlesController {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     })[]>;
     findBySlug(tenantId: string, slug: string): Promise<{
@@ -537,6 +542,7 @@ export declare class ArticlesController {
             headlineImage: string | null;
             headlineFontSize: number | null;
             headlineFontFamily: string | null;
+            hideHeadlineOverlay: boolean;
             nationalFeatured: boolean;
         })[];
         categories: ({
@@ -631,6 +637,7 @@ export declare class ArticlesController {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     create(tenantId: string, user: any, dto: CreateArticleDto): Promise<{
@@ -718,6 +725,7 @@ export declare class ArticlesController {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     update(tenantId: string, id: string, dto: UpdateArticleDto, user: any): Promise<{
@@ -805,6 +813,7 @@ export declare class ArticlesController {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     listRevisions(tenantId: string, id: string): Promise<({
@@ -912,6 +921,7 @@ export declare class ArticlesController {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     remove(tenantId: string, id: string, user: any): Promise<{
@@ -951,6 +961,7 @@ export declare class ArticlesController {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     bulkUpdateStatus(tenantId: string, dto: BulkArticleDto): Promise<import("@prisma/client").Prisma.BatchPayload>;
@@ -1007,6 +1018,7 @@ export declare class ArticlesController {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     })[]>;
     reviewQueue(tenantId: string): Promise<({
@@ -1060,6 +1072,7 @@ export declare class ArticlesController {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     })[]>;
     submitForReview(tenantId: string, id: string, user: any): Promise<{
@@ -1119,6 +1132,7 @@ export declare class ArticlesController {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     approve(tenantId: string, id: string, user: any): Promise<{
@@ -1158,6 +1172,7 @@ export declare class ArticlesController {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     reject(tenantId: string, id: string, body: {
@@ -1199,6 +1214,7 @@ export declare class ArticlesController {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
     assign(tenantId: string, id: string, body: {
@@ -1247,6 +1263,7 @@ export declare class ArticlesController {
         headlineImage: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
+        hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
 }

@@ -19,6 +19,7 @@ export declare class CreateArticleDto {
     headlineImage?: string;
     headlineFontSize?: number;
     headlineFontFamily?: string;
+    hideHeadlineOverlay?: boolean;
     publishedAt?: string;
     scheduledAt?: string;
     breakingLabel?: string | null;

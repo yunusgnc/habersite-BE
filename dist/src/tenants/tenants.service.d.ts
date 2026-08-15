@@ -195,6 +195,7 @@ export declare class TenantsService {
             headlineImage: string | null;
             headlineFontSize: number | null;
             headlineFontFamily: string | null;
+            hideHeadlineOverlay: boolean;
             nationalFeatured: boolean;
         })[];
         categories: {

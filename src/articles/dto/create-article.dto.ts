@@ -96,6 +96,15 @@ export class CreateArticleDto {
   @IsOptional()
   headlineFontFamily?: string;
 
+  /**
+   * Manşet slider'ında ve öne çıkan haber alanında görselin üzerine başlık +
+   * özet bindirilmesini kapatır. Görselin kendisi yazı taşıyorsa (afiş,
+   * infografik, pankart) bindirme okunaklılığı bozuyor.
+   */
+  @IsBoolean()
+  @IsOptional()
+  hideHeadlineOverlay?: boolean;
+
   @IsDateString()
   @IsOptional()
   publishedAt?: string;
