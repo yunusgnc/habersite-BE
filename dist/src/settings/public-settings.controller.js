@@ -20,7 +20,12 @@ const tenant_decorator_1 = require("../common/decorators/tenant.decorator");
 const settings_service_1 = require("./settings.service");
 const prisma_service_1 = require("../prisma/prisma.service");
 const secret_settings_1 = require("./secret-settings");
-const SENSITIVE_KEYS = ['oneSignalAppId', 'appStoreUrl', 'playStoreUrl'];
+const SENSITIVE_KEYS = [
+    'oneSignalAppId',
+    'appStoreUrl',
+    'playStoreUrl',
+    'aiProvider',
+];
 let PublicSettingsController = class PublicSettingsController {
     settingsService;
     prisma;

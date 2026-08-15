@@ -14,7 +14,14 @@ import { SECRET_SETTING_KEYS } from './secret-settings';
  * ikinci temizlik yalnızca kuşak ve kemer: biri ileride `getAll`'ı değiştirse
  * bile sır buradan geçemesin.
  */
-const SENSITIVE_KEYS = ['oneSignalAppId', 'appStoreUrl', 'playStoreUrl'];
+const SENSITIVE_KEYS = [
+  'oneSignalAppId',
+  'appStoreUrl',
+  'playStoreUrl',
+  // Sır değil ama sitenin bilmesine de gerek yok — yalnızca panel ve sunucu
+  // tarafı kullanıyor.
+  'aiProvider',
+];
 
 @Controller('api/public/settings')
 @UseGuards(TenantGuard)

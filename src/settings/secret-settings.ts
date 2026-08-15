@@ -11,7 +11,28 @@
  * güncellemeyi unutan biri olsa bile sızıntı olamaz — sır o kod yoluna hiç
  * ulaşmıyor. Okumak için ayrı ve açıkça adlandırılmış `getSecret()` var.
  */
-export const SECRET_SETTING_KEYS = new Set<string>(['anthropicApiKey']);
+export const SECRET_SETTING_KEYS = new Set<string>([
+  'anthropicApiKey',
+  'openaiApiKey',
+]);
+
+/**
+ * Hangi sağlayıcının kullanılacağı — sır değil, sadece bir tercih. Gizli
+ * anahtarların yanında değil normal ayarlarda duruyor ki panel okuyabilsin.
+ */
+export type AiProvider = 'anthropic' | 'openai';
+
+export const AI_PROVIDER_SETTING_KEY = 'aiProvider';
+
+/** Sağlayıcı → o sağlayıcının anahtarını tutan ayar adı. */
+export const AI_PROVIDER_KEY_SETTING: Record<AiProvider, string> = {
+  anthropic: 'anthropicApiKey',
+  openai: 'openaiApiKey',
+};
+
+export function normalizeAiProvider(value: unknown): AiProvider {
+  return value === 'openai' ? 'openai' : 'anthropic';
+}
 
 export function isSecretSettingKey(key: string): boolean {
   return SECRET_SETTING_KEYS.has(key);
