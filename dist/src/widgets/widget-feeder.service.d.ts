@@ -1,12 +1,14 @@
 import { OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import type { StorageAdapter } from '../media/storage/storage.types';
 import { WidgetsService } from './widgets.service';
 export declare class WidgetFeederService implements OnModuleInit {
     private readonly prisma;
     private readonly widgets;
+    private readonly storage;
     private readonly logger;
     private readonly feeders;
-    constructor(prisma: PrismaService, widgets: WidgetsService);
+    constructor(prisma: PrismaService, widgets: WidgetsService, storage: StorageAdapter);
     onModuleInit(): Promise<void>;
     private ensureCoreWidgets;
     refreshFast(): Promise<void>;
@@ -25,6 +27,7 @@ export declare class WidgetFeederService implements OnModuleInit {
     private fetchMarketTicker;
     private fetchHoroscope;
     private pickHoroscopeFallback;
+    private mirrorNewspaperCovers;
     private fetchNewspapers;
     private fetchPharmacy;
 }

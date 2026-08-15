@@ -41,6 +41,9 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -53,6 +56,7 @@ const axios_1 = __importDefault(require("axios"));
 const cheerio = __importStar(require("cheerio"));
 const slugify_1 = __importDefault(require("slugify"));
 const prisma_service_1 = require("../prisma/prisma.service");
+const storage_module_1 = require("../media/storage/storage.module");
 const widgets_service_1 = require("./widgets.service");
 const SCRAPE_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
@@ -63,6 +67,7 @@ const SCRAPE_HEADERS = {
 let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
     prisma;
     widgets;
+    storage;
     logger = new common_1.Logger(WidgetFeederService_1.name);
     feeders = {
         weather: this.fetchWeather.bind(this),
@@ -72,9 +77,10 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
         newspapers: this.fetchNewspapers.bind(this),
         pharmacy: this.fetchPharmacy.bind(this),
     };
-    constructor(prisma, widgets) {
+    constructor(prisma, widgets, storage) {
         this.prisma = prisma;
         this.widgets = widgets;
+        this.storage = storage;
     }
     async onModuleInit() {
         setTimeout(async () => {
@@ -151,7 +157,7 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
         if (!feeder)
             throw new Error(`No feeder registered for widget type: ${type}`);
         const widget = await this.widgets.findByType(tenantId, type);
-        const cache = await feeder(widget?.config ?? {});
+        const cache = await feeder(widget?.config ?? {}, widget?.cache ?? null, tenantId);
         await this.widgets.updateCache(tenantId, type, cache);
         return { ok: true, cachedAt: new Date() };
     }
@@ -164,7 +170,7 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
             if (!feeder)
                 continue;
             try {
-                const cache = await feeder(w.config ?? {});
+                const cache = await feeder(w.config ?? {}, w.cache ?? null, w.tenantId);
                 await this.widgets.updateCache(w.tenantId, w.type, cache);
                 this.logger.log(`Refreshed widget ${w.type} for tenant ${w.tenantId}`);
             }
@@ -219,39 +225,54 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
                 .map(([key, label]) => ({ name: label, time: t[key].slice(0, 5) })),
         };
     }
-    async fetchMarketTicker(config) {
+    async fetchMarketTicker(config, prev) {
         const pairs = config?.pairs ?? [
             { from: 'USD', to: 'TRY', label: 'Dolar' },
             { from: 'EUR', to: 'TRY', label: 'Euro' },
             { from: 'GBP', to: 'TRY', label: 'Sterlin' },
         ];
-        const today = new Date();
-        const yesterday = new Date(today);
-        yesterday.setDate(today.getDate() - 3);
-        const items = await Promise.all(pairs.map(async (p) => {
+        const prevItems = Array.isArray(prev?.items) ? prev.items : [];
+        const lastGood = (code) => {
+            const hit = prevItems.find((i) => i?.code === code);
+            const v = (hit?.value ?? '').toString().trim();
+            return v && v !== '—' ? hit : null;
+        };
+        const base = 'https://api.frankfurter.dev/v1';
+        const since = new Date();
+        since.setDate(since.getDate() - 3);
+        const sinceDay = since.toISOString().split('T')[0];
+        const settled = await Promise.all(pairs.map(async (p) => {
+            const code = `${p.from}/${p.to}`;
             try {
-                const [now, prev] = await Promise.all([
-                    axios_1.default.get(`https://api.frankfurter.app/latest?from=${p.from}&to=${p.to}`, {
-                        timeout: 8000,
-                    }),
-                    axios_1.default.get(`https://api.frankfurter.app/${yesterday.toISOString().split('T')[0]}?from=${p.from}&to=${p.to}`, { timeout: 8000 }),
+                const [now, before] = await Promise.all([
+                    axios_1.default.get(`${base}/latest?base=${p.from}&symbols=${p.to}`, { timeout: 8000 }),
+                    axios_1.default.get(`${base}/${sinceDay}?base=${p.from}&symbols=${p.to}`, { timeout: 8000 }),
                 ]);
                 const nowValue = now.data?.rates?.[p.to];
-                const prevValue = prev.data?.rates?.[p.to];
-                const diff = nowValue != null && prevValue != null ? nowValue - prevValue : 0;
+                if (nowValue == null)
+                    throw new Error(`rate missing for ${code}`);
+                const prevValue = before.data?.rates?.[p.to];
+                const diff = prevValue != null ? nowValue - prevValue : 0;
                 const pct = prevValue ? (diff / prevValue) * 100 : 0;
                 return {
                     name: p.label,
-                    code: `${p.from}/${p.to}`,
-                    value: nowValue != null ? nowValue.toFixed(2) : '—',
+                    code,
+                    value: nowValue.toFixed(2),
                     change: pct ? `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%` : '',
                     up: diff >= 0,
                 };
             }
-            catch {
-                return { name: p.label, code: `${p.from}/${p.to}`, value: '—', change: '', up: true };
+            catch (err) {
+                const kept = lastGood(code);
+                this.logger.warn(`[market] ${code} alınamadı (${err?.message ?? err}) — ` +
+                    (kept ? 'önceki değer korundu' : 'önceki değer de yok, atlandı'));
+                return kept;
             }
         }));
+        const items = settled.filter(Boolean);
+        if (items.length === 0) {
+            throw new Error('market-ticker: hiçbir kur alınamadı, cache korunuyor');
+        }
         return { items };
     }
     async fetchHoroscope(_config) {
@@ -461,7 +482,48 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
         const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
         return arr[dayOfYear % arr.length];
     }
-    async fetchNewspapers(_config) {
+    async mirrorNewspaperCovers(items, tenantId) {
+        if (!tenantId || items.length === 0)
+            return items;
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { mediaBaseUrl: true },
+        });
+        let ok = 0;
+        const out = await Promise.all(items.map(async (it) => {
+            const source = (it.image ?? '').trim();
+            if (!source)
+                return it;
+            try {
+                const res = await axios_1.default.get(source, {
+                    responseType: 'arraybuffer',
+                    timeout: 15000,
+                    headers: SCRAPE_HEADERS,
+                    maxContentLength: 8 * 1024 * 1024,
+                });
+                const buffer = Buffer.from(res.data);
+                const mimeType = res.headers['content-type'] || 'image/jpeg';
+                const ext = mimeType.includes('png') ? '.png' : mimeType.includes('webp') ? '.webp' : '.jpg';
+                const stored = await this.storage.put({
+                    tenantId,
+                    filename: `gazete-${it.slug || 'kapak'}${ext}`,
+                    mimeType,
+                    size: buffer.length,
+                    buffer,
+                    publicBaseUrl: tenant?.mediaBaseUrl ?? null,
+                });
+                ok++;
+                return { ...it, image: stored.url, imageFull: stored.url, sourceImage: source };
+            }
+            catch (err) {
+                this.logger.warn(`[newspapers] "${it.name}" kapağı aynalanamadı (${err?.message ?? err}) — kaynak adres korundu`);
+                return it;
+            }
+        }));
+        this.logger.log(`[newspapers] ${ok}/${items.length} kapak kendi CDN'imize aynalandı`);
+        return out;
+    }
+    async fetchNewspapers(_config, _prev, tenantId) {
         const url = 'https://www.gazeteoku.com/gazeteler';
         try {
             const { data: html } = await axios_1.default.get(url, {
@@ -509,8 +571,9 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
             else {
                 this.logger.log(`[newspapers] ${unique.length} gazete kapağı alındı`);
             }
+            const mirrored = await this.mirrorNewspaperCovers(unique.slice(0, 40), tenantId);
             return {
-                items: unique.slice(0, 40),
+                items: mirrored,
                 source: url,
                 date: new Date().toISOString().split('T')[0],
             };
@@ -618,7 +681,8 @@ __decorate([
 ], WidgetFeederService.prototype, "refreshPharmacy", null);
 exports.WidgetFeederService = WidgetFeederService = WidgetFeederService_1 = __decorate([
     (0, common_1.Injectable)(),
+    __param(2, (0, common_1.Inject)(storage_module_1.STORAGE_ADAPTER)),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        widgets_service_1.WidgetsService])
+        widgets_service_1.WidgetsService, Object])
 ], WidgetFeederService);
 //# sourceMappingURL=widget-feeder.service.js.map

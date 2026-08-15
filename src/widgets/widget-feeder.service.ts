@@ -1,12 +1,22 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import slugify from 'slugify';
 import { PrismaService } from '../prisma/prisma.service';
+import { STORAGE_ADAPTER } from '../media/storage/storage.module';
+import type { StorageAdapter } from '../media/storage/storage.types';
 import { WidgetsService } from './widgets.service';
 
-type Feeder = (config: any) => Promise<any>;
+/**
+ * `prev` = widget'ın o anki cache'i. Dış kaynak kısmen çökerse feeder eldeki
+ * son sağlam değeri geri verebilsin diye geçiliyor — böylece bir uçuşta
+ * bozulan veri, çalışan veriyi ezmiyor.
+ *
+ * `tenantId` yalnızca kendi bucket'ımıza yazması gereken besleyiciler için
+ * gerekli (gazete kapakları).
+ */
+type Feeder = (config: any, prev?: any, tenantId?: string) => Promise<any>;
 
 /**
  * Scrape edilen siteler bot filtresi uyguluyor. Yalnızca User-Agent yetmiyor —
@@ -42,6 +52,7 @@ export class WidgetFeederService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly widgets: WidgetsService,
+    @Inject(STORAGE_ADAPTER) private readonly storage: StorageAdapter,
   ) {}
 
   async onModuleInit() {
@@ -142,7 +153,7 @@ export class WidgetFeederService implements OnModuleInit {
     const feeder = this.feeders[type];
     if (!feeder) throw new Error(`No feeder registered for widget type: ${type}`);
     const widget = await this.widgets.findByType(tenantId, type);
-    const cache = await feeder(widget?.config ?? {});
+    const cache = await feeder(widget?.config ?? {}, widget?.cache ?? null, tenantId);
     await this.widgets.updateCache(tenantId, type, cache);
     return { ok: true, cachedAt: new Date() };
   }
@@ -155,10 +166,12 @@ export class WidgetFeederService implements OnModuleInit {
       const feeder = this.feeders[w.type];
       if (!feeder) continue;
       try {
-        const cache = await feeder(w.config ?? {});
+        const cache = await feeder(w.config ?? {}, w.cache ?? null, w.tenantId);
         await this.widgets.updateCache(w.tenantId, w.type, cache);
         this.logger.log(`Refreshed widget ${w.type} for tenant ${w.tenantId}`);
       } catch (err: any) {
+        // Bilinçli olarak cache'e DOKUNMUYORUZ: eldeki son sağlam veri
+        // kalsın, şerit boşalmasın. Bir sonraki turda tekrar denenir.
         this.logger.warn(`Failed to refresh ${w.type} (${w.tenantId}): ${err?.message ?? err}`);
       }
     }
@@ -229,10 +242,20 @@ export class WidgetFeederService implements OnModuleInit {
   }
 
   /**
-   * Frankfurter (döviz) — no key.
+   * Frankfurter (döviz) — anahtar gerektirmez.
    * Config: { pairs?: [{ from, to, label }] }
+   *
+   * Adres notu: servis `api.frankfurter.app` → `api.frankfurter.dev/v1`
+   * adresine taşındı. Eski adres 301 döndürüyor; yönlendirmeye güvenmek
+   * yerine güncel adrese doğrudan gidiyoruz.
+   *
+   * Dayanıklılık notu: eskiden bir çifti çekemediğimizde `value: '—'`
+   * yazılıyordu. Şerit `—` olan hücreleri elediği için, kaynağın tek bir
+   * kötü dakikası piyasa kutucuklarının tamamen kaybolmasına yol açıyordu —
+   * üstelik bir sonraki başarılı tura kadar (30 dk). Artık başarısız çiftte
+   * bir önceki sağlam değer korunuyor; hiç değer yoksa çift tamamen atlanıyor.
    */
-  private async fetchMarketTicker(config: any) {
+  private async fetchMarketTicker(config: any, prev?: any) {
     const pairs: Array<{ from: string; to: string; label: string }> =
       config?.pairs ?? [
         { from: 'USD', to: 'TRY', label: 'Dolar' },
@@ -240,40 +263,56 @@ export class WidgetFeederService implements OnModuleInit {
         { from: 'GBP', to: 'TRY', label: 'Sterlin' },
       ];
 
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 3); // Frankfurter is business-days only
+    const prevItems: any[] = Array.isArray(prev?.items) ? prev.items : [];
+    const lastGood = (code: string) => {
+      const hit = prevItems.find((i) => i?.code === code);
+      const v = (hit?.value ?? '').toString().trim();
+      return v && v !== '—' ? hit : null;
+    };
 
-    const items = await Promise.all(
+    const base = 'https://api.frankfurter.dev/v1';
+    const since = new Date();
+    since.setDate(since.getDate() - 3); // Frankfurter yalnızca iş günü yayınlıyor.
+    const sinceDay = since.toISOString().split('T')[0];
+
+    const settled = await Promise.all(
       pairs.map(async (p) => {
+        const code = `${p.from}/${p.to}`;
         try {
-          const [now, prev] = await Promise.all([
-            axios.get(`https://api.frankfurter.app/latest?from=${p.from}&to=${p.to}`, {
-              timeout: 8000,
-            }),
-            axios.get(
-              `https://api.frankfurter.app/${
-                yesterday.toISOString().split('T')[0]
-              }?from=${p.from}&to=${p.to}`,
-              { timeout: 8000 },
-            ),
+          const [now, before] = await Promise.all([
+            axios.get(`${base}/latest?base=${p.from}&symbols=${p.to}`, { timeout: 8000 }),
+            axios.get(`${base}/${sinceDay}?base=${p.from}&symbols=${p.to}`, { timeout: 8000 }),
           ]);
           const nowValue = now.data?.rates?.[p.to];
-          const prevValue = prev.data?.rates?.[p.to];
-          const diff = nowValue != null && prevValue != null ? nowValue - prevValue : 0;
+          if (nowValue == null) throw new Error(`rate missing for ${code}`);
+
+          const prevValue = before.data?.rates?.[p.to];
+          const diff = prevValue != null ? nowValue - prevValue : 0;
           const pct = prevValue ? (diff / prevValue) * 100 : 0;
           return {
             name: p.label,
-            code: `${p.from}/${p.to}`,
-            value: nowValue != null ? nowValue.toFixed(2) : '—',
+            code,
+            value: nowValue.toFixed(2),
             change: pct ? `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%` : '',
             up: diff >= 0,
           };
-        } catch {
-          return { name: p.label, code: `${p.from}/${p.to}`, value: '—', change: '', up: true };
+        } catch (err: any) {
+          const kept = lastGood(code);
+          this.logger.warn(
+            `[market] ${code} alınamadı (${err?.message ?? err}) — ` +
+              (kept ? 'önceki değer korundu' : 'önceki değer de yok, atlandı'),
+          );
+          return kept;
         }
       }),
     );
+
+    const items = settled.filter(Boolean);
+    // Hiçbir çift gelmediyse hata fırlat: refreshForTypes bunu yakalayıp
+    // cache'e hiç dokunmayacak, yani eldeki veri neyse o kalacak.
+    if (items.length === 0) {
+      throw new Error('market-ticker: hiçbir kur alınamadı, cache korunuyor');
+    }
     return { items };
   }
 
@@ -524,7 +563,72 @@ export class WidgetFeederService implements OnModuleInit {
    * `/3/1240/1754/` varyantı A4 oranına zorlayıp gazetenin altını kesiyor.
    * 1240 üzeri boyut istekleri kaynak tarafından 422 ile reddediliyor.
    */
-  private async fetchNewspapers(_config: any) {
+  /**
+   * Gazete kapaklarını kaynak sitedeki adresten indirip kendi bucket'ımıza
+   * yazar ve cache'e kendi CDN adresimizi koyar.
+   *
+   * Neden: kapaklar `i.gazeteoku.com` üzerinden geliyordu — anasayfada 17
+   * ayrı dış istek, her biri ~500 ms TTFB, üstelik bizim önbellek
+   * kurallarımızın ve erişilebilirliğimizin tamamen dışında. Kaynak site
+   * yavaşlarsa ya da görselleri silerse şerit bozuluyordu.
+   *
+   * Anahtar `put()` içinde UUID ile üretiliyor; yani her gün yeni adres
+   * çıkıyor. Bu kasıtlı — CDN'de 1 yıllık `immutable` önbellek var, sabit
+   * bir adres kullansaydık dünkü kapak bir yıl boyunca donardı.
+   *
+   * Aynalama başarısız olursa o gazete kaynak adresiyle bırakılır: şerit
+   * eksik görünmektense dış adresten yüklensin.
+   */
+  private async mirrorNewspaperCovers(items: any[], tenantId?: string) {
+    if (!tenantId || items.length === 0) return items;
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { mediaBaseUrl: true },
+    });
+
+    let ok = 0;
+    const out = await Promise.all(
+      items.map(async (it) => {
+        const source = (it.image ?? '').trim();
+        if (!source) return it;
+        try {
+          const res = await axios.get<ArrayBuffer>(source, {
+            responseType: 'arraybuffer',
+            timeout: 15000,
+            headers: SCRAPE_HEADERS,
+            maxContentLength: 8 * 1024 * 1024,
+          });
+          const buffer = Buffer.from(res.data);
+          const mimeType = (res.headers['content-type'] as string) || 'image/jpeg';
+          const ext = mimeType.includes('png') ? '.png' : mimeType.includes('webp') ? '.webp' : '.jpg';
+
+          const stored = await this.storage.put({
+            tenantId,
+            filename: `gazete-${it.slug || 'kapak'}${ext}`,
+            mimeType,
+            size: buffer.length,
+            buffer,
+            publicBaseUrl: tenant?.mediaBaseUrl ?? null,
+          });
+          ok++;
+          // `imageFull` kaynakta kırpılmamış sürümü gösteriyordu; aynaladığımız
+          // tek dosya olduğu için ikisini de ona yönlendiriyoruz.
+          return { ...it, image: stored.url, imageFull: stored.url, sourceImage: source };
+        } catch (err: any) {
+          this.logger.warn(
+            `[newspapers] "${it.name}" kapağı aynalanamadı (${err?.message ?? err}) — kaynak adres korundu`,
+          );
+          return it;
+        }
+      }),
+    );
+
+    this.logger.log(`[newspapers] ${ok}/${items.length} kapak kendi CDN'imize aynalandı`);
+    return out;
+  }
+
+  private async fetchNewspapers(_config: any, _prev?: any, tenantId?: string) {
     const url = 'https://www.gazeteoku.com/gazeteler';
 
     try {
@@ -591,8 +695,10 @@ export class WidgetFeederService implements OnModuleInit {
         this.logger.log(`[newspapers] ${unique.length} gazete kapağı alındı`);
       }
 
+      const mirrored = await this.mirrorNewspaperCovers(unique.slice(0, 40), tenantId);
+
       return {
-        items: unique.slice(0, 40),
+        items: mirrored,
         source: url,
         date: new Date().toISOString().split('T')[0],
       };
