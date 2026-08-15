@@ -8,8 +8,8 @@ export declare class AuthorsService {
     constructor(prisma: PrismaService, revalidation: RevalidationService);
     findAll(tenantId: string): Promise<{
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -30,15 +30,15 @@ export declare class AuthorsService {
             publishedAt: Date | null;
         } | null;
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         avatar: string | null;
         bio: string | null;
     }[]>;
     findBySlug(tenantId: string, slug: string): Promise<{
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -51,8 +51,8 @@ export declare class AuthorsService {
     }>;
     create(tenantId: string, dto: CreateAuthorDto): Promise<{
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -65,8 +65,8 @@ export declare class AuthorsService {
     }>;
     update(tenantId: string, id: string, dto: UpdateAuthorDto): Promise<{
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -79,8 +79,8 @@ export declare class AuthorsService {
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;

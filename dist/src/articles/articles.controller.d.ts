@@ -13,8 +13,8 @@ export declare class ArticlesController {
             categories: ({
                 category: {
                     id: string;
-                    slug: string;
                     name: string;
+                    slug: string;
                     active: boolean;
                     createdAt: Date;
                     updatedAt: Date;
@@ -28,15 +28,15 @@ export declare class ArticlesController {
                     seoDesc: string | null;
                 };
             } & {
-                primary: boolean;
-                categoryId: string;
                 articleId: string;
+                categoryId: string;
+                primary: boolean;
             })[];
             tags: ({
                 tag: {
                     id: string;
-                    slug: string;
                     name: string;
+                    slug: string;
                     tenantId: string;
                 };
             } & {
@@ -45,8 +45,8 @@ export declare class ArticlesController {
             })[];
             author: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -85,11 +85,6 @@ export declare class ArticlesController {
             authorId: string | null;
             createdById: string;
             approvedById: string | null;
-            assignedToId: string | null;
-            deadline: Date | null;
-            submittedAt: Date | null;
-            reviewedAt: Date | null;
-            reviewNote: string | null;
             viewCount: number;
             commentCount: number;
             readingTime: number | null;
@@ -99,6 +94,11 @@ export declare class ArticlesController {
             ogImage: string | null;
             source: string | null;
             sourceUrl: string | null;
+            assignedToId: string | null;
+            deadline: Date | null;
+            submittedAt: Date | null;
+            reviewedAt: Date | null;
+            reviewNote: string | null;
             headlineTitle: string | null;
             headlineImage: string | null;
             headlineFontSize: number | null;
@@ -116,8 +116,8 @@ export declare class ArticlesController {
         categories: ({
             category: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -131,15 +131,15 @@ export declare class ArticlesController {
                 seoDesc: string | null;
             };
         } & {
-            primary: boolean;
-            categoryId: string;
             articleId: string;
+            categoryId: string;
+            primary: boolean;
         })[];
         tags: ({
             tag: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 tenantId: string;
             };
         } & {
@@ -148,8 +148,8 @@ export declare class ArticlesController {
         })[];
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -193,11 +193,6 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -207,6 +202,11 @@ export declare class ArticlesController {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -237,8 +237,8 @@ export declare class ArticlesController {
         categories: ({
             category: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -252,14 +252,14 @@ export declare class ArticlesController {
                 seoDesc: string | null;
             };
         } & {
-            primary: boolean;
-            categoryId: string;
             articleId: string;
+            categoryId: string;
+            primary: boolean;
         })[];
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -289,11 +289,6 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -303,6 +298,11 @@ export declare class ArticlesController {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -314,8 +314,8 @@ export declare class ArticlesController {
         categories: ({
             category: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -329,14 +329,14 @@ export declare class ArticlesController {
                 seoDesc: string | null;
             };
         } & {
-            primary: boolean;
-            categoryId: string;
             articleId: string;
+            categoryId: string;
+            primary: boolean;
         })[];
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -366,11 +366,6 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -380,6 +375,11 @@ export declare class ArticlesController {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -402,8 +402,8 @@ export declare class ArticlesController {
         categories: ({
             category: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -417,14 +417,14 @@ export declare class ArticlesController {
                 seoDesc: string | null;
             };
         } & {
-            primary: boolean;
-            categoryId: string;
             articleId: string;
+            categoryId: string;
+            primary: boolean;
         })[];
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             avatar: string | null;
         } | null;
     } & {
@@ -446,11 +446,6 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -460,6 +455,11 @@ export declare class ArticlesController {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -472,8 +472,8 @@ export declare class ArticlesController {
             categories: ({
                 category: {
                     id: string;
-                    slug: string;
                     name: string;
+                    slug: string;
                     active: boolean;
                     createdAt: Date;
                     updatedAt: Date;
@@ -487,14 +487,14 @@ export declare class ArticlesController {
                     seoDesc: string | null;
                 };
             } & {
-                primary: boolean;
-                categoryId: string;
                 articleId: string;
+                categoryId: string;
+                primary: boolean;
             })[];
             author: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -524,11 +524,6 @@ export declare class ArticlesController {
             authorId: string | null;
             createdById: string;
             approvedById: string | null;
-            assignedToId: string | null;
-            deadline: Date | null;
-            submittedAt: Date | null;
-            reviewedAt: Date | null;
-            reviewNote: string | null;
             viewCount: number;
             commentCount: number;
             readingTime: number | null;
@@ -538,6 +533,11 @@ export declare class ArticlesController {
             ogImage: string | null;
             source: string | null;
             sourceUrl: string | null;
+            assignedToId: string | null;
+            deadline: Date | null;
+            submittedAt: Date | null;
+            reviewedAt: Date | null;
+            reviewNote: string | null;
             headlineTitle: string | null;
             headlineImage: string | null;
             headlineFontSize: number | null;
@@ -548,8 +548,8 @@ export declare class ArticlesController {
         categories: ({
             category: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -563,15 +563,15 @@ export declare class ArticlesController {
                 seoDesc: string | null;
             };
         } & {
-            primary: boolean;
-            categoryId: string;
             articleId: string;
+            categoryId: string;
+            primary: boolean;
         })[];
         tags: ({
             tag: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 tenantId: string;
             };
         } & {
@@ -580,8 +580,8 @@ export declare class ArticlesController {
         })[];
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -619,11 +619,6 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -633,6 +628,11 @@ export declare class ArticlesController {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -644,8 +644,8 @@ export declare class ArticlesController {
         categories: ({
             category: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -659,15 +659,15 @@ export declare class ArticlesController {
                 seoDesc: string | null;
             };
         } & {
-            primary: boolean;
-            categoryId: string;
             articleId: string;
+            categoryId: string;
+            primary: boolean;
         })[];
         tags: ({
             tag: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 tenantId: string;
             };
         } & {
@@ -676,8 +676,8 @@ export declare class ArticlesController {
         })[];
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -707,11 +707,6 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -721,6 +716,11 @@ export declare class ArticlesController {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -732,8 +732,8 @@ export declare class ArticlesController {
         categories: ({
             category: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -747,15 +747,15 @@ export declare class ArticlesController {
                 seoDesc: string | null;
             };
         } & {
-            primary: boolean;
-            categoryId: string;
             articleId: string;
+            categoryId: string;
+            primary: boolean;
         })[];
         tags: ({
             tag: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 tenantId: string;
             };
         } & {
@@ -764,8 +764,8 @@ export declare class ArticlesController {
         })[];
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -795,11 +795,6 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -809,6 +804,11 @@ export declare class ArticlesController {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -840,8 +840,8 @@ export declare class ArticlesController {
         categories: ({
             category: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -855,15 +855,15 @@ export declare class ArticlesController {
                 seoDesc: string | null;
             };
         } & {
-            primary: boolean;
-            categoryId: string;
             articleId: string;
+            categoryId: string;
+            primary: boolean;
         })[];
         tags: ({
             tag: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 tenantId: string;
             };
         } & {
@@ -872,8 +872,8 @@ export declare class ArticlesController {
         })[];
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -903,11 +903,6 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -917,6 +912,11 @@ export declare class ArticlesController {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -943,11 +943,6 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -957,6 +952,11 @@ export declare class ArticlesController {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -1000,11 +1000,6 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -1014,6 +1009,11 @@ export declare class ArticlesController {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -1054,11 +1054,6 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -1068,6 +1063,11 @@ export declare class ArticlesController {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -1078,8 +1078,8 @@ export declare class ArticlesController {
     submitForReview(tenantId: string, id: string, user: any): Promise<{
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -1114,11 +1114,6 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -1128,6 +1123,11 @@ export declare class ArticlesController {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -1154,11 +1154,6 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -1168,6 +1163,11 @@ export declare class ArticlesController {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -1196,11 +1196,6 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -1210,6 +1205,11 @@ export declare class ArticlesController {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -1245,11 +1245,6 @@ export declare class ArticlesController {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -1259,6 +1254,11 @@ export declare class ArticlesController {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;

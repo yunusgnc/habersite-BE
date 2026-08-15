@@ -22,8 +22,8 @@ export declare class OfficialNoticesService {
             title: string;
             publishedAt: Date;
             viewCount: number;
-            summary: string | null;
             expiresAt: Date | null;
+            summary: string | null;
             attachments: Prisma.JsonValue;
             noticeType: import("@prisma/client").$Enums.NoticeType;
             institution: string;
@@ -42,8 +42,8 @@ export declare class OfficialNoticesService {
         content: string;
         publishedAt: Date;
         viewCount: number;
-        summary: string | null;
         expiresAt: Date | null;
+        summary: string | null;
         attachments: Prisma.JsonValue;
         noticeType: import("@prisma/client").$Enums.NoticeType;
         institution: string;
@@ -70,8 +70,8 @@ export declare class OfficialNoticesService {
             content: string;
             publishedAt: Date;
             viewCount: number;
-            summary: string | null;
             expiresAt: Date | null;
+            summary: string | null;
             attachments: Prisma.JsonValue;
             noticeType: import("@prisma/client").$Enums.NoticeType;
             institution: string;
@@ -90,8 +90,8 @@ export declare class OfficialNoticesService {
         content: string;
         publishedAt: Date;
         viewCount: number;
-        summary: string | null;
         expiresAt: Date | null;
+        summary: string | null;
         attachments: Prisma.JsonValue;
         noticeType: import("@prisma/client").$Enums.NoticeType;
         institution: string;
@@ -113,8 +113,8 @@ export declare class OfficialNoticesService {
         content: string;
         publishedAt: Date;
         viewCount: number;
-        summary: string | null;
         expiresAt: Date | null;
+        summary: string | null;
         attachments: Prisma.JsonValue;
         noticeType: import("@prisma/client").$Enums.NoticeType;
         institution: string;
@@ -131,8 +131,8 @@ export declare class OfficialNoticesService {
         content: string;
         publishedAt: Date;
         viewCount: number;
-        summary: string | null;
         expiresAt: Date | null;
+        summary: string | null;
         attachments: Prisma.JsonValue;
         noticeType: import("@prisma/client").$Enums.NoticeType;
         institution: string;

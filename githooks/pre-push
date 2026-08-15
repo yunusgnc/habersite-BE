@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# Push öncesi kontrol — kırık kod uzak depoya gitmesin.
+#
+# Neden bu kanca var: CI'ı kullanmıyoruz, dolayısıyla testleri çalıştırmayı
+# hatırlamak tamamen insana kalıyor. Aceleyle atılan bir push'ta unutmak çok
+# kolay ve bu projedeki hataların hepsi SESSİZ hatalardı — çalıştığını
+# sandığın halde yanlış davranan kod. Kanca o unutmayı imkânsız kılıyor.
+#
+# Neden bu kadar kısa: 7 saniyeden uzun süren bir kanca er ya da geç
+# `--no-verify` ile atlanır ve hiç olmamış sayılır. Bu yüzden yalnızca hızlı
+# kontroller burada; uçtan uca testler ayrı çalıştırılıyor (API + veritabanı
+# ister).
+#
+# Kurulum (depo başına bir kez):
+#   git config core.hooksPath githooks
+
+set -e
+
+cd "$(git rev-parse --show-toplevel)"
+
+if [ ! -d node_modules ]; then
+  echo "✗ node_modules yok. Önce: npm install"
+  exit 1
+fi
+
+echo "→ TypeScript denetimi..."
+npx tsc --noEmit
+
+echo "→ Testler..."
+npx jest --silent
+
+echo "✓ Kontroller geçti, push ediliyor."

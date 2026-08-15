@@ -17,8 +17,8 @@ export declare class ArticlesService {
             categories: ({
                 category: {
                     id: string;
-                    slug: string;
                     name: string;
+                    slug: string;
                     active: boolean;
                     createdAt: Date;
                     updatedAt: Date;
@@ -32,15 +32,15 @@ export declare class ArticlesService {
                     seoDesc: string | null;
                 };
             } & {
-                primary: boolean;
-                categoryId: string;
                 articleId: string;
+                categoryId: string;
+                primary: boolean;
             })[];
             tags: ({
                 tag: {
                     id: string;
-                    slug: string;
                     name: string;
+                    slug: string;
                     tenantId: string;
                 };
             } & {
@@ -49,8 +49,8 @@ export declare class ArticlesService {
             })[];
             author: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -89,11 +89,6 @@ export declare class ArticlesService {
             authorId: string | null;
             createdById: string;
             approvedById: string | null;
-            assignedToId: string | null;
-            deadline: Date | null;
-            submittedAt: Date | null;
-            reviewedAt: Date | null;
-            reviewNote: string | null;
             viewCount: number;
             commentCount: number;
             readingTime: number | null;
@@ -103,6 +98,11 @@ export declare class ArticlesService {
             ogImage: string | null;
             source: string | null;
             sourceUrl: string | null;
+            assignedToId: string | null;
+            deadline: Date | null;
+            submittedAt: Date | null;
+            reviewedAt: Date | null;
+            reviewNote: string | null;
             headlineTitle: string | null;
             headlineImage: string | null;
             headlineFontSize: number | null;
@@ -151,8 +151,8 @@ export declare class ArticlesService {
             categories: ({
                 category: {
                     id: string;
-                    slug: string;
                     name: string;
+                    slug: string;
                     active: boolean;
                     createdAt: Date;
                     updatedAt: Date;
@@ -166,14 +166,14 @@ export declare class ArticlesService {
                     seoDesc: string | null;
                 };
             } & {
-                primary: boolean;
-                categoryId: string;
                 articleId: string;
+                categoryId: string;
+                primary: boolean;
             })[];
             author: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -203,11 +203,6 @@ export declare class ArticlesService {
             authorId: string | null;
             createdById: string;
             approvedById: string | null;
-            assignedToId: string | null;
-            deadline: Date | null;
-            submittedAt: Date | null;
-            reviewedAt: Date | null;
-            reviewNote: string | null;
             viewCount: number;
             commentCount: number;
             readingTime: number | null;
@@ -217,6 +212,11 @@ export declare class ArticlesService {
             ogImage: string | null;
             source: string | null;
             sourceUrl: string | null;
+            assignedToId: string | null;
+            deadline: Date | null;
+            submittedAt: Date | null;
+            reviewedAt: Date | null;
+            reviewNote: string | null;
             headlineTitle: string | null;
             headlineImage: string | null;
             headlineFontSize: number | null;
@@ -227,8 +227,8 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -242,15 +242,15 @@ export declare class ArticlesService {
                 seoDesc: string | null;
             };
         } & {
-            primary: boolean;
-            categoryId: string;
             articleId: string;
+            categoryId: string;
+            primary: boolean;
         })[];
         tags: ({
             tag: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 tenantId: string;
             };
         } & {
@@ -259,8 +259,8 @@ export declare class ArticlesService {
         })[];
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -298,11 +298,6 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -312,6 +307,11 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -323,8 +323,8 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -338,15 +338,15 @@ export declare class ArticlesService {
                 seoDesc: string | null;
             };
         } & {
-            primary: boolean;
-            categoryId: string;
             articleId: string;
+            categoryId: string;
+            primary: boolean;
         })[];
         tags: ({
             tag: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 tenantId: string;
             };
         } & {
@@ -355,8 +355,8 @@ export declare class ArticlesService {
         })[];
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -400,11 +400,6 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -414,6 +409,11 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -425,8 +425,8 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -440,15 +440,15 @@ export declare class ArticlesService {
                 seoDesc: string | null;
             };
         } & {
-            primary: boolean;
-            categoryId: string;
             articleId: string;
+            categoryId: string;
+            primary: boolean;
         })[];
         tags: ({
             tag: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 tenantId: string;
             };
         } & {
@@ -457,8 +457,8 @@ export declare class ArticlesService {
         })[];
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -488,11 +488,6 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -502,6 +497,11 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -513,8 +513,8 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -528,15 +528,15 @@ export declare class ArticlesService {
                 seoDesc: string | null;
             };
         } & {
-            primary: boolean;
-            categoryId: string;
             articleId: string;
+            categoryId: string;
+            primary: boolean;
         })[];
         tags: ({
             tag: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 tenantId: string;
             };
         } & {
@@ -545,8 +545,8 @@ export declare class ArticlesService {
         })[];
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -576,11 +576,6 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -590,6 +585,11 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -616,11 +616,6 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -630,6 +625,11 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -640,8 +640,8 @@ export declare class ArticlesService {
     submitForReview(tenantId: string, id: string, userId: string): Promise<{
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -676,11 +676,6 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -690,6 +685,11 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -716,11 +716,6 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -730,6 +725,11 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -756,11 +756,6 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -770,6 +765,11 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -805,11 +805,6 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -819,6 +814,11 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -854,11 +854,6 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -868,6 +863,11 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -908,11 +908,6 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -922,6 +917,11 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -953,8 +953,8 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -968,15 +968,15 @@ export declare class ArticlesService {
                 seoDesc: string | null;
             };
         } & {
-            primary: boolean;
-            categoryId: string;
             articleId: string;
+            categoryId: string;
+            primary: boolean;
         })[];
         tags: ({
             tag: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 tenantId: string;
             };
         } & {
@@ -985,8 +985,8 @@ export declare class ArticlesService {
         })[];
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -1016,11 +1016,6 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -1030,6 +1025,11 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -1056,11 +1056,6 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -1070,6 +1065,11 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -1081,8 +1081,8 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -1096,14 +1096,14 @@ export declare class ArticlesService {
                 seoDesc: string | null;
             };
         } & {
-            primary: boolean;
-            categoryId: string;
             articleId: string;
+            categoryId: string;
+            primary: boolean;
         })[];
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             avatar: string | null;
         } | null;
     } & {
@@ -1125,11 +1125,6 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -1139,6 +1134,11 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -1150,8 +1150,8 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -1165,14 +1165,14 @@ export declare class ArticlesService {
                 seoDesc: string | null;
             };
         } & {
-            primary: boolean;
-            categoryId: string;
             articleId: string;
+            categoryId: string;
+            primary: boolean;
         })[];
         author: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -1202,11 +1202,6 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -1216,6 +1211,11 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         headlineTitle: string | null;
         headlineImage: string | null;
         headlineFontSize: number | null;
@@ -1228,8 +1228,8 @@ export declare class ArticlesService {
             categories: ({
                 category: {
                     id: string;
-                    slug: string;
                     name: string;
+                    slug: string;
                     active: boolean;
                     createdAt: Date;
                     updatedAt: Date;
@@ -1243,15 +1243,15 @@ export declare class ArticlesService {
                     seoDesc: string | null;
                 };
             } & {
-                primary: boolean;
-                categoryId: string;
                 articleId: string;
+                categoryId: string;
+                primary: boolean;
             })[];
             tags: ({
                 tag: {
                     id: string;
-                    slug: string;
                     name: string;
+                    slug: string;
                     tenantId: string;
                 };
             } & {
@@ -1260,8 +1260,8 @@ export declare class ArticlesService {
             })[];
             author: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -1291,11 +1291,6 @@ export declare class ArticlesService {
             authorId: string | null;
             createdById: string;
             approvedById: string | null;
-            assignedToId: string | null;
-            deadline: Date | null;
-            submittedAt: Date | null;
-            reviewedAt: Date | null;
-            reviewNote: string | null;
             viewCount: number;
             commentCount: number;
             readingTime: number | null;
@@ -1305,6 +1300,11 @@ export declare class ArticlesService {
             ogImage: string | null;
             source: string | null;
             sourceUrl: string | null;
+            assignedToId: string | null;
+            deadline: Date | null;
+            submittedAt: Date | null;
+            reviewedAt: Date | null;
+            reviewNote: string | null;
             headlineTitle: string | null;
             headlineImage: string | null;
             headlineFontSize: number | null;
