@@ -5,6 +5,9 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  # Elle çalıştırma — Actions ekranındaki "Run workflow" düğmesi bu satırla
+  # geliyor.
+  workflow_dispatch:
 
 jobs:
   test:
