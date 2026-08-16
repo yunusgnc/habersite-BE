@@ -33,11 +33,11 @@ export class GalleriesService {
       },
     });
 
-    let nextCursor: string | undefined;
-    if (items.length > limit) {
-      const next = items.pop();
-      nextCursor = next!.id;
-    }
+    // İmleç döndürülen son kayıt olmalı — `skip: 1` ile birlikte aksi hâlde
+    // her sayfa sınırında bir kayıt atlanıyor (bkz. articles.service findAll).
+    const hasMore = items.length > limit;
+    if (hasMore) items.pop();
+    const nextCursor = hasMore ? items[items.length - 1]?.id : undefined;
 
     return { items, nextCursor };
   }

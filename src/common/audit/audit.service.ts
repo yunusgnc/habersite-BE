@@ -87,11 +87,13 @@ export class AuditService {
       this.prisma.auditLog.count({ where }),
     ]);
 
-    let nextCursor: string | null = null;
-    if (items.length > limit) {
-      const last = items.pop();
-      nextCursor = last?.id ?? null;
-    }
+    // İmleç döndürülen son kayıt olmalı — `skip: 1` ile birlikte aksi hâlde
+    // her sayfa sınırında bir kayıt atlanıyor (bkz. articles.service findAll).
+    // Denetim kayıtlarında bu ayrıca ciddi: atlanan satır, geriye dönük
+    // incelemede hiç olmamış gibi görünür.
+    const hasMore = items.length > limit;
+    if (hasMore) items.pop();
+    const nextCursor = hasMore ? (items[items.length - 1]?.id ?? null) : null;
     return { items, nextCursor, total };
   }
 

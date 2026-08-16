@@ -218,11 +218,23 @@ export class ArticlesService {
 
     // limit+1 çekiliyor; fazlası varsa sonraki sayfa var demektir.
     const hasMore = items.length > limit;
-    let nextCursor: string | undefined;
-    if (hasMore) {
-      const next = items.pop();
-      if (!usePageOffset) nextCursor = next!.id;
-    }
+    if (hasMore) items.pop();
+
+    /**
+     * İmleç, DÖNDÜRÜLEN son kaydın kimliği olmak zorunda.
+     *
+     * Sorgu `skip: 1` kullanıyor: bir sonraki sayfa imleçteki kaydın BİR
+     * SONRASINDAN başlıyor. Bu yüzden imleç olarak `pop()` ile atılan
+     * (limit+1'inci, yani bir sonraki sayfanın ilk) kaydı vermek o kaydı
+     * hepten atlatıyordu — her sayfa sınırında tam bir haber kayboluyordu.
+     *
+     * Atlanan kayıt görünmez bir hata: liste normal görünüyor, sadece
+     * içinde olmayan bir haber var. 20'şerlik sayfalarda 200 haberlik bir
+     * listede 9 haber hiç görünmüyordu; kategori sayfalarında da aynısı
+     * okuyucuya yansıyordu.
+     */
+    const nextCursor =
+      hasMore && !usePageOffset ? items[items.length - 1]?.id : undefined;
 
     return {
       items,
@@ -1000,11 +1012,11 @@ export class ArticlesService {
       },
     });
 
-    let nextCursor: string | undefined;
-    if (items.length > limit) {
-      const next = items.pop();
-      nextCursor = next!.id;
-    }
+    // İmleç döndürülen son kayıt olmalı — `skip: 1` ile birlikte aksi hâlde
+    // her sayfa sınırında bir haber atlanıyor (bkz. `findAll`).
+    const hasMore = items.length > limit;
+    if (hasMore) items.pop();
+    const nextCursor = hasMore ? items[items.length - 1]?.id : undefined;
 
     return { items, nextCursor };
   }

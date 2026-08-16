@@ -52,11 +52,10 @@ let AuditService = AuditService_1 = class AuditService {
             }),
             this.prisma.auditLog.count({ where }),
         ]);
-        let nextCursor = null;
-        if (items.length > limit) {
-            const last = items.pop();
-            nextCursor = last?.id ?? null;
-        }
+        const hasMore = items.length > limit;
+        if (hasMore)
+            items.pop();
+        const nextCursor = hasMore ? (items[items.length - 1]?.id ?? null) : null;
         return { items, nextCursor, total };
     }
     async summary(params) {

@@ -169,12 +169,9 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
             this.prisma.article.count({ where }),
         ]);
         const hasMore = items.length > limit;
-        let nextCursor;
-        if (hasMore) {
-            const next = items.pop();
-            if (!usePageOffset)
-                nextCursor = next.id;
-        }
+        if (hasMore)
+            items.pop();
+        const nextCursor = hasMore && !usePageOffset ? items[items.length - 1]?.id : undefined;
         return {
             items,
             nextCursor,
@@ -768,11 +765,10 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
                 author: true,
             },
         });
-        let nextCursor;
-        if (items.length > limit) {
-            const next = items.pop();
-            nextCursor = next.id;
-        }
+        const hasMore = items.length > limit;
+        if (hasMore)
+            items.pop();
+        const nextCursor = hasMore ? items[items.length - 1]?.id : undefined;
         return { items, nextCursor };
     }
     async bulkUpdateStatus(tenantId, ids, status) {

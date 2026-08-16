@@ -38,11 +38,10 @@ let VideosService = class VideosService {
                 skip: 1,
             }),
         });
-        let nextCursor;
-        if (items.length > limit) {
-            const next = items.pop();
-            nextCursor = next.id;
-        }
+        const hasMore = items.length > limit;
+        if (hasMore)
+            items.pop();
+        const nextCursor = hasMore ? items[items.length - 1]?.id : undefined;
         return { items, nextCursor };
     }
     async findOne(tenantId, id) {
