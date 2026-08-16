@@ -114,6 +114,49 @@ async function main() {
             publishedAt: new Date(),
         },
     });
+    const A = a.id;
+    await prisma.author.upsert({
+        where: { tenantId_slug: { tenantId: A, slug: 'e2e-yazar' } },
+        update: {},
+        create: { tenantId: A, name: 'E2E Yazar Profili', slug: 'e2e-yazar' },
+    });
+    await prisma.page.upsert({
+        where: { tenantId_slug: { tenantId: A, slug: 'e2e-sayfa' } },
+        update: {},
+        create: {
+            tenantId: A,
+            title: 'E2E Sayfa',
+            slug: 'e2e-sayfa',
+            content: '<p>E2E test sayfası.</p>',
+        },
+    });
+    await prisma.gallery.upsert({
+        where: { tenantId_slug: { tenantId: A, slug: 'e2e-galeri' } },
+        update: {},
+        create: { tenantId: A, title: 'E2E Galeri', slug: 'e2e-galeri' },
+    });
+    await prisma.video.upsert({
+        where: { tenantId_slug: { tenantId: A, slug: 'e2e-video' } },
+        update: {},
+        create: {
+            tenantId: A,
+            title: 'E2E Video',
+            slug: 'e2e-video',
+            videoUrl: 'https://example.invalid/e2e.mp4',
+        },
+    });
+    const varsaGec = async (ad, bul, olustur) => {
+        if (await bul())
+            return;
+        await olustur();
+        console.log(`  + ${ad}`);
+    };
+    await varsaGec('reklam', () => prisma.ad.findFirst({ where: { tenantId: A, name: 'E2E Reklam' } }), () => prisma.ad.create({
+        data: { tenantId: A, name: 'E2E Reklam', position: 'HEADER_TOP' },
+    }));
+    await varsaGec('duyuru', () => prisma.announcement.findFirst({ where: { tenantId: A, title: 'E2E Duyuru' } }), () => prisma.announcement.create({ data: { tenantId: A, title: 'E2E Duyuru' } }));
+    await varsaGec('son dakika', () => prisma.breakingNews.findFirst({ where: { tenantId: A, title: 'E2E Son Dakika' } }), () => prisma.breakingNews.create({ data: { tenantId: A, title: 'E2E Son Dakika' } }));
+    await varsaGec('popup', () => prisma.popup.findFirst({ where: { tenantId: A, title: 'E2E Popup' } }), () => prisma.popup.create({ data: { tenantId: A, title: 'E2E Popup' } }));
     console.log('E2E tohumu hazır:');
     console.log(`  Kiracı A: ${a.id} (${exports.E2E.kiracıA.domain})`);
     console.log(`  Kiracı B: ${b.id} (${exports.E2E.kiracıB.domain})`);
