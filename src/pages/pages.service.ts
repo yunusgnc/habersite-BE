@@ -22,9 +22,23 @@ export class PagesService {
     });
   }
 
-  async findBySlug(tenantId: string, slug: string) {
-    const page = await this.prisma.page.findUnique({
-      where: { tenantId_slug: { tenantId, slug } },
+  /**
+   * Sayfayı slug VEYA kimlikle bulur.
+   *
+   * Neden ikisi de: site sayfaları slug ile açıyor (`/kunye`), panel ise
+   * listede kimlikle bağlantı veriyor (`/pages/<id>`). Uç yalnızca slug ile
+   * arıyordu, dolayısıyla panelden hiçbir sayfa açılamıyordu — "Sayfa
+   * bulunamadı" çıkıyordu. Sessiz bir hataydı: kimse hata görmüyor, sadece
+   * düzenleme ekranı boş dönüyordu.
+   *
+   * Önce slug deniyoruz çünkü sık olan yol o (site tarafı, her ziyaret).
+   */
+  async findBySlug(tenantId: string, slugYaDaId: string) {
+    const page = await this.prisma.page.findFirst({
+      where: {
+        tenantId,
+        OR: [{ slug: slugYaDaId }, { id: slugYaDaId }],
+      },
     });
     if (!page) throw new NotFoundException('Page not found');
     return page;

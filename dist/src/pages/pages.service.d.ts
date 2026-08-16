@@ -29,7 +29,7 @@ export declare class PagesService {
         content: import("@prisma/client/runtime/client").JsonValue;
         published: boolean;
     }[]>;
-    findBySlug(tenantId: string, slug: string): Promise<{
+    findBySlug(tenantId: string, slugYaDaId: string): Promise<{
         id: string;
         slug: string;
         createdAt: Date;

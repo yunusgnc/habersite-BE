@@ -36,9 +36,12 @@ let PagesService = class PagesService {
             orderBy: { title: 'asc' },
         });
     }
-    async findBySlug(tenantId, slug) {
-        const page = await this.prisma.page.findUnique({
-            where: { tenantId_slug: { tenantId, slug } },
+    async findBySlug(tenantId, slugYaDaId) {
+        const page = await this.prisma.page.findFirst({
+            where: {
+                tenantId,
+                OR: [{ slug: slugYaDaId }, { id: slugYaDaId }],
+            },
         });
         if (!page)
             throw new common_1.NotFoundException('Page not found');
