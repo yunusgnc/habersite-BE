@@ -314,8 +314,9 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
         if (userRole && !canPublishArticle(userRole)) {
             data.status = client_1.ArticleStatus.DRAFT;
         }
-        const slug = await this.generateUniqueSlug(tenantId, data.title);
-        const readingTime = this.calculateReadingTime(data.content);
+        const { slug: istenenSlug, ...alanlar } = data;
+        const slug = await this.generateUniqueSlug(tenantId, istenenSlug?.trim() || alanlar.title);
+        const readingTime = this.calculateReadingTime(alanlar.content);
         const publishedAt = data.status === client_1.ArticleStatus.PUBLISHED && !data.publishedAt
             ? new Date()
             : data.publishedAt
@@ -326,7 +327,7 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
             : undefined;
         const article = await this.prisma.article.create({
             data: {
-                ...data,
+                ...alanlar,
                 tenantId,
                 slug,
                 readingTime,
@@ -800,8 +801,8 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
         }));
         return this.prisma.articleCategory.createMany({ data: creates });
     }
-    async generateUniqueSlug(tenantId, title) {
-        let slug = (0, slugify_1.default)(title, { lower: true, strict: true, locale: 'tr' });
+    async generateUniqueSlug(tenantId, kaynak) {
+        let slug = (0, slugify_1.default)(kaynak, { lower: true, strict: true, locale: 'tr' });
         const existing = await this.prisma.article.findUnique({
             where: { tenantId_slug: { tenantId, slug } },
         });

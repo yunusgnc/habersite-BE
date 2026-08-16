@@ -404,8 +404,15 @@ export class ArticlesService {
       data.status = ArticleStatus.DRAFT;
     }
 
-    const slug = await this.generateUniqueSlug(tenantId, data.title);
-    const readingTime = this.calculateReadingTime(data.content);
+    // Elle yazılmış slug varsa onu kullan, yoksa başlıktan türet.
+    const { slug: istenenSlug, ...alanlar } = data as typeof data & {
+      slug?: string;
+    };
+    const slug = await this.generateUniqueSlug(
+      tenantId,
+      istenenSlug?.trim() || alanlar.title,
+    );
+    const readingTime = this.calculateReadingTime(alanlar.content);
 
     const publishedAt =
       data.status === ArticleStatus.PUBLISHED && !data.publishedAt
@@ -420,7 +427,7 @@ export class ArticlesService {
 
     const article = await this.prisma.article.create({
       data: {
-        ...data,
+        ...alanlar,
         tenantId,
         slug,
         readingTime,
@@ -1035,11 +1042,21 @@ export class ArticlesService {
 
   // ─── Private helpers ───
 
+  /**
+   * Adres parçasını üretir.
+   *
+   * `kaynak` başlık ya da kullanıcının elle yazdığı slug olabilir; ikisi de
+   * aynı temizlikten geçiyor. Elle yazılan değer önemli: haber adresi SEO'nun
+   * kendisi ve editörün onu belirleyebilmesi gerekiyor. Panelde "manuel
+   * değiştirebilirsiniz" yazıyordu ama değer buraya hiç ulaşmıyordu — form
+   * gönderiyordu, DTO'da karşılığı olmadığı için düşüyordu ve slug her zaman
+   * başlıktan türetiliyordu.
+   */
   private async generateUniqueSlug(
     tenantId: string,
-    title: string,
+    kaynak: string,
   ): Promise<string> {
-    let slug = slugify(title, { lower: true, strict: true, locale: 'tr' });
+    let slug = slugify(kaynak, { lower: true, strict: true, locale: 'tr' });
 
     const existing = await this.prisma.article.findUnique({
       where: { tenantId_slug: { tenantId, slug } },

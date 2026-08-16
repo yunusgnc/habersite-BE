@@ -19,6 +19,18 @@ export class CreateArticleDto {
   @MinLength(3)
   title: string;
 
+  /**
+   * Haberin adres parçası. Boş bırakılırsa başlıktan türetilir.
+   *
+   * Panel bu alanı gönderiyordu ama burada karşılığı yoktu; doğrulama katmanı
+   * onu sessizce düşürüyor ve slug her zaman başlıktan üretiliyordu. Editörün
+   * yazdığı adres kayboluyordu — SEO açısından önemli bir alanda sessiz veri
+   * kaybı.
+   */
+  @IsString()
+  @IsOptional()
+  slug?: string;
+
   @IsObject()
   content: Record<string, any>;
 

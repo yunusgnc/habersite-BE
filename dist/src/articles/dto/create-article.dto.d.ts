@@ -1,6 +1,7 @@
 import { ArticleType, ArticleStatus } from '@prisma/client';
 export declare class CreateArticleDto {
     title: string;
+    slug?: string;
     content: Record<string, any>;
     type?: ArticleType;
     spot?: string;
