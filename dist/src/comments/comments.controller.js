@@ -41,11 +41,11 @@ let CommentsController = class CommentsController {
             '';
         return this.commentsService.create(tenantId, dto, ipAddress);
     }
-    updateStatus(tenantId, id, status) {
-        return this.commentsService.updateStatus(tenantId, id, status);
-    }
     bulkUpdateStatus(tenantId, dto) {
         return this.commentsService.bulkUpdateStatus(tenantId, dto.ids, dto.status);
+    }
+    updateStatus(tenantId, id, status) {
+        return this.commentsService.updateStatus(tenantId, id, status);
     }
     remove(tenantId, id) {
         return this.commentsService.remove(tenantId, id);
@@ -86,6 +86,18 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], CommentsController.prototype, "create", null);
 __decorate([
+    openapi.ApiOperation({ summary: "SIRA \u00D6NEML\u0130: `:id/status` rotas\u0131ndan \u00D6NCE olmak zorunda.\n\nAlt\u0131ndayd\u0131 ve `PATCH /comments/bulk/status` iste\u011Fi buraya hi\u00E7 ula\u015Fm\u0131yordu\n\u2014 \"bulk\" bir yorum kimli\u011Fi san\u0131l\u0131yordu. Yorumlar ekran\u0131ndaki toplu\nonaylama/reddetme fiilen \u00E7al\u0131\u015Fm\u0131yordu; edit\u00F6r onlarca yorumu se\u00E7ip\n\"Onayla\" diyor ve hi\u00E7biri onaylanm\u0131yordu." }),
+    (0, common_1.Patch)('bulk/status'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
+    (0, roles_guard_1.Roles)('ADMIN', 'EDITOR'),
+    openapi.ApiResponse({ status: 200, type: Object }),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], CommentsController.prototype, "bulkUpdateStatus", null);
+__decorate([
     (0, common_1.Patch)(':id/status'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN', 'EDITOR'),
@@ -97,17 +109,6 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], CommentsController.prototype, "updateStatus", null);
-__decorate([
-    (0, common_1.Patch)('bulk/status'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
-    (0, roles_guard_1.Roles)('ADMIN', 'EDITOR'),
-    openapi.ApiResponse({ status: 200, type: Object }),
-    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
-], CommentsController.prototype, "bulkUpdateStatus", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),

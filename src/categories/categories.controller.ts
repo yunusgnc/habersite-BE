@@ -45,6 +45,26 @@ export class CategoriesController {
     return this.categoriesService.create(tenantId, dto);
   }
 
+  /**
+   * SIRA ÖNEMLİ: `:id` rotasından ÖNCE olmak zorunda.
+   *
+   * Dosyanın en altındaydı ve Express rotaları bildirim sırasına göre
+   * eşleştirdiği için `PATCH /categories/reorder` isteği buraya hiç
+   * ulaşmıyordu: "reorder" bir kategori kimliği sanılıyor, gövde doğrulamaya
+   * takılıp 400 dönüyordu. Kategorilerde sürükle-bırak sıralama fiilen hiç
+   * çalışmamıştı — kullanıcı kartları sürüklüyor, sayfayı yenileyince eski
+   * sıra geri geliyordu.
+   */
+  @Patch('reorder')
+  @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
+  @Roles('ADMIN', 'EDITOR')
+  reorder(
+    @CurrentTenant() tenantId: string,
+    @Body() dto: { items: { id: string; sortOrder: number }[] },
+  ) {
+    return this.categoriesService.reorder(tenantId, dto.items);
+  }
+
   @Patch(':id')
   @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
   @Roles('ADMIN', 'EDITOR')
@@ -66,13 +86,4 @@ export class CategoriesController {
     return this.categoriesService.remove(tenantId, id);
   }
 
-  @Patch('reorder')
-  @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
-  @Roles('ADMIN', 'EDITOR')
-  reorder(
-    @CurrentTenant() tenantId: string,
-    @Body() dto: { items: { id: string; sortOrder: number }[] },
-  ) {
-    return this.categoriesService.reorder(tenantId, dto.items);
-  }
 }

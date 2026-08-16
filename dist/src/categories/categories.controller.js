@@ -36,14 +36,14 @@ let CategoriesController = class CategoriesController {
     create(tenantId, dto) {
         return this.categoriesService.create(tenantId, dto);
     }
+    reorder(tenantId, dto) {
+        return this.categoriesService.reorder(tenantId, dto.items);
+    }
     update(tenantId, id, dto) {
         return this.categoriesService.update(tenantId, id, dto);
     }
     remove(tenantId, id) {
         return this.categoriesService.remove(tenantId, id);
-    }
-    reorder(tenantId, dto) {
-        return this.categoriesService.reorder(tenantId, dto.items);
     }
 };
 exports.CategoriesController = CategoriesController;
@@ -78,6 +78,18 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], CategoriesController.prototype, "create", null);
 __decorate([
+    openapi.ApiOperation({ summary: "SIRA \u00D6NEML\u0130: `:id` rotas\u0131ndan \u00D6NCE olmak zorunda.\n\nDosyan\u0131n en alt\u0131ndayd\u0131 ve Express rotalar\u0131 bildirim s\u0131ras\u0131na g\u00F6re\ne\u015Fle\u015Ftirdi\u011Fi i\u00E7in `PATCH /categories/reorder` iste\u011Fi buraya hi\u00E7\nula\u015Fm\u0131yordu: \"reorder\" bir kategori kimli\u011Fi san\u0131l\u0131yor, g\u00F6vde do\u011Frulamaya\ntak\u0131l\u0131p 400 d\u00F6n\u00FCyordu. Kategorilerde s\u00FCr\u00FCkle-b\u0131rak s\u0131ralama fiilen hi\u00E7\n\u00E7al\u0131\u015Fmam\u0131\u015Ft\u0131 \u2014 kullan\u0131c\u0131 kartlar\u0131 s\u00FCr\u00FCkl\u00FCyor, sayfay\u0131 yenileyince eski\ns\u0131ra geri geliyordu." }),
+    (0, common_1.Patch)('reorder'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
+    (0, roles_guard_1.Roles)('ADMIN', 'EDITOR'),
+    openapi.ApiResponse({ status: 200, type: [Object] }),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], CategoriesController.prototype, "reorder", null);
+__decorate([
     (0, common_1.Patch)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN', 'EDITOR'),
@@ -100,17 +112,6 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], CategoriesController.prototype, "remove", null);
-__decorate([
-    (0, common_1.Patch)('reorder'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
-    (0, roles_guard_1.Roles)('ADMIN', 'EDITOR'),
-    openapi.ApiResponse({ status: 200, type: [Object] }),
-    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
-], CategoriesController.prototype, "reorder", null);
 exports.CategoriesController = CategoriesController = __decorate([
     (0, common_1.Controller)('api/categories'),
     __metadata("design:paramtypes", [categories_service_1.CategoriesService])

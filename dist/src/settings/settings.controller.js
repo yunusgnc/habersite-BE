@@ -21,6 +21,7 @@ const roles_guard_1 = require("../auth/guards/roles.guard");
 const tenant_guard_1 = require("../common/guards/tenant.guard");
 const tenant_decorator_1 = require("../common/decorators/tenant.decorator");
 const settings_service_1 = require("./settings.service");
+const secret_box_1 = require("../common/crypto/secret-box");
 const update_settings_dto_1 = require("./dto/update-settings.dto");
 let SettingsController = class SettingsController {
     settingsService;
@@ -32,6 +33,9 @@ let SettingsController = class SettingsController {
     }
     getSecretStatus(tenantId) {
         return this.settingsService.getSecretStatus(tenantId);
+    }
+    getEncryptionStatus() {
+        return { ready: (0, secret_box_1.isEncryptionConfigured)() };
     }
     get(tenantId, key) {
         return this.settingsService.get(tenantId, key);
@@ -61,6 +65,14 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], SettingsController.prototype, "getSecretStatus", null);
+__decorate([
+    openapi.ApiOperation({ summary: "Sunucu s\u0131r saklayabilecek durumda m\u0131 \u2014 `SETTINGS_ENCRYPTION_KEY` tan\u0131ml\u0131 m\u0131.\n\nAnahtar\u0131n kendisi hakk\u0131nda hi\u00E7bir bilgi vermiyor, yaln\u0131zca \"haz\u0131r m\u0131\"\ndiyor; yine de y\u00F6netici korumas\u0131n\u0131n arkas\u0131nda duruyor.\n\nNeden var: anahtar tan\u0131ml\u0131 de\u011Filken API anahtar\u0131 kaydetmek 400 d\u00F6n\u00FCyor ve\nkullan\u0131c\u0131 bunu ancak formu doldurup kaydete bast\u0131ktan SONRA \u00F6\u011Freniyor.\nU\u00E7tan uca testlerde de ayn\u0131 durum, \u00FCr\u00FCn bozuk olmad\u0131\u011F\u0131 h\u00E2lde anla\u015F\u0131lmaz\nbir k\u0131r\u0131lma olarak g\u00F6r\u00FCn\u00FCyordu; test kurulumu art\u0131k bunu \u00F6nden yoklay\u0131p\nne yap\u0131lmas\u0131 gerekti\u011Fini s\u00F6yl\u00FCyor.\n\n`:key` rotas\u0131ndan \u00D6NCE tan\u0131ml\u0131 olmal\u0131." }),
+    (0, common_1.Get)('encryption-status'),
+    openapi.ApiResponse({ status: 200 }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], SettingsController.prototype, "getEncryptionStatus", null);
 __decorate([
     (0, common_1.Get)(':key'),
     openapi.ApiResponse({ status: 200, type: Object }),

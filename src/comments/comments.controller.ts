@@ -60,6 +60,24 @@ export class CommentsController {
     return this.commentsService.create(tenantId, dto, ipAddress);
   }
 
+  /**
+   * SIRA ÖNEMLİ: `:id/status` rotasından ÖNCE olmak zorunda.
+   *
+   * Altındaydı ve `PATCH /comments/bulk/status` isteği buraya hiç ulaşmıyordu
+   * — "bulk" bir yorum kimliği sanılıyordu. Yorumlar ekranındaki toplu
+   * onaylama/reddetme fiilen çalışmıyordu; editör onlarca yorumu seçip
+   * "Onayla" diyor ve hiçbiri onaylanmıyordu.
+   */
+  @Patch('bulk/status')
+  @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
+  @Roles('ADMIN', 'EDITOR')
+  bulkUpdateStatus(
+    @CurrentTenant() tenantId: string,
+    @Body() dto: { ids: string[]; status: CommentStatus },
+  ) {
+    return this.commentsService.bulkUpdateStatus(tenantId, dto.ids, dto.status);
+  }
+
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
   @Roles('ADMIN', 'EDITOR')
@@ -69,16 +87,6 @@ export class CommentsController {
     @Body('status') status: CommentStatus,
   ) {
     return this.commentsService.updateStatus(tenantId, id, status);
-  }
-
-  @Patch('bulk/status')
-  @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
-  @Roles('ADMIN', 'EDITOR')
-  bulkUpdateStatus(
-    @CurrentTenant() tenantId: string,
-    @Body() dto: { ids: string[]; status: CommentStatus },
-  ) {
-    return this.commentsService.bulkUpdateStatus(tenantId, dto.ids, dto.status);
   }
 
   @Delete(':id')

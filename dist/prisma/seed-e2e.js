@@ -46,6 +46,8 @@ exports.E2E = {
     kiracıB: { slug: 'e2e-b', domain: 'e2e-b.test', ad: 'E2E Kiracı B' },
     adminEposta: 'e2e-admin@test.local',
     yazarEposta: 'e2e-yazar@test.local',
+    editorEpostasi: 'e2e-editor@test.local',
+    kosayazariEpostasi: 'e2e-kosayazari@test.local',
     bEpostası: 'e2e-b-admin@test.local',
 };
 async function kiracıKur(bilgi, sifreHash, kullanicilar) {
@@ -94,6 +96,12 @@ async function main() {
     const a = await kiracıKur(exports.E2E.kiracıA, hash, [
         { email: exports.E2E.adminEposta, name: 'E2E Admin', role: client_1.UserRole.ADMIN },
         { email: exports.E2E.yazarEposta, name: 'E2E Yazar', role: client_1.UserRole.REPORTER },
+        { email: exports.E2E.editorEpostasi, name: 'E2E Editör', role: client_1.UserRole.EDITOR },
+        {
+            email: exports.E2E.kosayazariEpostasi,
+            name: 'E2E Köşe Yazarı',
+            role: client_1.UserRole.COLUMNIST,
+        },
     ]);
     const b = await kiracıKur(exports.E2E.kiracıB, hash, [
         { email: exports.E2E.bEpostası, name: 'E2E B Admin', role: client_1.UserRole.ADMIN },

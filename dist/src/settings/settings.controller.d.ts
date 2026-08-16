@@ -8,6 +8,9 @@ export declare class SettingsController {
         configured: boolean;
         hint: string | null;
     }>>;
+    getEncryptionStatus(): {
+        ready: boolean;
+    };
     get(tenantId: string, key: string): Promise<any>;
     bulkUpsert(tenantId: string, dto: BulkUpdateSettingsDto): Promise<{
         updated: string[];

@@ -40,6 +40,11 @@ export const E2E = {
   kiracıB: { slug: 'e2e-b', domain: 'e2e-b.test', ad: 'E2E Kiracı B' },
   adminEposta: 'e2e-admin@test.local',
   yazarEposta: 'e2e-yazar@test.local',
+  // Panel beş rol seviyesi tanımlıyor; rol matrisi testi bunların dördünü
+  // gerçek oturumla geziyor. Rol taklidi yapmak yetmez: guard'ların gerçekte
+  // ne yaptığını değil, bizim ne sandığımızı test ederdi.
+  editorEpostasi: 'e2e-editor@test.local',
+  kosayazariEpostasi: 'e2e-kosayazari@test.local',
   bEpostası: 'e2e-b-admin@test.local',
 };
 
@@ -107,6 +112,12 @@ async function main() {
   const a = await kiracıKur(E2E.kiracıA, hash, [
     { email: E2E.adminEposta, name: 'E2E Admin', role: UserRole.ADMIN },
     { email: E2E.yazarEposta, name: 'E2E Yazar', role: UserRole.REPORTER },
+    { email: E2E.editorEpostasi, name: 'E2E Editör', role: UserRole.EDITOR },
+    {
+      email: E2E.kosayazariEpostasi,
+      name: 'E2E Köşe Yazarı',
+      role: UserRole.COLUMNIST,
+    },
   ]);
 
   const b = await kiracıKur(E2E.kiracıB, hash, [

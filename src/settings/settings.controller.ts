@@ -12,6 +12,7 @@ import { RolesGuard, Roles } from '../auth/guards/roles.guard';
 import { TenantGuard } from '../common/guards/tenant.guard';
 import { CurrentTenant } from '../common/decorators/tenant.decorator';
 import { SettingsService } from './settings.service';
+import { isEncryptionConfigured } from '../common/crypto/secret-box';
 import { UpdateSettingDto, BulkUpdateSettingsDto } from './dto/update-settings.dto';
 
 @Controller('api/settings')
@@ -38,6 +39,25 @@ export class SettingsController {
   @Get('secret-status')
   getSecretStatus(@CurrentTenant() tenantId: string) {
     return this.settingsService.getSecretStatus(tenantId);
+  }
+
+  /**
+   * Sunucu sır saklayabilecek durumda mı — `SETTINGS_ENCRYPTION_KEY` tanımlı mı.
+   *
+   * Anahtarın kendisi hakkında hiçbir bilgi vermiyor, yalnızca "hazır mı"
+   * diyor; yine de yönetici korumasının arkasında duruyor.
+   *
+   * Neden var: anahtar tanımlı değilken API anahtarı kaydetmek 400 dönüyor ve
+   * kullanıcı bunu ancak formu doldurup kaydete bastıktan SONRA öğreniyor.
+   * Uçtan uca testlerde de aynı durum, ürün bozuk olmadığı hâlde anlaşılmaz
+   * bir kırılma olarak görünüyordu; test kurulumu artık bunu önden yoklayıp
+   * ne yapılması gerektiğini söylüyor.
+   *
+   * `:key` rotasından ÖNCE tanımlı olmalı.
+   */
+  @Get('encryption-status')
+  getEncryptionStatus() {
+    return { ready: isEncryptionConfigured() };
   }
 
   @Get(':key')

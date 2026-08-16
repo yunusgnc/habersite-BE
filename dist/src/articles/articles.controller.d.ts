@@ -924,6 +924,9 @@ export declare class ArticlesController {
         hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
+    bulkDelete(tenantId: string, dto: {
+        ids: string[];
+    }): Promise<import("@prisma/client").Prisma.BatchPayload>;
     remove(tenantId: string, id: string, user: any): Promise<{
         id: string;
         slug: string;
@@ -968,9 +971,6 @@ export declare class ArticlesController {
     bulkUpdateCategory(tenantId: string, dto: {
         ids: string[];
         categoryId: string;
-    }): Promise<import("@prisma/client").Prisma.BatchPayload>;
-    bulkDelete(tenantId: string, dto: {
-        ids: string[];
     }): Promise<import("@prisma/client").Prisma.BatchPayload>;
     myTasks(tenantId: string, user: any): Promise<({
         author: {

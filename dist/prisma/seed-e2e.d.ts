@@ -13,5 +13,7 @@ export declare const E2E: {
     };
     adminEposta: string;
     yazarEposta: string;
+    editorEpostasi: string;
+    kosayazariEpostasi: string;
     bEpostası: string;
 };

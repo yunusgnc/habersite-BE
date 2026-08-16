@@ -135,6 +135,12 @@ export declare class CategoriesController {
         seoTitle: string | null;
         seoDesc: string | null;
     }>;
+    reorder(tenantId: string, dto: {
+        items: {
+            id: string;
+            sortOrder: number;
+        }[];
+    }): Promise<import("@prisma/client").Prisma.BatchPayload[]>;
     update(tenantId: string, id: string, dto: UpdateCategoryDto): Promise<{
         children: {
             id: string;
@@ -184,10 +190,4 @@ export declare class CategoriesController {
         seoTitle: string | null;
         seoDesc: string | null;
     }>;
-    reorder(tenantId: string, dto: {
-        items: {
-            id: string;
-            sortOrder: number;
-        }[];
-    }): Promise<import("@prisma/client").Prisma.BatchPayload[]>;
 }

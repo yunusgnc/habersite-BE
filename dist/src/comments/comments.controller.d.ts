@@ -59,6 +59,10 @@ export declare class CommentsController {
         articleId: string;
         ipAddress: string | null;
     }>;
+    bulkUpdateStatus(tenantId: string, dto: {
+        ids: string[];
+        status: CommentStatus;
+    }): Promise<import("@prisma/client").Prisma.BatchPayload>;
     updateStatus(tenantId: string, id: string, status: CommentStatus): Promise<{
         id: string;
         name: string;
@@ -71,10 +75,6 @@ export declare class CommentsController {
         articleId: string;
         ipAddress: string | null;
     }>;
-    bulkUpdateStatus(tenantId: string, dto: {
-        ids: string[];
-        status: CommentStatus;
-    }): Promise<import("@prisma/client").Prisma.BatchPayload>;
     remove(tenantId: string, id: string): Promise<{
         deleted: boolean;
     }>;

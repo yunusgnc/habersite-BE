@@ -82,6 +82,9 @@ let ArticlesController = class ArticlesController {
     restoreRevision(tenantId, id, revisionId, user) {
         return this.articlesService.restoreRevision(tenantId, id, revisionId, user?.userId);
     }
+    bulkDelete(tenantId, dto) {
+        return this.articlesService.bulkDelete(tenantId, dto.ids);
+    }
     remove(tenantId, id, user) {
         return this.articlesService.remove(tenantId, id, user?.userId);
     }
@@ -90,9 +93,6 @@ let ArticlesController = class ArticlesController {
     }
     bulkUpdateCategory(tenantId, dto) {
         return this.articlesService.bulkUpdateCategory(tenantId, dto.ids, dto.categoryId);
-    }
-    bulkDelete(tenantId, dto) {
-        return this.articlesService.bulkDelete(tenantId, dto.ids);
     }
     myTasks(tenantId, user) {
         return this.articlesService.myTasks(tenantId, user.userId);
@@ -257,6 +257,18 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ArticlesController.prototype, "restoreRevision", null);
 __decorate([
+    openapi.ApiOperation({ summary: "SIRA \u00D6NEML\u0130: `:id` rotas\u0131ndan \u00D6NCE olmak zorunda.\n\nA\u015Fa\u011F\u0131dayd\u0131 ve Express rotalar\u0131 bildirim s\u0131ras\u0131na g\u00F6re e\u015Fle\u015Ftirdi\u011Fi i\u00E7in\n`DELETE /articles/bulk` iste\u011Fi buraya hi\u00E7 ula\u015Fm\u0131yordu \u2014 \"bulk\" bir haber\nkimli\u011Fi san\u0131l\u0131yor, istek 404 d\u00F6n\u00FCyordu. Panelde toplu silme fiilen\n\u00E7al\u0131\u015Fm\u0131yordu ve hata bir uyar\u0131 balonuna d\u00F6n\u00FC\u015Ft\u00FC\u011F\u00FC i\u00E7in sebebi g\u00F6r\u00FCnm\u00FCyordu." }),
+    (0, common_1.Delete)('bulk'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_guard_1.Roles)('ADMIN', 'EDITOR'),
+    openapi.ApiResponse({ status: 200, type: Object }),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ArticlesController.prototype, "bulkDelete", null);
+__decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_guard_1.Roles)('ADMIN', 'EDITOR'),
@@ -290,17 +302,6 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], ArticlesController.prototype, "bulkUpdateCategory", null);
-__decorate([
-    (0, common_1.Delete)('bulk'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_guard_1.Roles)('ADMIN', 'EDITOR'),
-    openapi.ApiResponse({ status: 200, type: Object }),
-    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
-], ArticlesController.prototype, "bulkDelete", null);
 __decorate([
     (0, common_1.Get)('workflow/my-tasks'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

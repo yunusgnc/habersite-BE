@@ -181,6 +181,24 @@ export class ArticlesController {
     return this.articlesService.restoreRevision(tenantId, id, revisionId, user?.userId);
   }
 
+  /**
+   * SIRA ÖNEMLİ: `:id` rotasından ÖNCE olmak zorunda.
+   *
+   * Aşağıdaydı ve Express rotaları bildirim sırasına göre eşleştirdiği için
+   * `DELETE /articles/bulk` isteği buraya hiç ulaşmıyordu — "bulk" bir haber
+   * kimliği sanılıyor, istek 404 dönüyordu. Panelde toplu silme fiilen
+   * çalışmıyordu ve hata bir uyarı balonuna dönüştüğü için sebebi görünmüyordu.
+   */
+  @Delete('bulk')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'EDITOR')
+  bulkDelete(
+    @CurrentTenant() tenantId: string,
+    @Body() dto: { ids: string[] },
+  ) {
+    return this.articlesService.bulkDelete(tenantId, dto.ids);
+  }
+
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'EDITOR')
@@ -210,16 +228,6 @@ export class ArticlesController {
     @Body() dto: { ids: string[]; categoryId: string },
   ) {
     return this.articlesService.bulkUpdateCategory(tenantId, dto.ids, dto.categoryId);
-  }
-
-  @Delete('bulk')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'EDITOR')
-  bulkDelete(
-    @CurrentTenant() tenantId: string,
-    @Body() dto: { ids: string[] },
-  ) {
-    return this.articlesService.bulkDelete(tenantId, dto.ids);
   }
 
   // ---------- editorial workflow ----------
