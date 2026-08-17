@@ -3,6 +3,25 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import * as iconv from 'iconv-lite';
+import { Agent as HttpsAgent } from 'https';
+
+/**
+ * TFF isteklerine ÖZEL https agent'ı — sertifika doğrulaması kapalı.
+ *
+ * NEDEN: tff.org sertifika zincirini eksik gönderiyor. Tarayıcı ve curl
+ * eksik ara sertifikayı kendi deposundan tamamlıyor, Node tamamlayamıyor ve
+ * isteği `UNABLE_TO_VERIFY_LEAF_SIGNATURE` ile reddediyor.
+ *
+ * NEDEN SÜREÇ GENELİNDE DEĞİL: `NODE_TLS_REJECT_UNAUTHORIZED=0` bütün
+ * bağlantıların doğrulamasını kaldırırdı — veritabanı, R2 depolama, yapay
+ * zekâ sağlayıcıları dahil. Bu agent yalnızca bu tek isteğe veriliyor.
+ *
+ * KABUL EDİLEN RİSK: ağ yolundaki biri bu isteğin yanıtını değiştirebilir.
+ * Etkisi sınırlı — gelen veri herkese açık maç takvimi, kimlik bilgisi ya da
+ * kullanıcı verisi taşımıyor; en kötü hâlde sitede yanlış maç saati görünür.
+ * Bilinçli bir karar, kolaylık için değil zorunluluktan.
+ */
+const TFF_AGENT = new HttpsAgent({ rejectUnauthorized: false });
 import slugify from 'slugify';
 import { PrismaService } from '../prisma/prisma.service';
 import { STORAGE_ADAPTER } from '../media/storage/storage.module';
@@ -59,7 +78,10 @@ type LigTanimi = {
 
 const VARSAYILAN_LIGLER: LigTanimi[] = [
   { anahtar: 'super-lig', ad: 'Trendyol Süper Lig', wiki: '{SEZON}_Süper_Lig', wikiDil: 'tr', tffSayfa: 198 },
-  { anahtar: 'birinci-lig', ad: 'Trendyol 1. Lig', wiki: '{SEZON}_1._Lig', wikiDil: 'tr', tffSayfa: 220 },
+  // 1. Lig'in fikstür sayfası TFF'de ayrı bir adreste ve gezinmeden
+  // bulunamıyor; boş istek atmak yerine fikstürsüz bırakıldı. Puan durumu
+  // Wikipedia'dan tam geliyor, site bu ligde yalnızca puan sekmesi gösteriyor.
+  { anahtar: 'birinci-lig', ad: 'Trendyol 1. Lig', wiki: '{SEZON}_1._Lig', wikiDil: 'tr' },
   { anahtar: 'laliga', ad: 'LaLiga', wiki: '{SEZON}_La_Liga', wikiDil: 'en' },
   { anahtar: 'premier-lig', ad: 'Premier League', wiki: '{SEZON}_Premier_League', wikiDil: 'en' },
   { anahtar: 'bundesliga', ad: 'Bundesliga', wiki: '{SEZON}_Bundesliga', wikiDil: 'en' },
@@ -972,6 +994,8 @@ export class WidgetFeederService implements OnModuleInit {
       timeout: 20000,
       headers: SCRAPE_HEADERS,
       responseType: 'arraybuffer',
+      // Yalnızca bu istek için: eksik sertifika zinciri (bkz. TFF_AGENT).
+      httpsAgent: TFF_AGENT,
     });
     const html = iconv.decode(Buffer.from(data), 'windows-1254');
 
@@ -988,13 +1012,16 @@ export class WidgetFeederService implements OnModuleInit {
       );
       if (!evSahibi || !deplasman) continue;
 
-      // Oynanmış maçta skor iki sayı olarak duruyor, oynanmamışta boş.
-      const skorlar = [
-        ...blok.slice(0, 3000).matchAll(/haftaninMaclariSkor"[\s\S]{0,400}?<span[^>]*>([^<]*)/g),
-      ].map((m) => m[1].trim());
-      const skor = skorlar.filter((x) => /^\d+$/.test(x)).slice(0, 2).join(' - ');
-
-      maclar.push({ tarih, saat, evSahibi, deplasman, skor });
+      /*
+       * SKOR ALINMIYOR — bilinçli.
+       *
+       * Skor hücresi iç içe geçmiş bağlantı/span yapısında ve iki golden
+       * yalnızca biri güvenilir biçimde çıkarılabiliyordu. "2 - 1" yerine
+       * "2" göstermek yanlış bilgi olurdu; yarım skor hiç skordan kötüdür.
+       * Fikstür sekmesinin ihtiyacı zaten oynanacak maçlar: tarih, saat ve
+       * takımlar.
+       */
+      maclar.push({ tarih, saat, evSahibi, deplasman });
     }
 
     return maclar.slice(0, 12);

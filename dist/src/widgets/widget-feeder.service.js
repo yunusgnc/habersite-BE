@@ -55,6 +55,8 @@ const schedule_1 = require("@nestjs/schedule");
 const axios_1 = __importDefault(require("axios"));
 const cheerio = __importStar(require("cheerio"));
 const iconv = __importStar(require("iconv-lite"));
+const https_1 = require("https");
+const TFF_AGENT = new https_1.Agent({ rejectUnauthorized: false });
 const slugify_1 = __importDefault(require("slugify"));
 const prisma_service_1 = require("../prisma/prisma.service");
 const storage_module_1 = require("../media/storage/storage.module");
@@ -67,7 +69,7 @@ const SCRAPE_HEADERS = {
 };
 const VARSAYILAN_LIGLER = [
     { anahtar: 'super-lig', ad: 'Trendyol Süper Lig', wiki: '{SEZON}_Süper_Lig', wikiDil: 'tr', tffSayfa: 198 },
-    { anahtar: 'birinci-lig', ad: 'Trendyol 1. Lig', wiki: '{SEZON}_1._Lig', wikiDil: 'tr', tffSayfa: 220 },
+    { anahtar: 'birinci-lig', ad: 'Trendyol 1. Lig', wiki: '{SEZON}_1._Lig', wikiDil: 'tr' },
     { anahtar: 'laliga', ad: 'LaLiga', wiki: '{SEZON}_La_Liga', wikiDil: 'en' },
     { anahtar: 'premier-lig', ad: 'Premier League', wiki: '{SEZON}_Premier_League', wikiDil: 'en' },
     { anahtar: 'bundesliga', ad: 'Bundesliga', wiki: '{SEZON}_Bundesliga', wikiDil: 'en' },
@@ -735,6 +737,7 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
             timeout: 20000,
             headers: SCRAPE_HEADERS,
             responseType: 'arraybuffer',
+            httpsAgent: TFF_AGENT,
         });
         const html = iconv.decode(Buffer.from(data), 'windows-1254');
         const maclar = [];
@@ -747,11 +750,7 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
             const deplasman = yakala(/haftaninMaclariDeplasman"[\s\S]{0,600}?<span[^>]*>([^<]+)/);
             if (!evSahibi || !deplasman)
                 continue;
-            const skorlar = [
-                ...blok.slice(0, 3000).matchAll(/haftaninMaclariSkor"[\s\S]{0,400}?<span[^>]*>([^<]*)/g),
-            ].map((m) => m[1].trim());
-            const skor = skorlar.filter((x) => /^\d+$/.test(x)).slice(0, 2).join(' - ');
-            maclar.push({ tarih, saat, evSahibi, deplasman, skor });
+            maclar.push({ tarih, saat, evSahibi, deplasman });
         }
         return maclar.slice(0, 12);
     }
