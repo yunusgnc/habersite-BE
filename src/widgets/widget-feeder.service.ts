@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import * as iconv from 'iconv-lite';
 import slugify from 'slugify';
 import { PrismaService } from '../prisma/prisma.service';
 import { STORAGE_ADAPTER } from '../media/storage/storage.module';
@@ -32,6 +33,72 @@ const SCRAPE_HEADERS = {
   'Upgrade-Insecure-Requests': '1',
 } as const;
 
+
+/**
+ * Puan durumu / fikstür bileşeninin desteklediği ligler.
+ *
+ * KAYNAK SEÇİMİ: TheSportsDB'nin ücretsiz katmanı denendi ve lig başına
+ * yalnızca 5 takım + 1 maç döndürüyor — 18 takımlık bir tablo için
+ * kullanılamaz. Wikipedia'nın sezon sayfaları tam tabloyu veriyor, anahtar
+ * istemiyor ve yapısı yıllardır sabit. Fikstür için TFF'nin kendi sayfası
+ * kullanılıyor (yalnızca Türkiye ligleri; Avrupa ligleri için ücretsiz ve
+ * anahtarsız bir fikstür kaynağı bulunamadı, o sekme onlarda gizleniyor).
+ *
+ * `wikiSayfa` içindeki sezon her yıl değişiyor. Sayfa bulunamazsa besleyici
+ * bir önceki sezonu deniyor — ağustosta yeni sezon sayfası bazen birkaç gün
+ * geç açılıyor ve tablo o sırada boşalmamalı.
+ */
+type LigTanimi = {
+  anahtar: string;
+  ad: string;
+  wiki: string;
+  wikiDil: 'tr' | 'en';
+  /** TFF sayfa kimliği — yalnızca fikstürü olan ligler için. */
+  tffSayfa?: number;
+};
+
+const VARSAYILAN_LIGLER: LigTanimi[] = [
+  { anahtar: 'super-lig', ad: 'Trendyol Süper Lig', wiki: '{SEZON}_Süper_Lig', wikiDil: 'tr', tffSayfa: 198 },
+  { anahtar: 'birinci-lig', ad: 'Trendyol 1. Lig', wiki: '{SEZON}_1._Lig', wikiDil: 'tr', tffSayfa: 220 },
+  { anahtar: 'laliga', ad: 'LaLiga', wiki: '{SEZON}_La_Liga', wikiDil: 'en' },
+  { anahtar: 'premier-lig', ad: 'Premier League', wiki: '{SEZON}_Premier_League', wikiDil: 'en' },
+  { anahtar: 'bundesliga', ad: 'Bundesliga', wiki: '{SEZON}_Bundesliga', wikiDil: 'en' },
+];
+
+/**
+ * Futbol sezonu takvim yılıyla aynı değil: ağustosta başlayıp mayısta
+ * bitiyor. Temmuz ve öncesi bir önceki sezona ait.
+ */
+
+/**
+ * Tablo başlığını ortak alan adına çevirir (Türkçe + İngilizce).
+ *
+ * NEDEN BAŞLIĞA GÖRE: ilk sürüm sütunları sabit sıraya göre okuyordu ve
+ * Avrupa liglerinde takım adı yerine maç sayısını alıyordu — o tablolarda
+ * sıra ve takım hücreleri `<th>`, kalanlar `<td>`. Sabit indeks iki farklı
+ * tablo düzeninde aynı anda doğru olamaz; başlık ismi ise ikisinde de aynı.
+ */
+function puanSutunu(baslik: string): string | null {
+  const b = baslik.replace(/\[.*?\]/g, '').trim().toLowerCase();
+  if (/^(sıra|pos|#|no)\.?$/.test(b)) return 'sira';
+  if (/^(takım|team|club|kulüp)/.test(b)) return 'takim';
+  if (/^(o|pld|mp)$/.test(b)) return 'oynadi';
+  if (/^(g|w)$/.test(b)) return 'galibiyet';
+  if (/^(b|d)$/.test(b)) return 'beraberlik';
+  if (/^(m|l)$/.test(b)) return 'maglubiyet';
+  if (/^(p|pts|puan)$/.test(b)) return 'puan';
+  return null;
+}
+
+function futbolSezonu(tarih = new Date()): { tr: string; en: string } {
+  const yil = tarih.getFullYear();
+  const baslangic = tarih.getMonth() >= 6 ? yil : yil - 1;
+  return {
+    tr: `${baslangic}-${String(baslangic + 1).slice(2)}`,
+    en: `${baslangic}–${String(baslangic + 1).slice(2)}`,
+  };
+}
+
 /**
  * Periodically refreshes cache for feed-driven widgets (weather, prayer, market, horoscope).
  * Data sources are free / no-key APIs; API URLs & city come from the widget's config JSON.
@@ -47,6 +114,7 @@ export class WidgetFeederService implements OnModuleInit {
     horoscope: this.fetchHoroscope.bind(this),
     newspapers: this.fetchNewspapers.bind(this),
     pharmacy: this.fetchPharmacy.bind(this),
+    standings: this.fetchStandings.bind(this),
   };
 
   constructor(
@@ -91,6 +159,7 @@ export class WidgetFeederService implements OnModuleInit {
       { type: 'horoscope', config: {}, sortOrder: 4 },
       { type: 'newspapers', config: {}, sortOrder: 5 },
       { type: 'pharmacy', config: { city: 'Kayseri' }, sortOrder: 6 },
+      { type: 'standings', config: { ligler: VARSAYILAN_LIGLER.map((l) => l.anahtar) }, sortOrder: 7 },
     ];
 
     const tenants = await this.prisma.tenant.findMany({ select: { id: true } });
@@ -142,6 +211,18 @@ export class WidgetFeederService implements OnModuleInit {
   @Cron('30 8,19 * * *')
   async refreshPharmacy() {
     await this.refreshForTypes(['pharmacy']);
+  }
+
+  /**
+   * Puan durumu ve fikstür: sabah 07:00 ve akşam 23:30.
+   *
+   * Maçlar genelde akşam bitiyor; gece yarısına doğru tablo güncelleniyor.
+   * Sabah çekimi de gece kaçırılan bir güncellemeyi telafi ediyor. Daha sık
+   * çekmek kaynak siteye gereksiz yük — tablo gün içinde değişmiyor.
+   */
+  @Cron('0 7,23 * * *')
+  async refreshStandings() {
+    await this.refreshForTypes(['standings']);
   }
 
   async refreshAll() {
@@ -714,6 +795,211 @@ export class WidgetFeederService implements OnModuleInit {
    * sekmesi boşsa (gece yarısından sonra site sekmeleri kaydırır) yarına düşer.
    * Config: { city?: string }  (varsayılan: Kayseri)
    */
+
+  /**
+   * Puan durumu (Wikipedia) + fikstür (TFF).
+   *
+   * Her lig ayrı ayrı çekiliyor ve BİRİ ÇÖKSE DİĞERLERİ ETKİLENMİYOR: bir
+   * ligin sayfası değişirse yalnızca o sekme eski veride kalıyor, tablo
+   * tamamen boşalmıyor. Elde sağlam veri varken onu bozmamak, `prev`
+   * mekanizmasının kurulma sebebi.
+   */
+  private async fetchStandings(config: any, prev?: any) {
+    const istenen: string[] = Array.isArray(config?.ligler) && config.ligler.length
+      ? config.ligler
+      : VARSAYILAN_LIGLER.map((l) => l.anahtar);
+
+    const ligler = VARSAYILAN_LIGLER.filter((l) => istenen.includes(l.anahtar));
+    const oncekiler: Record<string, any> = {};
+    for (const l of prev?.ligler ?? []) oncekiler[l.anahtar] = l;
+
+    const sonuclar = await Promise.all(
+      ligler.map(async (lig) => {
+        try {
+          // Fikstür AYRI ele alınıyor: TFF sayfası çökerse puan durumu da
+          // gitmesin. İlk sürümde ikisi tek `Promise.all` içindeydi ve TFF
+          // hatası yüzünden Türkiye liglerinin tablosu hiç görünmüyordu —
+          // asıl veri sağlamken yan veri onu da düşürüyordu.
+          const puanDurumu = await this.wikipediaPuanDurumu(lig);
+          const fikstur = lig.tffSayfa
+            ? await this.tffFikstur(lig).catch((err: any) => {
+                this.logger.warn(
+                  `standings: ${lig.ad} fikstürü alınamadı — ${err?.message ?? err}`,
+                );
+                return [] as any[];
+              })
+            : [];
+
+          // Tablo boş geldiyse eldeki veriyi koru — kaynak geçici olarak
+          // bozulmuş olabilir ve boş bir tablo göstermek daha kötü.
+          if (puanDurumu.length === 0 && oncekiler[lig.anahtar]) {
+            this.logger.warn(`standings: ${lig.ad} boş döndü, önceki veri korunuyor`);
+            return oncekiler[lig.anahtar];
+          }
+
+          return {
+            anahtar: lig.anahtar,
+            ad: lig.ad,
+            puanDurumu,
+            fikstur,
+            guncellendi: new Date().toISOString(),
+          };
+        } catch (err: any) {
+          this.logger.warn(`standings: ${lig.ad} alınamadı — ${err?.message ?? err}`);
+          return oncekiler[lig.anahtar] ?? null;
+        }
+      }),
+    );
+
+    return { ligler: sonuclar.filter(Boolean), guncellendi: new Date().toISOString() };
+  }
+
+  /**
+   * Wikipedia sezon sayfasından puan durumu tablosu.
+   *
+   * Tabloyu sınıfa göre değil BAŞLIKLARINA göre buluyoruz: sayfada onlarca
+   * `wikitable` var (kadro, teknik direktör değişiklikleri, sonuç matrisi) ve
+   * hangisinin kaçıncı sırada olduğu ligden lige değişiyor. Başlıkta hem
+   * "Takım" hem "O/G/B/M" geçen tek tablo puan durumudur.
+   */
+  private async wikipediaPuanDurumu(lig: LigTanimi) {
+    const sezon = futbolSezonu();
+    const adaylar = [
+      lig.wiki.replace('{SEZON}', lig.wikiDil === 'tr' ? sezon.tr : sezon.en),
+      // Yeni sezon sayfası henüz açılmamışsa bir öncekine düş.
+      lig.wiki.replace(
+        '{SEZON}',
+        lig.wikiDil === 'tr'
+          ? futbolSezonu(new Date(Date.now() - 365 * 864e5)).tr
+          : futbolSezonu(new Date(Date.now() - 365 * 864e5)).en,
+      ),
+    ];
+
+    for (const sayfa of adaylar) {
+      const url = `https://${lig.wikiDil}.wikipedia.org/wiki/${encodeURIComponent(sayfa)}`;
+      const { data: html } = await axios.get<string>(url, {
+        timeout: 20000,
+        headers: SCRAPE_HEADERS,
+        responseType: 'text',
+        validateStatus: (s) => s === 200 || s === 404,
+      });
+      if (!html || html.length < 1000) continue;
+
+      const $ = cheerio.load(html);
+      let satirlar: any[] = [];
+
+      $('table.wikitable').each((_i, tablo) => {
+        if (satirlar.length > 0) return;
+        // Başlık satırındaki hücreleri alan adlarına eşle.
+        const basliklar = $(tablo)
+          .find('tr')
+          .first()
+          .find('th,td')
+          .map((_j, c) => $(c).text().trim())
+          .get();
+        const harita: Record<string, number> = {};
+        basliklar.forEach((b, i) => {
+          const alan = puanSutunu(b);
+          if (alan && harita[alan] === undefined) harita[alan] = i;
+        });
+        // Takım ve puan sütunu olmayan tablo puan durumu değildir (kadro,
+        // teknik direktör değişiklikleri, sonuç matrisi hep `wikitable`).
+        if (harita.takim === undefined || harita.puan === undefined) return;
+
+        const bulunan: any[] = [];
+        $(tablo)
+          .find('tr')
+          .slice(1)
+          .each((_j, tr) => {
+            // `th` ve `td` BİRLİKTE, belge sırasında: takım adı bazı
+            // tablolarda th, bazılarında td.
+            const hucreler = $(tr)
+              .find('th,td')
+              .map((_k, c) => $(c).text().replace(/\s+/g, ' ').trim())
+              .get();
+            if (hucreler.length < basliklar.length - 2) return;
+            const al = (ad: string) => hucreler[harita[ad]] ?? '';
+            const sayi = (ad: string) =>
+              Number((al(ad) || '').replace(/[^0-9-]/g, '')) || 0;
+            const takim = al('takim').replace(/\(.*?\)/g, '').trim();
+            // Sadece sayıdan oluşan "takım" = yanlış sütuna denk geldik.
+            if (!takim || /^\d+$/.test(takim)) return;
+            bulunan.push({
+              sira: bulunan.length + 1,
+              takim,
+              oynadi: sayi('oynadi'),
+              galibiyet: sayi('galibiyet'),
+              beraberlik: sayi('beraberlik'),
+              maglubiyet: sayi('maglubiyet'),
+              puan: sayi('puan'),
+            });
+          });
+
+        if (bulunan.length >= 4) satirlar = bulunan;
+      });
+
+      if (satirlar.length > 0) return satirlar;
+    }
+    return [];
+  }
+
+  /**
+   * TFF sayfasından bu haftanın maçları.
+   *
+   * Yalnızca Türkiye ligleri için var; Avrupa ligleri için ücretsiz ve
+   * anahtarsız bir fikstür kaynağı bulunamadı ve uydurmak yerine boş
+   * bırakıyoruz — site o ligde fikstür sekmesini hiç göstermiyor.
+   */
+  /**
+   * TFF sayfasından bu haftanın maçları.
+   *
+   * İKİ TUZAK VAR, ikisi de deneyerek bulundu:
+   *
+   * 1. Sayfa `windows-1254` kodlu, UTF-8 değil. UTF-8 varsayınca takım
+   *    adları "GALATASARAY A.�." gibi bozuluyor.
+   * 2. `<table>` ile `<tr>` arasına `<div>` konmuş — geçersiz iç içe geçme.
+   *    Hoşgörülü HTML ayrıştırıcıları bu satırları tablodan dışarı taşıyor
+   *    ve seçiciler hiçbir şey bulamıyor. Bu yüzden burada cheerio yerine
+   *    doğrudan metin üzerinde çalışıyoruz; TFF'nin sınıf adları sabit.
+   *
+   * Yalnızca Türkiye ligleri için var; Avrupa ligleri için ücretsiz ve
+   * anahtarsız bir fikstür kaynağı bulunamadı ve uydurmak yerine boş
+   * bırakılıyor — site o ligde fikstür sekmesini göstermiyor.
+   */
+  private async tffFikstur(lig: LigTanimi) {
+    const url = `https://www.tff.org/Default.aspx?pageId=${lig.tffSayfa}`;
+    const { data } = await axios.get<ArrayBuffer>(url, {
+      timeout: 20000,
+      headers: SCRAPE_HEADERS,
+      responseType: 'arraybuffer',
+    });
+    const html = iconv.decode(Buffer.from(data), 'windows-1254');
+
+    const maclar: any[] = [];
+    const bloklar = html.split('class="haftaninMaclariTr"').slice(1);
+
+    for (const blok of bloklar) {
+      const yakala = (desen: RegExp) => blok.match(desen)?.[1]?.trim() ?? '';
+      const tarih = yakala(/lblTarih[^>]*>([^<]+)/);
+      const saat = yakala(/lblSaat[^>]*>([^<]+)/);
+      const evSahibi = yakala(/haftaninMaclariEv"[\s\S]{0,600}?<span[^>]*>([^<]+)/);
+      const deplasman = yakala(
+        /haftaninMaclariDeplasman"[\s\S]{0,600}?<span[^>]*>([^<]+)/,
+      );
+      if (!evSahibi || !deplasman) continue;
+
+      // Oynanmış maçta skor iki sayı olarak duruyor, oynanmamışta boş.
+      const skorlar = [
+        ...blok.slice(0, 3000).matchAll(/haftaninMaclariSkor"[\s\S]{0,400}?<span[^>]*>([^<]*)/g),
+      ].map((m) => m[1].trim());
+      const skor = skorlar.filter((x) => /^\d+$/.test(x)).slice(0, 2).join(' - ');
+
+      maclar.push({ tarih, saat, evSahibi, deplasman, skor });
+    }
+
+    return maclar.slice(0, 12);
+  }
+
   private async fetchPharmacy(config: any) {
     const city = (config?.city as string) ?? 'Kayseri';
     const citySlug = slugify(city, { lower: true, strict: true, locale: 'tr' });

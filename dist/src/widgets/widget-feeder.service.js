@@ -54,6 +54,7 @@ const common_1 = require("@nestjs/common");
 const schedule_1 = require("@nestjs/schedule");
 const axios_1 = __importDefault(require("axios"));
 const cheerio = __importStar(require("cheerio"));
+const iconv = __importStar(require("iconv-lite"));
 const slugify_1 = __importDefault(require("slugify"));
 const prisma_service_1 = require("../prisma/prisma.service");
 const storage_module_1 = require("../media/storage/storage.module");
@@ -64,6 +65,39 @@ const SCRAPE_HEADERS = {
     'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8',
     'Upgrade-Insecure-Requests': '1',
 };
+const VARSAYILAN_LIGLER = [
+    { anahtar: 'super-lig', ad: 'Trendyol Süper Lig', wiki: '{SEZON}_Süper_Lig', wikiDil: 'tr', tffSayfa: 198 },
+    { anahtar: 'birinci-lig', ad: 'Trendyol 1. Lig', wiki: '{SEZON}_1._Lig', wikiDil: 'tr', tffSayfa: 220 },
+    { anahtar: 'laliga', ad: 'LaLiga', wiki: '{SEZON}_La_Liga', wikiDil: 'en' },
+    { anahtar: 'premier-lig', ad: 'Premier League', wiki: '{SEZON}_Premier_League', wikiDil: 'en' },
+    { anahtar: 'bundesliga', ad: 'Bundesliga', wiki: '{SEZON}_Bundesliga', wikiDil: 'en' },
+];
+function puanSutunu(baslik) {
+    const b = baslik.replace(/\[.*?\]/g, '').trim().toLowerCase();
+    if (/^(sıra|pos|#|no)\.?$/.test(b))
+        return 'sira';
+    if (/^(takım|team|club|kulüp)/.test(b))
+        return 'takim';
+    if (/^(o|pld|mp)$/.test(b))
+        return 'oynadi';
+    if (/^(g|w)$/.test(b))
+        return 'galibiyet';
+    if (/^(b|d)$/.test(b))
+        return 'beraberlik';
+    if (/^(m|l)$/.test(b))
+        return 'maglubiyet';
+    if (/^(p|pts|puan)$/.test(b))
+        return 'puan';
+    return null;
+}
+function futbolSezonu(tarih = new Date()) {
+    const yil = tarih.getFullYear();
+    const baslangic = tarih.getMonth() >= 6 ? yil : yil - 1;
+    return {
+        tr: `${baslangic}-${String(baslangic + 1).slice(2)}`,
+        en: `${baslangic}–${String(baslangic + 1).slice(2)}`,
+    };
+}
 let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
     prisma;
     widgets;
@@ -76,6 +110,7 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
         horoscope: this.fetchHoroscope.bind(this),
         newspapers: this.fetchNewspapers.bind(this),
         pharmacy: this.fetchPharmacy.bind(this),
+        standings: this.fetchStandings.bind(this),
     };
     constructor(prisma, widgets, storage) {
         this.prisma = prisma;
@@ -111,6 +146,7 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
             { type: 'horoscope', config: {}, sortOrder: 4 },
             { type: 'newspapers', config: {}, sortOrder: 5 },
             { type: 'pharmacy', config: { city: 'Kayseri' }, sortOrder: 6 },
+            { type: 'standings', config: { ligler: VARSAYILAN_LIGLER.map((l) => l.anahtar) }, sortOrder: 7 },
         ];
         const tenants = await this.prisma.tenant.findMany({ select: { id: true } });
         for (const t of tenants) {
@@ -148,6 +184,9 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
     }
     async refreshPharmacy() {
         await this.refreshForTypes(['pharmacy']);
+    }
+    async refreshStandings() {
+        await this.refreshForTypes(['standings']);
     }
     async refreshAll() {
         await this.refreshForTypes(Object.keys(this.feeders));
@@ -583,6 +622,139 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
             return { items: [], date: new Date().toISOString().split('T')[0] };
         }
     }
+    async fetchStandings(config, prev) {
+        const istenen = Array.isArray(config?.ligler) && config.ligler.length
+            ? config.ligler
+            : VARSAYILAN_LIGLER.map((l) => l.anahtar);
+        const ligler = VARSAYILAN_LIGLER.filter((l) => istenen.includes(l.anahtar));
+        const oncekiler = {};
+        for (const l of prev?.ligler ?? [])
+            oncekiler[l.anahtar] = l;
+        const sonuclar = await Promise.all(ligler.map(async (lig) => {
+            try {
+                const puanDurumu = await this.wikipediaPuanDurumu(lig);
+                const fikstur = lig.tffSayfa
+                    ? await this.tffFikstur(lig).catch((err) => {
+                        this.logger.warn(`standings: ${lig.ad} fikstürü alınamadı — ${err?.message ?? err}`);
+                        return [];
+                    })
+                    : [];
+                if (puanDurumu.length === 0 && oncekiler[lig.anahtar]) {
+                    this.logger.warn(`standings: ${lig.ad} boş döndü, önceki veri korunuyor`);
+                    return oncekiler[lig.anahtar];
+                }
+                return {
+                    anahtar: lig.anahtar,
+                    ad: lig.ad,
+                    puanDurumu,
+                    fikstur,
+                    guncellendi: new Date().toISOString(),
+                };
+            }
+            catch (err) {
+                this.logger.warn(`standings: ${lig.ad} alınamadı — ${err?.message ?? err}`);
+                return oncekiler[lig.anahtar] ?? null;
+            }
+        }));
+        return { ligler: sonuclar.filter(Boolean), guncellendi: new Date().toISOString() };
+    }
+    async wikipediaPuanDurumu(lig) {
+        const sezon = futbolSezonu();
+        const adaylar = [
+            lig.wiki.replace('{SEZON}', lig.wikiDil === 'tr' ? sezon.tr : sezon.en),
+            lig.wiki.replace('{SEZON}', lig.wikiDil === 'tr'
+                ? futbolSezonu(new Date(Date.now() - 365 * 864e5)).tr
+                : futbolSezonu(new Date(Date.now() - 365 * 864e5)).en),
+        ];
+        for (const sayfa of adaylar) {
+            const url = `https://${lig.wikiDil}.wikipedia.org/wiki/${encodeURIComponent(sayfa)}`;
+            const { data: html } = await axios_1.default.get(url, {
+                timeout: 20000,
+                headers: SCRAPE_HEADERS,
+                responseType: 'text',
+                validateStatus: (s) => s === 200 || s === 404,
+            });
+            if (!html || html.length < 1000)
+                continue;
+            const $ = cheerio.load(html);
+            let satirlar = [];
+            $('table.wikitable').each((_i, tablo) => {
+                if (satirlar.length > 0)
+                    return;
+                const basliklar = $(tablo)
+                    .find('tr')
+                    .first()
+                    .find('th,td')
+                    .map((_j, c) => $(c).text().trim())
+                    .get();
+                const harita = {};
+                basliklar.forEach((b, i) => {
+                    const alan = puanSutunu(b);
+                    if (alan && harita[alan] === undefined)
+                        harita[alan] = i;
+                });
+                if (harita.takim === undefined || harita.puan === undefined)
+                    return;
+                const bulunan = [];
+                $(tablo)
+                    .find('tr')
+                    .slice(1)
+                    .each((_j, tr) => {
+                    const hucreler = $(tr)
+                        .find('th,td')
+                        .map((_k, c) => $(c).text().replace(/\s+/g, ' ').trim())
+                        .get();
+                    if (hucreler.length < basliklar.length - 2)
+                        return;
+                    const al = (ad) => hucreler[harita[ad]] ?? '';
+                    const sayi = (ad) => Number((al(ad) || '').replace(/[^0-9-]/g, '')) || 0;
+                    const takim = al('takim').replace(/\(.*?\)/g, '').trim();
+                    if (!takim || /^\d+$/.test(takim))
+                        return;
+                    bulunan.push({
+                        sira: bulunan.length + 1,
+                        takim,
+                        oynadi: sayi('oynadi'),
+                        galibiyet: sayi('galibiyet'),
+                        beraberlik: sayi('beraberlik'),
+                        maglubiyet: sayi('maglubiyet'),
+                        puan: sayi('puan'),
+                    });
+                });
+                if (bulunan.length >= 4)
+                    satirlar = bulunan;
+            });
+            if (satirlar.length > 0)
+                return satirlar;
+        }
+        return [];
+    }
+    async tffFikstur(lig) {
+        const url = `https://www.tff.org/Default.aspx?pageId=${lig.tffSayfa}`;
+        const { data } = await axios_1.default.get(url, {
+            timeout: 20000,
+            headers: SCRAPE_HEADERS,
+            responseType: 'arraybuffer',
+        });
+        const html = iconv.decode(Buffer.from(data), 'windows-1254');
+        const maclar = [];
+        const bloklar = html.split('class="haftaninMaclariTr"').slice(1);
+        for (const blok of bloklar) {
+            const yakala = (desen) => blok.match(desen)?.[1]?.trim() ?? '';
+            const tarih = yakala(/lblTarih[^>]*>([^<]+)/);
+            const saat = yakala(/lblSaat[^>]*>([^<]+)/);
+            const evSahibi = yakala(/haftaninMaclariEv"[\s\S]{0,600}?<span[^>]*>([^<]+)/);
+            const deplasman = yakala(/haftaninMaclariDeplasman"[\s\S]{0,600}?<span[^>]*>([^<]+)/);
+            if (!evSahibi || !deplasman)
+                continue;
+            const skorlar = [
+                ...blok.slice(0, 3000).matchAll(/haftaninMaclariSkor"[\s\S]{0,400}?<span[^>]*>([^<]*)/g),
+            ].map((m) => m[1].trim());
+            const skor = skorlar.filter((x) => /^\d+$/.test(x)).slice(0, 2).join(' - ');
+            maclar.push({ tarih, saat, evSahibi, deplasman, skor });
+        }
+        return maclar.slice(0, 12);
+    }
     async fetchPharmacy(config) {
         const city = config?.city ?? 'Kayseri';
         const citySlug = (0, slugify_1.default)(city, { lower: true, strict: true, locale: 'tr' });
@@ -679,6 +851,12 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], WidgetFeederService.prototype, "refreshPharmacy", null);
+__decorate([
+    (0, schedule_1.Cron)('0 7,23 * * *'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], WidgetFeederService.prototype, "refreshStandings", null);
 exports.WidgetFeederService = WidgetFeederService = WidgetFeederService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(2, (0, common_1.Inject)(storage_module_1.STORAGE_ADAPTER)),
