@@ -9,16 +9,16 @@ export declare class MenusController {
         updatedAt: Date;
         tenantId: string;
         location: string;
-        label: string | null;
         items: import("@prisma/client/runtime/client").JsonValue;
+        label: string | null;
     }[]>;
     findByLocation(tenantId: string, location: string): Promise<{
         id: string;
         updatedAt: Date;
         tenantId: string;
         location: string;
-        label: string | null;
         items: import("@prisma/client/runtime/client").JsonValue;
+        label: string | null;
     } | {
         location: string;
         items: never[];
@@ -28,23 +28,23 @@ export declare class MenusController {
         updatedAt: Date;
         tenantId: string;
         location: string;
-        label: string | null;
         items: import("@prisma/client/runtime/client").JsonValue;
+        label: string | null;
     }>;
     update(tenantId: string, location: string, dto: UpdateMenuDto): Promise<{
         id: string;
         updatedAt: Date;
         tenantId: string;
         location: string;
-        label: string | null;
         items: import("@prisma/client/runtime/client").JsonValue;
+        label: string | null;
     }>;
     remove(tenantId: string, location: string): Promise<{
         id: string;
         updatedAt: Date;
         tenantId: string;
         location: string;
-        label: string | null;
         items: import("@prisma/client/runtime/client").JsonValue;
+        label: string | null;
     }>;
 }

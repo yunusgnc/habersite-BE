@@ -14,8 +14,8 @@ export declare class AnnouncementsService {
         type: string;
         title: string;
         content: string | null;
-        pinned: boolean;
         expiresAt: Date | null;
+        pinned: boolean;
     }[]>;
     findOne(tenantId: string, id: string): Promise<{
         id: string;
@@ -25,8 +25,8 @@ export declare class AnnouncementsService {
         type: string;
         title: string;
         content: string | null;
-        pinned: boolean;
         expiresAt: Date | null;
+        pinned: boolean;
     }>;
     findActive(tenantId: string): Promise<{
         id: string;
@@ -36,8 +36,8 @@ export declare class AnnouncementsService {
         type: string;
         title: string;
         content: string | null;
-        pinned: boolean;
         expiresAt: Date | null;
+        pinned: boolean;
     }[]>;
     create(tenantId: string, dto: CreateAnnouncementDto): Promise<{
         id: string;
@@ -47,8 +47,8 @@ export declare class AnnouncementsService {
         type: string;
         title: string;
         content: string | null;
-        pinned: boolean;
         expiresAt: Date | null;
+        pinned: boolean;
     }>;
     update(tenantId: string, id: string, dto: UpdateAnnouncementDto): Promise<{
         id: string;
@@ -58,8 +58,8 @@ export declare class AnnouncementsService {
         type: string;
         title: string;
         content: string | null;
-        pinned: boolean;
         expiresAt: Date | null;
+        pinned: boolean;
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
@@ -69,7 +69,7 @@ export declare class AnnouncementsService {
         type: string;
         title: string;
         content: string | null;
-        pinned: boolean;
         expiresAt: Date | null;
+        pinned: boolean;
     }>;
 }

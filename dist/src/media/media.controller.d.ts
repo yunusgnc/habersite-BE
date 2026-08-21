@@ -6,12 +6,12 @@ export declare class MediaController {
     constructor(mediaService: MediaService);
     findAll(tenantId: string, query: QueryMediaDto): Promise<{
         data: {
+            url: string;
             id: string;
             createdAt: Date;
             tenantId: string;
             type: import("@prisma/client").$Enums.MediaType;
             title: string | null;
-            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -26,12 +26,12 @@ export declare class MediaController {
         total: number;
     }>;
     upload(tenantId: string, file: Express.Multer.File, dto: UploadMediaDto): Promise<{
+        url: string;
         id: string;
         createdAt: Date;
         tenantId: string;
         type: import("@prisma/client").$Enums.MediaType;
         title: string | null;
-        url: string;
         filename: string;
         originalName: string;
         mimeType: string;
@@ -43,12 +43,12 @@ export declare class MediaController {
         credit: string | null;
     }>;
     update(tenantId: string, id: string, dto: UploadMediaDto): Promise<{
+        url: string;
         id: string;
         createdAt: Date;
         tenantId: string;
         type: import("@prisma/client").$Enums.MediaType;
         title: string | null;
-        url: string;
         filename: string;
         originalName: string;
         mimeType: string;
@@ -60,12 +60,12 @@ export declare class MediaController {
         credit: string | null;
     }>;
     remove(tenantId: string, id: string): Promise<{
+        url: string;
         id: string;
         createdAt: Date;
         tenantId: string;
         type: import("@prisma/client").$Enums.MediaType;
         title: string | null;
-        url: string;
         filename: string;
         originalName: string;
         mimeType: string;

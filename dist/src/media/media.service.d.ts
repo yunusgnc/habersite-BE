@@ -9,12 +9,12 @@ export declare class MediaService {
     private resolveMediaBaseUrl;
     findAll(tenantId: string, query: QueryMediaDto): Promise<{
         data: {
+            url: string;
             id: string;
             createdAt: Date;
             tenantId: string;
             type: import("@prisma/client").$Enums.MediaType;
             title: string | null;
-            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -29,12 +29,12 @@ export declare class MediaService {
         total: number;
     }>;
     findById(tenantId: string, id: string): Promise<{
+        url: string;
         id: string;
         createdAt: Date;
         tenantId: string;
         type: import("@prisma/client").$Enums.MediaType;
         title: string | null;
-        url: string;
         filename: string;
         originalName: string;
         mimeType: string;
@@ -46,12 +46,12 @@ export declare class MediaService {
         credit: string | null;
     }>;
     create(tenantId: string, file: Express.Multer.File, dto: UploadMediaDto): Promise<{
+        url: string;
         id: string;
         createdAt: Date;
         tenantId: string;
         type: import("@prisma/client").$Enums.MediaType;
         title: string | null;
-        url: string;
         filename: string;
         originalName: string;
         mimeType: string;
@@ -64,12 +64,12 @@ export declare class MediaService {
     }>;
     private looksLikeSvg;
     update(tenantId: string, id: string, dto: UploadMediaDto): Promise<{
+        url: string;
         id: string;
         createdAt: Date;
         tenantId: string;
         type: import("@prisma/client").$Enums.MediaType;
         title: string | null;
-        url: string;
         filename: string;
         originalName: string;
         mimeType: string;
@@ -81,12 +81,12 @@ export declare class MediaService {
         credit: string | null;
     }>;
     remove(tenantId: string, id: string): Promise<{
+        url: string;
         id: string;
         createdAt: Date;
         tenantId: string;
         type: import("@prisma/client").$Enums.MediaType;
         title: string | null;
-        url: string;
         filename: string;
         originalName: string;
         mimeType: string;
