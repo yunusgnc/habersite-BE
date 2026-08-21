@@ -52,7 +52,7 @@ let AdsController = class AdsController {
 };
 exports.AdsController = AdsController;
 __decorate([
-    openapi.ApiParam({ name: "position", enum: ["HEADER_TOP", "FOOTER_BOTTOM", "SITE_TOWER_LEFT", "SITE_TOWER_RIGHT", "HOME_SLIDER_UNDER", "HOME_MIDDLE_1", "HOME_MIDDLE_2", "HOME_MIDDLE_3", "HOME_MIDDLE_4", "HOME_BOTTOM", "CATEGORY_MIDDLE_1", "CATEGORY_MIDDLE_2", "ARTICLE_TOP", "ARTICLE_IN_TEXT_1", "ARTICLE_BOTTOM", "ARTICLE_SIDEBAR_1", "ARTICLE_SIDEBAR_2", "VIDEO_LIST_TOP", "VIDEO_LIST_BOTTOM", "VIDEO_DETAIL_TOP"] }),
+    openapi.ApiParam({ name: "position", enum: ["HEADER_ABOVE", "HEADER_TOP", "FOOTER_BOTTOM", "SITE_TOWER_LEFT", "SITE_TOWER_RIGHT", "HOME_SLIDER_UNDER", "HOME_MIDDLE_1", "HOME_MIDDLE_2", "HOME_MIDDLE_3", "HOME_MIDDLE_4", "HOME_BOTTOM", "CATEGORY_MIDDLE_1", "CATEGORY_MIDDLE_2", "ARTICLE_TOP", "ARTICLE_IN_TEXT_1", "ARTICLE_BOTTOM", "ARTICLE_SIDEBAR_1", "ARTICLE_SIDEBAR_2", "VIDEO_LIST_TOP", "VIDEO_LIST_BOTTOM", "VIDEO_DETAIL_TOP"] }),
     (0, common_1.Get)('position/:position'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),
     openapi.ApiResponse({ status: 200 }),

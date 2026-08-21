@@ -394,6 +394,9 @@ model BreakingNews {
 // ─── AD (Reklam) ───
 
 enum AdPosition {
+  // Sayfanın en tepesi, logonun/künyenin üstü. HEADER_TOP logonun ALTINDA
+  // kalıyor; reklamverenler "künye üstü"nü ayrı bir yer olarak istiyor.
+  HEADER_ABOVE
   HEADER_TOP
   FOOTER_BOTTOM
   SITE_TOWER_LEFT
