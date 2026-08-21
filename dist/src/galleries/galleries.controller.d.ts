@@ -24,18 +24,18 @@ export declare class GalleriesController {
             status: import("@prisma/client").$Enums.ArticleStatus;
             publishedAt: Date | null;
             viewCount: number;
-            categoryId: string | null;
             headline: string | null;
             coverImage: string | null;
+            categoryId: string | null;
             seoKeywords: string | null;
         })[];
         nextCursor: string | undefined;
     }>;
     findOne(tenantId: string, id: string): Promise<{
         images: {
-            url: string;
             id: string;
             sortOrder: number;
+            url: string;
             alt: string | null;
             credit: string | null;
             caption: string | null;
@@ -55,16 +55,16 @@ export declare class GalleriesController {
         status: import("@prisma/client").$Enums.ArticleStatus;
         publishedAt: Date | null;
         viewCount: number;
-        categoryId: string | null;
         headline: string | null;
         coverImage: string | null;
+        categoryId: string | null;
         seoKeywords: string | null;
     }>;
     findBySlug(tenantId: string, slug: string): Promise<{
         images: {
-            url: string;
             id: string;
             sortOrder: number;
+            url: string;
             alt: string | null;
             credit: string | null;
             caption: string | null;
@@ -84,16 +84,16 @@ export declare class GalleriesController {
         status: import("@prisma/client").$Enums.ArticleStatus;
         publishedAt: Date | null;
         viewCount: number;
-        categoryId: string | null;
         headline: string | null;
         coverImage: string | null;
+        categoryId: string | null;
         seoKeywords: string | null;
     }>;
     create(tenantId: string, dto: CreateGalleryDto): Promise<{
         images: {
-            url: string;
             id: string;
             sortOrder: number;
+            url: string;
             alt: string | null;
             credit: string | null;
             caption: string | null;
@@ -113,16 +113,16 @@ export declare class GalleriesController {
         status: import("@prisma/client").$Enums.ArticleStatus;
         publishedAt: Date | null;
         viewCount: number;
-        categoryId: string | null;
         headline: string | null;
         coverImage: string | null;
+        categoryId: string | null;
         seoKeywords: string | null;
     }>;
     update(tenantId: string, id: string, dto: UpdateGalleryDto): Promise<{
         images: {
-            url: string;
             id: string;
             sortOrder: number;
+            url: string;
             alt: string | null;
             credit: string | null;
             caption: string | null;
@@ -142,9 +142,9 @@ export declare class GalleriesController {
         status: import("@prisma/client").$Enums.ArticleStatus;
         publishedAt: Date | null;
         viewCount: number;
-        categoryId: string | null;
         headline: string | null;
         coverImage: string | null;
+        categoryId: string | null;
         seoKeywords: string | null;
     }>;
     remove(tenantId: string, id: string): Promise<{
@@ -161,25 +161,25 @@ export declare class GalleriesController {
         status: import("@prisma/client").$Enums.ArticleStatus;
         publishedAt: Date | null;
         viewCount: number;
-        categoryId: string | null;
         headline: string | null;
         coverImage: string | null;
+        categoryId: string | null;
         seoKeywords: string | null;
     }>;
     addImages(tenantId: string, galleryId: string, images: CreateGalleryImageDto[]): Promise<import("@prisma/client").Prisma.BatchPayload>;
     removeImage(tenantId: string, imageId: string): Promise<{
-        url: string;
         id: string;
         sortOrder: number;
+        url: string;
         alt: string | null;
         credit: string | null;
         caption: string | null;
         galleryId: string;
     }>;
     reorderImages(tenantId: string, galleryId: string, imageIds: string[]): Promise<{
-        url: string;
         id: string;
         sortOrder: number;
+        url: string;
         alt: string | null;
         credit: string | null;
         caption: string | null;

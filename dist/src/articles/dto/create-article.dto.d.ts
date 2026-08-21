@@ -6,6 +6,7 @@ export declare class CreateArticleDto {
     type?: ArticleType;
     spot?: string;
     featuredImage?: string;
+    videoUrl?: string;
     status?: ArticleStatus;
     categoryIds?: string[];
     tagNames?: string[];

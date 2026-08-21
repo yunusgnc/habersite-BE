@@ -219,6 +219,11 @@ model Article {
   ogImage        String?       @map("og_image")
   source         String?
   sourceUrl      String?       @map("source_url")
+  /// Haberin YouTube videosu — içerik editöründen BAĞIMSIZ ayrı alan.
+  /// Doluysa site haber detayında gövdenin üstünde oynatıcı çiziliyor.
+  /// Ham adres saklanıyor (watch / youtu.be / shorts fark etmez); gömme
+  /// adresine çevirme sunum katmanının işi.
+  videoUrl       String?       @map("video_url")
   // Editorial highlights — displayed on the FE homepage manşet slots.
   headlineTitle       String?  @map("headline_title")
   headlineImage       String?  @map("headline_image")

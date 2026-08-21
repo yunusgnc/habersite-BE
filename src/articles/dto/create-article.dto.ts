@@ -46,6 +46,11 @@ export class CreateArticleDto {
   @IsOptional()
   featuredImage?: string;
 
+  /** Haberin YouTube video adresi (ayrı alan; içerik editöründen bağımsız). */
+  @IsString()
+  @IsOptional()
+  videoUrl?: string;
+
   @IsEnum(ArticleStatus)
   @IsOptional()
   status?: ArticleStatus;

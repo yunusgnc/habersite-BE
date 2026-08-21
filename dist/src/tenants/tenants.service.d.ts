@@ -5,12 +5,13 @@ export declare class TenantsService {
     constructor(prisma: PrismaService);
     findAll(): Promise<{
         id: string;
-        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
+        name: string;
         logo: string | null;
         favicon: string | null;
+        mediaBaseUrl: string | null;
         theme: string;
         locale: string;
         timezone: string;
@@ -19,16 +20,16 @@ export declare class TenantsService {
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
-        mediaBaseUrl: string | null;
     }[]>;
     findById(id: string): Promise<{
         id: string;
-        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
+        name: string;
         logo: string | null;
         favicon: string | null;
+        mediaBaseUrl: string | null;
         theme: string;
         locale: string;
         timezone: string;
@@ -37,16 +38,16 @@ export declare class TenantsService {
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
-        mediaBaseUrl: string | null;
     }>;
     findByDomain(domain: string): Promise<{
         id: string;
-        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
+        name: string;
         logo: string | null;
         favicon: string | null;
+        mediaBaseUrl: string | null;
         theme: string;
         locale: string;
         timezone: string;
@@ -55,16 +56,16 @@ export declare class TenantsService {
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
-        mediaBaseUrl: string | null;
     } | null>;
     create(dto: CreateTenantDto): Promise<{
         id: string;
-        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
+        name: string;
         logo: string | null;
         favicon: string | null;
+        mediaBaseUrl: string | null;
         theme: string;
         locale: string;
         timezone: string;
@@ -73,16 +74,16 @@ export declare class TenantsService {
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
-        mediaBaseUrl: string | null;
     }>;
     update(id: string, dto: UpdateTenantDto): Promise<{
         id: string;
-        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
+        name: string;
         logo: string | null;
         favicon: string | null;
+        mediaBaseUrl: string | null;
         theme: string;
         locale: string;
         timezone: string;
@@ -91,16 +92,16 @@ export declare class TenantsService {
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
-        mediaBaseUrl: string | null;
     }>;
     remove(id: string): Promise<{
         id: string;
-        name: string;
         slug: string;
         domain: string | null;
         subdomain: string | null;
+        name: string;
         logo: string | null;
         favicon: string | null;
+        mediaBaseUrl: string | null;
         theme: string;
         locale: string;
         timezone: string;
@@ -109,19 +110,19 @@ export declare class TenantsService {
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
-        mediaBaseUrl: string | null;
     }>;
     exportAll(id: string): Promise<{
         exportedAt: string;
         version: number;
         tenant: {
             id: string;
-            name: string;
             slug: string;
             domain: string | null;
             subdomain: string | null;
+            name: string;
             logo: string | null;
             favicon: string | null;
+            mediaBaseUrl: string | null;
             theme: string;
             locale: string;
             timezone: string;
@@ -130,7 +131,6 @@ export declare class TenantsService {
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
-            mediaBaseUrl: string | null;
         };
         users: {
             id: string;
@@ -140,19 +140,19 @@ export declare class TenantsService {
             updatedAt: Date;
             tenantId: string;
             email: string;
+            username: string | null;
             passwordHash: string;
             avatar: string | null;
             role: import("@prisma/client").$Enums.UserRole;
             lastLoginAt: Date | null;
-            username: string | null;
             passwordResetTokenHash: string | null;
             passwordResetExpiresAt: Date | null;
         }[];
         articles: ({
             categories: {
-                articleId: string;
                 categoryId: string;
                 primary: boolean;
+                articleId: string;
             }[];
             tags: {
                 articleId: string;
@@ -177,6 +177,11 @@ export declare class TenantsService {
             authorId: string | null;
             createdById: string;
             approvedById: string | null;
+            assignedToId: string | null;
+            deadline: Date | null;
+            submittedAt: Date | null;
+            reviewedAt: Date | null;
+            reviewNote: string | null;
             viewCount: number;
             commentCount: number;
             readingTime: number | null;
@@ -186,11 +191,7 @@ export declare class TenantsService {
             ogImage: string | null;
             source: string | null;
             sourceUrl: string | null;
-            assignedToId: string | null;
-            deadline: Date | null;
-            submittedAt: Date | null;
-            reviewedAt: Date | null;
-            reviewNote: string | null;
+            videoUrl: string | null;
             headlineTitle: string | null;
             headlineImage: string | null;
             headlineFontSize: number | null;
@@ -200,8 +201,8 @@ export declare class TenantsService {
         })[];
         categories: {
             id: string;
-            name: string;
             slug: string;
+            name: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -216,14 +217,14 @@ export declare class TenantsService {
         }[];
         tags: {
             id: string;
-            name: string;
             slug: string;
+            name: string;
             tenantId: string;
         }[];
         authors: {
             id: string;
-            name: string;
             slug: string;
+            name: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -235,12 +236,12 @@ export declare class TenantsService {
             social: import("@prisma/client/runtime/client").JsonValue;
         }[];
         media: {
-            url: string;
             id: string;
             createdAt: Date;
             tenantId: string;
             type: import("@prisma/client").$Enums.MediaType;
             title: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -274,8 +275,8 @@ export declare class TenantsService {
             updatedAt: Date;
             tenantId: string;
             location: string;
-            items: import("@prisma/client/runtime/client").JsonValue;
             label: string | null;
+            items: import("@prisma/client/runtime/client").JsonValue;
         }[];
         pages: {
             id: string;

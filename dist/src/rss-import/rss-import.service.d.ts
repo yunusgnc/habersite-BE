@@ -5,13 +5,13 @@ export declare class RssImportService {
     private readonly logger;
     constructor(prisma: PrismaService);
     list(tenantId: string): Promise<{
-        url: string;
         id: string;
         name: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
         tenantId: string;
+        url: string;
         defaultCategoryId: string | null;
         defaultAuthorName: string | null;
         fetchIntervalMinutes: number;
@@ -20,13 +20,13 @@ export declare class RssImportService {
         itemsImported: number;
     }[]>;
     get(tenantId: string, id: string): Promise<{
-        url: string;
         id: string;
         name: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
         tenantId: string;
+        url: string;
         defaultCategoryId: string | null;
         defaultAuthorName: string | null;
         fetchIntervalMinutes: number;
@@ -35,13 +35,13 @@ export declare class RssImportService {
         itemsImported: number;
     }>;
     create(tenantId: string, dto: CreateRssSourceDto): Promise<{
-        url: string;
         id: string;
         name: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
         tenantId: string;
+        url: string;
         defaultCategoryId: string | null;
         defaultAuthorName: string | null;
         fetchIntervalMinutes: number;
@@ -50,13 +50,13 @@ export declare class RssImportService {
         itemsImported: number;
     }>;
     update(tenantId: string, id: string, dto: UpdateRssSourceDto): Promise<{
-        url: string;
         id: string;
         name: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
         tenantId: string;
+        url: string;
         defaultCategoryId: string | null;
         defaultAuthorName: string | null;
         fetchIntervalMinutes: number;

@@ -80,11 +80,11 @@ export declare class UsersController {
         updatedAt: Date;
         tenantId: string;
         email: string;
+        username: string | null;
         passwordHash: string;
         avatar: string | null;
         role: import("@prisma/client").$Enums.UserRole;
         lastLoginAt: Date | null;
-        username: string | null;
         passwordResetTokenHash: string | null;
         passwordResetExpiresAt: Date | null;
     }>;
