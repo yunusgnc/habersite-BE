@@ -402,6 +402,8 @@ enum AdPosition {
   SITE_TOWER_LEFT
   SITE_TOWER_RIGHT
   HOME_SLIDER_UNDER
+  // Manşet slider'ının İÇİNDE dönen reklam slaytı — her 5 haberde bir girer.
+  HOME_SLIDER_INSIDE
   HOME_MIDDLE_1
   HOME_MIDDLE_2
   HOME_MIDDLE_3
