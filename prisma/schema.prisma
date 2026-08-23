@@ -249,6 +249,7 @@ model Article {
   persons    ArticlePerson[]
   revisions  ArticleRevision[]
   bookmarks  Bookmark[]
+  reactions  ArticleReaction[]
 
   @@unique([tenantId, slug])
   @@index([tenantId, status, publishedAt(sort: Desc)])
@@ -354,6 +355,36 @@ enum CommentStatus {
   APPROVED
   SPAM
   REJECTED
+}
+
+// ─── TEPKİLER (Habere Tepki Ver) ───
+
+enum ReactionType {
+  LIKE
+  LOVE
+  HAHA
+  WOW
+  SAD
+  ANGRY
+}
+
+/// Haber başına tepki SAYAÇLARI — kullanıcı başına kayıt değil.
+///
+/// Tepki girişsiz verildiği için kişi takibi yok; "kim ne verdi" sorusu
+/// sorulamaz, yalnızca toplamlar tutulur. Satır sayısı haber başına en çok
+/// 6 (tepki tipi sayısı); artırma `upsert + increment` ile atomik.
+model ArticleReaction {
+  id        String       @id @default(cuid())
+  tenantId  String       @map("tenant_id")
+  articleId String       @map("article_id")
+  type      ReactionType
+  count     Int          @default(0)
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, type])
+  @@index([tenantId, articleId])
+  @@map("article_reactions")
 }
 
 model Comment {

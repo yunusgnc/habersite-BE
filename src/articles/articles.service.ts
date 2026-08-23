@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nest
 import { Cron, CronExpression } from '@nestjs/schedule';
 import slugify from 'slugify';
 import { PrismaService } from '../prisma/prisma.service';
-import { ArticleStatus, Prisma } from '@prisma/client';
+import { ArticleStatus, Prisma, ReactionType } from '@prisma/client';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { QueryArticlesDto } from './dto/query-articles.dto';
@@ -211,6 +211,9 @@ export class ArticlesService {
           author: true,
           createdBy: { select: { id: true, name: true, email: true } },
           approvedBy: { select: { id: true, name: true } },
+          // Panel listesi tepki toplamini gosteriyor; haber basina en cok
+          // 6 satir oldugu icin listeye maliyeti ihmal edilebilir.
+          reactions: { select: { type: true, count: true } },
         },
       }),
       this.prisma.article.count({ where }),
@@ -354,6 +357,7 @@ export class ArticlesService {
         author: true,
         createdBy: { select: { id: true, name: true, email: true } },
         approvedBy: { select: { id: true, name: true } },
+        reactions: { select: { type: true, count: true } },
       },
     });
 
@@ -966,6 +970,70 @@ export class ArticlesService {
         author: { select: { id: true, name: true, slug: true, avatar: true } },
       },
     });
+  }
+
+  /**
+   * TEPKİLER — "Habere Tepki Ver".
+   *
+   * Girişsiz çalışır: kişi kaydı tutulmaz, yalnızca tip başına sayaç var.
+   * Tarayıcı hangi tepkiyi verdiğini kendi localStorage'ında hatırlar ve
+   * tepki DEĞİŞTİRİRKEN eskisini `previous` olarak bildirir — eski sayaç
+   * bir azaltılır, yenisi bir artırılır. Bu istemci beyanına güvenmek
+   * bilinçli bir ödün: girişsiz bir sayaçta bundan iyisi (IP/parmak izi
+   * takibi) KVKK tarafında ayrı bir dert açar. Kaba kötüye kullanım
+   * controller'daki IP throttle'ıyla sınırlandı.
+   */
+  async getReactions(tenantId: string, articleId: string) {
+    const rows = await this.prisma.articleReaction.findMany({
+      where: { tenantId, articleId },
+      select: { type: true, count: true },
+    });
+    const sayilar = Object.fromEntries(
+      Object.values(ReactionType).map((t) => [t, 0]),
+    ) as Record<ReactionType, number>;
+    for (const r of rows) sayilar[r.type] = r.count;
+    return sayilar;
+  }
+
+  async react(
+    tenantId: string,
+    articleId: string,
+    type: ReactionType,
+    previous?: ReactionType,
+  ) {
+    // Yalnızca yayında olan habere tepki verilir — taslak kimliğini tahmin
+    // edip sayaç şişirilmesin.
+    const article = await this.prisma.article.findFirst({
+      where: { id: articleId, tenantId, status: ArticleStatus.PUBLISHED },
+      select: { id: true },
+    });
+    if (!article) throw new NotFoundException('Article not found');
+
+    await this.prisma.articleReaction.upsert({
+      where: { articleId_type: { articleId, type } },
+      create: { tenantId, articleId, type, count: 1 },
+      update: { count: { increment: 1 } },
+    });
+
+    if (previous && previous !== type) {
+      // Sıfırın altına düşürme — updateMany koşullu olduğu için satır yoksa
+      // ya da sayaç 0'daysa sessizce hiçbir şey yapmaz.
+      await this.prisma.articleReaction.updateMany({
+        where: { articleId, type: previous, count: { gt: 0 } },
+        data: { count: { decrement: 1 } },
+      });
+    }
+
+    return this.getReactions(tenantId, articleId);
+  }
+
+  /** Tepkiyi geri alma — aynı emojiye ikinci tıklama. */
+  async unreact(tenantId: string, articleId: string, type: ReactionType) {
+    await this.prisma.articleReaction.updateMany({
+      where: { tenantId, articleId, type, count: { gt: 0 } },
+      data: { count: { decrement: 1 } },
+    });
+    return this.getReactions(tenantId, articleId);
   }
 
   async getMostRead(tenantId: string, limit = 10) {

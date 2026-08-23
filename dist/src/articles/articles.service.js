@@ -164,6 +164,7 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
                     author: true,
                     createdBy: { select: { id: true, name: true, email: true } },
                     approvedBy: { select: { id: true, name: true } },
+                    reactions: { select: { type: true, count: true } },
                 },
             }),
             this.prisma.article.count({ where }),
@@ -265,6 +266,7 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
                 author: true,
                 createdBy: { select: { id: true, name: true, email: true } },
                 approvedBy: { select: { id: true, name: true } },
+                reactions: { select: { type: true, count: true } },
             },
         });
         if (!article) {
@@ -728,6 +730,43 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
                 author: { select: { id: true, name: true, slug: true, avatar: true } },
             },
         });
+    }
+    async getReactions(tenantId, articleId) {
+        const rows = await this.prisma.articleReaction.findMany({
+            where: { tenantId, articleId },
+            select: { type: true, count: true },
+        });
+        const sayilar = Object.fromEntries(Object.values(client_1.ReactionType).map((t) => [t, 0]));
+        for (const r of rows)
+            sayilar[r.type] = r.count;
+        return sayilar;
+    }
+    async react(tenantId, articleId, type, previous) {
+        const article = await this.prisma.article.findFirst({
+            where: { id: articleId, tenantId, status: client_1.ArticleStatus.PUBLISHED },
+            select: { id: true },
+        });
+        if (!article)
+            throw new common_1.NotFoundException('Article not found');
+        await this.prisma.articleReaction.upsert({
+            where: { articleId_type: { articleId, type } },
+            create: { tenantId, articleId, type, count: 1 },
+            update: { count: { increment: 1 } },
+        });
+        if (previous && previous !== type) {
+            await this.prisma.articleReaction.updateMany({
+                where: { articleId, type: previous, count: { gt: 0 } },
+                data: { count: { decrement: 1 } },
+            });
+        }
+        return this.getReactions(tenantId, articleId);
+    }
+    async unreact(tenantId, articleId, type) {
+        await this.prisma.articleReaction.updateMany({
+            where: { tenantId, articleId, type, count: { gt: 0 } },
+            data: { count: { decrement: 1 } },
+        });
+        return this.getReactions(tenantId, articleId);
     }
     async getMostRead(tenantId, limit = 10) {
         const sevenDaysAgo = new Date();

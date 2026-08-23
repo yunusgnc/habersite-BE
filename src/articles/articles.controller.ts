@@ -9,11 +9,13 @@ import {
   Body,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ArticlesService } from './articles.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { QueryArticlesDto } from './dto/query-articles.dto';
 import { BulkArticleDto } from './dto/bulk-article.dto';
+import { ReactDto, UnreactDto } from './dto/react.dto';
 import { TenantGuard } from '../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
@@ -114,6 +116,40 @@ export class ArticlesController {
   @Get('archive-facets')
   archiveFacets(@CurrentTenant() tenantId: string) {
     return this.articlesService.archiveFacets(tenantId);
+  }
+
+  /**
+   * TEPKİLER — herkese açık, giriş İSTEMEZ. Okuyucu emojiyle tepki verir,
+   * sayaçlar herkese görünür. Kişi kaydı tutulmadığı için tek koruma IP
+   * başına hız sınırı: 20 tepki/dakika bir insan için bol, bir script için
+   * caydırıcı.
+   */
+  @Get(':id/reactions')
+  getReactions(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    return this.articlesService.getReactions(tenantId, id);
+  }
+
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  @Post(':id/reactions')
+  react(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Body() dto: ReactDto,
+  ) {
+    return this.articlesService.react(tenantId, id, dto.type, dto.previous);
+  }
+
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  @Delete(':id/reactions')
+  unreact(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Body() dto: UnreactDto,
+  ) {
+    return this.articlesService.unreact(tenantId, id, dto.type);
   }
 
   @Get(':id/related')

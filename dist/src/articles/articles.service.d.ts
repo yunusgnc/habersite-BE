@@ -1,5 +1,5 @@
 import { PrismaService } from '../prisma/prisma.service';
-import { ArticleStatus, Prisma } from '@prisma/client';
+import { ArticleStatus, Prisma, ReactionType } from '@prisma/client';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { QueryArticlesDto } from './dto/query-articles.dto';
@@ -70,6 +70,10 @@ export declare class ArticlesService {
                 id: string;
                 name: string;
             } | null;
+            reactions: {
+                type: import("@prisma/client").$Enums.ReactionType;
+                count: number;
+            }[];
         } & {
             id: string;
             slug: string;
@@ -282,6 +286,10 @@ export declare class ArticlesService {
             id: string;
             name: string;
         } | null;
+        reactions: {
+            type: import("@prisma/client").$Enums.ReactionType;
+            count: number;
+        }[];
         id: string;
         slug: string;
         createdAt: Date;
@@ -1162,6 +1170,9 @@ export declare class ArticlesService {
         hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     })[]>;
+    getReactions(tenantId: string, articleId: string): Promise<Record<import("@prisma/client").$Enums.ReactionType, number>>;
+    react(tenantId: string, articleId: string, type: ReactionType, previous?: ReactionType): Promise<Record<import("@prisma/client").$Enums.ReactionType, number>>;
+    unreact(tenantId: string, articleId: string, type: ReactionType): Promise<Record<import("@prisma/client").$Enums.ReactionType, number>>;
     getMostRead(tenantId: string, limit?: number): Promise<({
         categories: ({
             category: {

@@ -3,6 +3,7 @@ import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { QueryArticlesDto } from './dto/query-articles.dto';
 import { BulkArticleDto } from './dto/bulk-article.dto';
+import { ReactDto, UnreactDto } from './dto/react.dto';
 export declare class ArticlesController {
     private readonly articlesService;
     constructor(articlesService: ArticlesService);
@@ -66,6 +67,10 @@ export declare class ArticlesController {
                 id: string;
                 name: string;
             } | null;
+            reactions: {
+                type: import("@prisma/client").$Enums.ReactionType;
+                count: number;
+            }[];
         } & {
             id: string;
             slug: string;
@@ -402,6 +407,9 @@ export declare class ArticlesController {
             count: number;
         }[];
     }>;
+    getReactions(tenantId: string, id: string): Promise<Record<import("@prisma/client").$Enums.ReactionType, number>>;
+    react(tenantId: string, id: string, dto: ReactDto): Promise<Record<import("@prisma/client").$Enums.ReactionType, number>>;
+    unreact(tenantId: string, id: string, dto: UnreactDto): Promise<Record<import("@prisma/client").$Enums.ReactionType, number>>;
     getRelated(tenantId: string, id: string, limit?: number): Promise<({
         categories: ({
             category: {
@@ -607,6 +615,10 @@ export declare class ArticlesController {
             id: string;
             name: string;
         } | null;
+        reactions: {
+            type: import("@prisma/client").$Enums.ReactionType;
+            count: number;
+        }[];
         id: string;
         slug: string;
         createdAt: Date;
