@@ -22,8 +22,6 @@ const prisma_service_1 = require("../prisma/prisma.service");
 const secret_settings_1 = require("./secret-settings");
 const SENSITIVE_KEYS = [
     'oneSignalAppId',
-    'appStoreUrl',
-    'playStoreUrl',
     'aiProvider',
 ];
 let PublicSettingsController = class PublicSettingsController {

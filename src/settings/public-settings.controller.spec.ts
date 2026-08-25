@@ -55,8 +55,8 @@ describe('PublicSettingsController', () => {
       settingsService.getAll.mockResolvedValue({
         siteTitle: 'Test Site',
         oneSignalAppId: 'secret-onesignal-id',
-        appStoreUrl: 'https://apps.apple.com/secret',
-        playStoreUrl: 'https://play.google.com/secret',
+        appStoreUrl: 'https://apps.apple.com/app/ornek',
+        playStoreUrl: 'https://play.google.com/store/apps/ornek',
         primaryColor: '#bc1010',
       });
 
@@ -65,8 +65,10 @@ describe('PublicSettingsController', () => {
       expect(result.siteTitle).toBe('Test Site');
       expect(result.primaryColor).toBe('#bc1010');
       expect(result).not.toHaveProperty('oneSignalAppId');
-      expect(result).not.toHaveProperty('appStoreUrl');
-      expect(result).not.toHaveProperty('playStoreUrl');
+      // Mağaza bağlantıları footer rozetleri için bilinçli olarak AÇIK —
+      // zaten herkese açık mağaza sayfalarına gidiyorlar.
+      expect(result.appStoreUrl).toBe('https://apps.apple.com/app/ornek');
+      expect(result.playStoreUrl).toBe('https://play.google.com/store/apps/ornek');
     });
 
     it('falls back to tenant name when siteTitle is empty', async () => {

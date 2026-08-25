@@ -16,12 +16,13 @@ import { SECRET_SETTING_KEYS } from './secret-settings';
  */
 const SENSITIVE_KEYS = [
   'oneSignalAppId',
-  'appStoreUrl',
-  'playStoreUrl',
   // Sır değil ama sitenin bilmesine de gerek yok — yalnızca panel ve sunucu
   // tarafı kullanıyor.
   'aiProvider',
 ];
+// NOT: appStoreUrl/playStoreUrl eskiden burada gizliydi; footer'daki mağaza
+// rozetleri (gastepress düzeni) için artık siteye açık — zaten herkese açık
+// mağaza bağlantıları.
 
 @Controller('api/public/settings')
 @UseGuards(TenantGuard)
