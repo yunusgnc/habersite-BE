@@ -7,6 +7,9 @@ exports.secretHint = secretHint;
 exports.SECRET_SETTING_KEYS = new Set([
     'anthropicApiKey',
     'openaiApiKey',
+    'telegramBotToken',
+    'facebookPageToken',
+    'instagramToken',
 ]);
 exports.AI_PROVIDER_SETTING_KEY = 'aiProvider';
 exports.AI_PROVIDER_KEY_SETTING = {

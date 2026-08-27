@@ -23,6 +23,12 @@ const secret_settings_1 = require("./secret-settings");
 const SENSITIVE_KEYS = [
     'oneSignalAppId',
     'aiProvider',
+    'autoShareTelegram',
+    'autoShareFacebook',
+    'autoShareInstagram',
+    'telegramChatId',
+    'facebookPageId',
+    'instagramUserId',
 ];
 let PublicSettingsController = class PublicSettingsController {
     settingsService;

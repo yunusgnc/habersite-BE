@@ -8,6 +8,7 @@ import { UpdateArticleDto } from './dto/update-article.dto';
 import { QueryArticlesDto } from './dto/query-articles.dto';
 import { AuditService } from '../common/audit/audit.service';
 import { RevalidationService } from '../common/revalidation/revalidation.service';
+import { SocialShareService } from '../social-share/social-share.service';
 
 // Yayınlama yetkisi olan roller — REPORTER/COLUMNIST DRAFT'a kilitlenir.
 function canPublishArticle(role: string): boolean {
@@ -57,6 +58,7 @@ export class ArticlesService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly revalidation: RevalidationService,
+    private readonly socialShare: SocialShareService,
   ) {}
 
   /**
@@ -71,7 +73,15 @@ export class ArticlesService {
         status: ArticleStatus.DRAFT,
         scheduledAt: { lte: now, not: null },
       },
-      select: { id: true, tenantId: true, scheduledAt: true, title: true },
+      select: {
+        id: true,
+        tenantId: true,
+        scheduledAt: true,
+        title: true,
+        slug: true,
+        type: true,
+        featuredImage: true,
+      },
       take: 100,
     });
 
@@ -94,6 +104,7 @@ export class ArticlesService {
             entityId: a.id,
             changes: { title: a.title, source: 'scheduled' },
           });
+          void this.socialShare.paylas(a.tenantId, a);
         } catch (err) {
           this.logger.warn(
             `Zamanlanmış yayın başarısız (${a.id}): ${(err as Error).message}`,
@@ -495,6 +506,11 @@ export class ArticlesService {
     });
 
     this.revalidation.revalidateTenant(tenantId, ['articles', 'breaking-news', 'most-read']);
+
+    if (article.status === ArticleStatus.PUBLISHED) {
+      // Ateşle ve unut — paylaşım hatası yayını asla bloklamaz.
+      void this.socialShare.paylas(tenantId, article);
+    }
     return article;
   }
 
@@ -637,6 +653,15 @@ export class ArticlesService {
       'breaking-news',
       'most-read',
     ]);
+
+    // Sosyal paylaşım yalnızca DURUM GEÇİŞİNDE — yayındaki haberi
+    // düzenlemek mükerrer gönderi atmasın.
+    if (
+      article.status === ArticleStatus.PUBLISHED &&
+      existing.status !== ArticleStatus.PUBLISHED
+    ) {
+      void this.socialShare.paylas(tenantId, article);
+    }
     return article;
   }
 

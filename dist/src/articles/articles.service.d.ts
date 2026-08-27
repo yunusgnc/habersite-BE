@@ -5,12 +5,14 @@ import { UpdateArticleDto } from './dto/update-article.dto';
 import { QueryArticlesDto } from './dto/query-articles.dto';
 import { AuditService } from '../common/audit/audit.service';
 import { RevalidationService } from '../common/revalidation/revalidation.service';
+import { SocialShareService } from '../social-share/social-share.service';
 export declare class ArticlesService {
     private readonly prisma;
     private readonly audit;
     private readonly revalidation;
+    private readonly socialShare;
     private readonly logger;
-    constructor(prisma: PrismaService, audit: AuditService, revalidation: RevalidationService);
+    constructor(prisma: PrismaService, audit: AuditService, revalidation: RevalidationService, socialShare: SocialShareService);
     publishScheduled(): Promise<void>;
     findAll(tenantId: string, query: QueryArticlesDto): Promise<{
         items: ({

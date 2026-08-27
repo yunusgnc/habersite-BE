@@ -21,6 +21,7 @@ const prisma_service_1 = require("../prisma/prisma.service");
 const client_1 = require("@prisma/client");
 const audit_service_1 = require("../common/audit/audit.service");
 const revalidation_service_1 = require("../common/revalidation/revalidation.service");
+const social_share_service_1 = require("../social-share/social-share.service");
 function canPublishArticle(role) {
     return ['SUPER_ADMIN', 'ADMIN', 'EDITOR'].includes(role);
 }
@@ -49,11 +50,13 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
     prisma;
     audit;
     revalidation;
+    socialShare;
     logger = new common_1.Logger(ArticlesService_1.name);
-    constructor(prisma, audit, revalidation) {
+    constructor(prisma, audit, revalidation, socialShare) {
         this.prisma = prisma;
         this.audit = audit;
         this.revalidation = revalidation;
+        this.socialShare = socialShare;
     }
     async publishScheduled() {
         const now = new Date();
@@ -62,7 +65,15 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
                 status: client_1.ArticleStatus.DRAFT,
                 scheduledAt: { lte: now, not: null },
             },
-            select: { id: true, tenantId: true, scheduledAt: true, title: true },
+            select: {
+                id: true,
+                tenantId: true,
+                scheduledAt: true,
+                title: true,
+                slug: true,
+                type: true,
+                featuredImage: true,
+            },
             take: 100,
         });
         if (due.length === 0)
@@ -83,6 +94,7 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
                     entityId: a.id,
                     changes: { title: a.title, source: 'scheduled' },
                 });
+                void this.socialShare.paylas(a.tenantId, a);
             }
             catch (err) {
                 this.logger.warn(`Zamanlanmış yayın başarısız (${a.id}): ${err.message}`);
@@ -374,6 +386,9 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
             changes: { title: article.title, status: article.status },
         });
         this.revalidation.revalidateTenant(tenantId, ['articles', 'breaking-news', 'most-read']);
+        if (article.status === client_1.ArticleStatus.PUBLISHED) {
+            void this.socialShare.paylas(tenantId, article);
+        }
         return article;
     }
     async update(tenantId, id, dto, userId, userRole) {
@@ -487,6 +502,10 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
             'breaking-news',
             'most-read',
         ]);
+        if (article.status === client_1.ArticleStatus.PUBLISHED &&
+            existing.status !== client_1.ArticleStatus.PUBLISHED) {
+            void this.socialShare.paylas(tenantId, article);
+        }
         return article;
     }
     async remove(tenantId, id, userId) {
@@ -878,6 +897,7 @@ exports.ArticlesService = ArticlesService = ArticlesService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         audit_service_1.AuditService,
-        revalidation_service_1.RevalidationService])
+        revalidation_service_1.RevalidationService,
+        social_share_service_1.SocialShareService])
 ], ArticlesService);
 //# sourceMappingURL=articles.service.js.map

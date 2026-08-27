@@ -19,6 +19,12 @@ const SENSITIVE_KEYS = [
   // Sır değil ama sitenin bilmesine de gerek yok — yalnızca panel ve sunucu
   // tarafı kullanıyor.
   'aiProvider',
+  'autoShareTelegram',
+  'autoShareFacebook',
+  'autoShareInstagram',
+  'telegramChatId',
+  'facebookPageId',
+  'instagramUserId',
 ];
 // NOT: appStoreUrl/playStoreUrl eskiden burada gizliydi; footer'daki mağaza
 // rozetleri (gastepress düzeni) için artık siteye açık — zaten herkese açık

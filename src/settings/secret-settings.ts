@@ -14,6 +14,11 @@
 export const SECRET_SETTING_KEYS = new Set<string>([
   'anthropicApiKey',
   'openaiApiKey',
+  // Otomatik sosyal paylaşım kimlik bilgileri — panelde yalnızca
+  // "kayıtlı mı" durumu görünür, değer tarayıcıya hiç inmez.
+  'telegramBotToken',
+  'facebookPageToken',
+  'instagramToken',
 ]);
 
 /**
