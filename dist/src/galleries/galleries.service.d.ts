@@ -6,32 +6,29 @@ import type { QueryGalleriesDto } from './dto/query-galleries.dto';
 export declare class GalleriesService {
     private readonly prisma;
     constructor(prisma: PrismaService);
-    findAll(tenantId: string, query: QueryGalleriesDto): Promise<{
-        items: ({
-            _count: {
-                images: number;
-            };
-        } & {
-            id: string;
-            slug: string;
-            createdAt: Date;
-            updatedAt: Date;
-            tenantId: string;
-            description: string | null;
-            sortOrder: number;
-            seoTitle: string | null;
-            seoDesc: string | null;
-            title: string;
-            status: import("@prisma/client").$Enums.ArticleStatus;
-            publishedAt: Date | null;
-            viewCount: number;
-            categoryId: string | null;
-            headline: string | null;
-            coverImage: string | null;
-            seoKeywords: string | null;
-        })[];
-        nextCursor: string | undefined;
-    }>;
+    findAll(tenantId: string, query: QueryGalleriesDto): Promise<import("../common/pagination/sayfali-liste").SayfaliSonuc<{
+        _count: {
+            images: number;
+        };
+    } & {
+        id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
+        description: string | null;
+        sortOrder: number;
+        seoTitle: string | null;
+        seoDesc: string | null;
+        title: string;
+        status: import("@prisma/client").$Enums.ArticleStatus;
+        publishedAt: Date | null;
+        viewCount: number;
+        categoryId: string | null;
+        headline: string | null;
+        coverImage: string | null;
+        seoKeywords: string | null;
+    }>>;
     findOne(tenantId: string, id: string): Promise<{
         images: {
             url: string;

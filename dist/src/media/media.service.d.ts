@@ -8,6 +8,10 @@ export declare class MediaService {
     constructor(prisma: PrismaService, storage: StorageAdapter);
     private resolveMediaBaseUrl;
     findAll(tenantId: string, query: QueryMediaDto): Promise<{
+        total: number;
+        totalPages: number;
+        page?: number;
+        hasMore: boolean;
         data: {
             url: string;
             id: string;
@@ -26,7 +30,6 @@ export declare class MediaService {
             credit: string | null;
         }[];
         nextCursor: string | null;
-        total: number;
     }>;
     findById(tenantId: string, id: string): Promise<{
         url: string;

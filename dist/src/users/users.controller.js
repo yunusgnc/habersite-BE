@@ -25,9 +25,10 @@ let UsersController = class UsersController {
     constructor(usersService) {
         this.usersService = usersService;
     }
-    findAll(tenantId, cursor, limit, search, role) {
+    findAll(tenantId, cursor, page, limit, search, role) {
         return this.usersService.findAll(tenantId, {
             cursor,
+            page: page ? Number(page) : undefined,
             limit: limit ? Number(limit) : undefined,
             search,
             role,
@@ -55,18 +56,20 @@ let UsersController = class UsersController {
 exports.UsersController = UsersController;
 __decorate([
     openapi.ApiQuery({ name: "cursor", required: false }),
+    openapi.ApiQuery({ name: "page", required: false }),
     openapi.ApiQuery({ name: "limit", required: false }),
     openapi.ApiQuery({ name: "search", required: false }),
     openapi.ApiQuery({ name: "role", required: false }),
     (0, common_1.Get)(),
-    openapi.ApiResponse({ status: 200 }),
+    openapi.ApiResponse({ status: 200, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('cursor')),
-    __param(2, (0, common_1.Query)('limit')),
-    __param(3, (0, common_1.Query)('search')),
-    __param(4, (0, common_1.Query)('role')),
+    __param(2, (0, common_1.Query)('page')),
+    __param(3, (0, common_1.Query)('limit')),
+    __param(4, (0, common_1.Query)('search')),
+    __param(5, (0, common_1.Query)('role')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, String, String, String]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "findAll", null);
 __decorate([

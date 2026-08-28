@@ -26,12 +26,14 @@ export class UsersController {
   findAll(
     @CurrentTenant() tenantId: string,
     @Query('cursor') cursor?: string,
+    @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('role') role?: string,
   ) {
     return this.usersService.findAll(tenantId, {
       cursor,
+      page: page ? Number(page) : undefined,
       limit: limit ? Number(limit) : undefined,
       search,
       role,

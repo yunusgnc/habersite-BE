@@ -11,6 +11,13 @@ export class QueryCommentsDto {
   @IsOptional()
   status?: CommentStatus;
 
+  /** Numaralı sayfalama — verilirse imleç yok sayılır (bkz. sayfali-liste). */
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  page?: number;
+
   @IsString()
   @IsOptional()
   cursor?: string;

@@ -5,6 +5,10 @@ export declare class MediaController {
     private readonly mediaService;
     constructor(mediaService: MediaService);
     findAll(tenantId: string, query: QueryMediaDto): Promise<{
+        total: number;
+        totalPages: number;
+        page?: number;
+        hasMore: boolean;
         data: {
             url: string;
             id: string;
@@ -23,7 +27,6 @@ export declare class MediaController {
             credit: string | null;
         }[];
         nextCursor: string | null;
-        total: number;
     }>;
     upload(tenantId: string, file: Express.Multer.File, dto: UploadMediaDto): Promise<{
         url: string;

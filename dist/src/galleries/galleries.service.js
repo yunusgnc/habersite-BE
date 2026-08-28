@@ -16,6 +16,7 @@ exports.GalleriesService = void 0;
 const common_1 = require("@nestjs/common");
 const slugify_1 = __importDefault(require("slugify"));
 const prisma_service_1 = require("../prisma/prisma.service");
+const sayfali_liste_1 = require("../common/pagination/sayfali-liste");
 const client_1 = require("@prisma/client");
 let GalleriesService = class GalleriesService {
     prisma;
@@ -23,29 +24,26 @@ let GalleriesService = class GalleriesService {
         this.prisma = prisma;
     }
     async findAll(tenantId, query) {
-        const { cursor, limit = 20, status, search } = query;
+        const { cursor, page, limit = 20, status, search } = query;
         const where = { tenantId };
         if (status)
             where.status = status;
         if (search)
             where.title = { contains: search, mode: 'insensitive' };
-        const items = await this.prisma.gallery.findMany({
-            where,
-            orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-            take: limit + 1,
-            ...(cursor && {
-                cursor: { id: cursor },
-                skip: 1,
+        return (0, sayfali_liste_1.sayfaliListe)({
+            limit,
+            page,
+            cursor,
+            say: () => this.prisma.gallery.count({ where }),
+            bul: (args) => this.prisma.gallery.findMany({
+                where,
+                orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+                include: {
+                    _count: { select: { images: true } },
+                },
+                ...args,
             }),
-            include: {
-                _count: { select: { images: true } },
-            },
         });
-        const hasMore = items.length > limit;
-        if (hasMore)
-            items.pop();
-        const nextCursor = hasMore ? items[items.length - 1]?.id : undefined;
-        return { items, nextCursor };
     }
     async findOne(tenantId, id) {
         const gallery = await this.prisma.gallery.findFirst({

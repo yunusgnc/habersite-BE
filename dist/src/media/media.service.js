@@ -51,6 +51,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MediaService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const sayfali_liste_1 = require("../common/pagination/sayfali-liste");
 const client_1 = require("@prisma/client");
 const storage_module_1 = require("./storage/storage.module");
 const file_type_1 = require("file-type");
@@ -106,19 +107,19 @@ let MediaService = class MediaService {
                 { url: { contains: q, mode: 'insensitive' } },
             ];
         }
-        const [items, total] = await Promise.all([
-            this.prisma.media.findMany({
+        const sonuc = await (0, sayfali_liste_1.sayfaliListe)({
+            limit,
+            page: query.page,
+            cursor: query.cursor,
+            say: () => this.prisma.media.count({ where }),
+            bul: (args) => this.prisma.media.findMany({
                 where,
-                take: limit + 1,
                 orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-                ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
+                ...args,
             }),
-            this.prisma.media.count({ where }),
-        ]);
-        const hasMore = items.length > limit;
-        const data = hasMore ? items.slice(0, limit) : items;
-        const nextCursor = hasMore ? data[data.length - 1].id : null;
-        return { data, nextCursor, total };
+        });
+        const { items, nextCursor, ...kalan } = sonuc;
+        return { data: items, nextCursor: nextCursor ?? null, ...kalan };
     }
     async findById(tenantId, id) {
         const media = await this.prisma.media.findFirst({

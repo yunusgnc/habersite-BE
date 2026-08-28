@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { sayfaliListe } from '../common/pagination/sayfali-liste';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { QueryCommentsDto } from './dto/query-comments.dto';
 import { CommentStatus } from '@prisma/client';
@@ -27,31 +28,25 @@ export class CommentsService {
   }
 
   async findAll(tenantId: string, query: QueryCommentsDto) {
-    const { articleId, status, cursor, limit = 20 } = query;
+    const { articleId, status, cursor, page, limit = 20 } = query;
 
     const where: any = { tenantId };
     if (articleId) where.articleId = articleId;
     if (status) where.status = status;
 
-    const [items, total] = await Promise.all([
-      this.prisma.comment.findMany({
-        where,
-        take: limit + 1,
-        ...(cursor && {
-          skip: 1,
-          cursor: { id: cursor },
+    return sayfaliListe({
+      limit,
+      page,
+      cursor,
+      say: () => this.prisma.comment.count({ where }),
+      bul: (args) =>
+        this.prisma.comment.findMany({
+          where,
+          // id tiebreaker: createdAt unique degil, deterministik siralama sart.
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          ...args,
         }),
-        // id tiebreaker: createdAt unique degil, cursor pagination deterministik siralama ister.
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-      }),
-      this.prisma.comment.count({ where }),
-    ]);
-    // İmleç döndürülen son kayıt olmalı — `skip: 1` ile birlikte aksi hâlde
-    // her sayfa sınırında bir kayıt atlanıyor (bkz. articles.service findAll).
-    const hasMore = items.length > limit;
-    if (hasMore) items.pop();
-    const nextCursor = hasMore ? items[items.length - 1]?.id : undefined;
-    return { items, nextCursor, total };
+    });
   }
 
   async create(tenantId: string, dto: CreateCommentDto, ipAddress: string) {

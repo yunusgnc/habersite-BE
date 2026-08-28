@@ -3,6 +3,13 @@ import { Type } from 'class-transformer';
 import { MediaType } from '@prisma/client';
 
 export class QueryMediaDto {
+  /** Numaralı sayfalama — verilirse imleç yok sayılır (bkz. sayfali-liste). */
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  page?: number;
+
   @IsString()
   @IsOptional()
   cursor?: string;

@@ -7,33 +7,30 @@ export declare class VideosController {
     private readonly videosService;
     private readonly videoUploadService;
     constructor(videosService: VideosService, videoUploadService: VideoUploadService);
-    findAll(tenantId: string, query: QueryVideosDto): Promise<{
-        items: {
-            id: string;
-            slug: string;
-            createdAt: Date;
-            updatedAt: Date;
-            tenantId: string;
-            description: string | null;
-            sortOrder: number;
-            seoTitle: string | null;
-            seoDesc: string | null;
-            title: string;
-            status: import("@prisma/client").$Enums.ArticleStatus;
-            publishedAt: Date | null;
-            viewCount: number;
-            source: string;
-            categoryId: string | null;
-            videoUrl: string;
-            headline: string | null;
-            coverImage: string | null;
-            seoKeywords: string | null;
-            embedCode: string | null;
-            duration: number | null;
-            fileSize: number | null;
-        }[];
-        nextCursor: string | undefined;
-    }>;
+    findAll(tenantId: string, query: QueryVideosDto): Promise<import("../common/pagination/sayfali-liste").SayfaliSonuc<{
+        id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
+        description: string | null;
+        sortOrder: number;
+        seoTitle: string | null;
+        seoDesc: string | null;
+        title: string;
+        status: import("@prisma/client").$Enums.ArticleStatus;
+        publishedAt: Date | null;
+        viewCount: number;
+        source: string;
+        categoryId: string | null;
+        videoUrl: string;
+        headline: string | null;
+        coverImage: string | null;
+        seoKeywords: string | null;
+        embedCode: string | null;
+        duration: number | null;
+        fileSize: number | null;
+    }>>;
     getLimits(): {
         maxUploadBytes: number;
         targetMaxBytes: number;

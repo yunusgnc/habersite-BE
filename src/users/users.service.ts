@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { sayfaliListe } from '../common/pagination/sayfali-liste';
 import { UserRole } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
@@ -20,7 +21,13 @@ export class UsersService {
 
   async findAll(
     tenantId: string,
-    opts: { cursor?: string; limit?: number; search?: string; role?: string } = {},
+    opts: {
+      cursor?: string;
+      page?: number;
+      limit?: number;
+      search?: string;
+      role?: string;
+    } = {},
   ) {
     const limit = Math.min(100, opts.limit ?? 30);
     const where: any = { tenantId };
@@ -34,26 +41,20 @@ export class UsersService {
     }
     if (opts.role) where.role = opts.role;
 
-    const [items, total] = await Promise.all([
-      this.prisma.user.findMany({
-        where,
-        select: this.selectFields,
-        // id tiebreaker: createdAt unique degil, cursor pagination deterministik siralama ister.
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        take: limit + 1,
-        ...(opts.cursor
-          ? { cursor: { id: opts.cursor }, skip: 1 }
-          : {}),
-      }),
-      this.prisma.user.count({ where }),
-    ]);
-
-    // İmleç döndürülen son kayıt olmalı — `skip: 1` ile birlikte aksi hâlde
-    // her sayfa sınırında bir kayıt atlanıyor (bkz. articles.service findAll).
-    const hasMore = items.length > limit;
-    if (hasMore) items.pop();
-    const nextCursor = hasMore ? items[items.length - 1]?.id : undefined;
-    return { items, nextCursor, total };
+    return sayfaliListe({
+      limit,
+      page: opts.page,
+      cursor: opts.cursor,
+      say: () => this.prisma.user.count({ where }),
+      bul: (args) =>
+        this.prisma.user.findMany({
+          where,
+          select: this.selectFields,
+          // id tiebreaker: createdAt unique degil, deterministik siralama sart.
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          ...args,
+        }),
+    });
   }
 
   async findById(tenantId: string, id: string) {

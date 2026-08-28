@@ -6,23 +6,20 @@ export declare class UsersService {
     private readonly selectFields;
     findAll(tenantId: string, opts?: {
         cursor?: string;
+        page?: number;
         limit?: number;
         search?: string;
         role?: string;
-    }): Promise<{
-        items: {
-            id: string;
-            name: string;
-            active: boolean;
-            createdAt: Date;
-            email: string;
-            avatar: string | null;
-            role: import("@prisma/client").$Enums.UserRole;
-            lastLoginAt: Date | null;
-        }[];
-        nextCursor: string | undefined;
-        total: number;
-    }>;
+    }): Promise<import("../common/pagination/sayfali-liste").SayfaliSonuc<{
+        id: string;
+        name: string;
+        active: boolean;
+        createdAt: Date;
+        email: string;
+        avatar: string | null;
+        role: import("@prisma/client").$Enums.UserRole;
+        lastLoginAt: Date | null;
+    }>>;
     findById(tenantId: string, id: string): Promise<{
         id: string;
         name: string;

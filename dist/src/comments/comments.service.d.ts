@@ -30,22 +30,18 @@ export declare class CommentsService {
         articleId: string;
         ipAddress: string | null;
     })[]>;
-    findAll(tenantId: string, query: QueryCommentsDto): Promise<{
-        items: {
-            id: string;
-            name: string;
-            createdAt: Date;
-            tenantId: string;
-            email: string;
-            parentId: string | null;
-            content: string;
-            status: import("@prisma/client").$Enums.CommentStatus;
-            articleId: string;
-            ipAddress: string | null;
-        }[];
-        nextCursor: string | undefined;
-        total: number;
-    }>;
+    findAll(tenantId: string, query: QueryCommentsDto): Promise<import("../common/pagination/sayfali-liste").SayfaliSonuc<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        tenantId: string;
+        email: string;
+        parentId: string | null;
+        content: string;
+        status: import("@prisma/client").$Enums.CommentStatus;
+        articleId: string;
+        ipAddress: string | null;
+    }>>;
     create(tenantId: string, dto: CreateCommentDto, ipAddress: string): Promise<{
         id: string;
         name: string;

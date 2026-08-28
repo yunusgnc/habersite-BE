@@ -17,10 +17,11 @@ const client_1 = require("@prisma/client");
 class QueryCommentsDto {
     articleId;
     status;
+    page;
     cursor;
     limit = 20;
     static _OPENAPI_METADATA_FACTORY() {
-        return { articleId: { required: false, type: () => String }, status: { required: false, enum: ["PENDING", "APPROVED", "SPAM", "REJECTED"] }, cursor: { required: false, type: () => String }, limit: { required: false, type: () => Number, default: 20, minimum: 1, maximum: 50 } };
+        return { articleId: { required: false, type: () => String }, status: { required: false, enum: ["PENDING", "APPROVED", "SPAM", "REJECTED"] }, page: { required: false, type: () => Number, description: "Numaral\u0131 sayfalama \u2014 verilirse imle\u00E7 yok say\u0131l\u0131r (bkz. sayfali-liste).", minimum: 1 }, cursor: { required: false, type: () => String }, limit: { required: false, type: () => Number, default: 20, minimum: 1, maximum: 50 } };
     }
 }
 exports.QueryCommentsDto = QueryCommentsDto;
@@ -34,6 +35,13 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], QueryCommentsDto.prototype, "status", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], QueryCommentsDto.prototype, "page", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),

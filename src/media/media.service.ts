@@ -1,5 +1,6 @@
 import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { sayfaliListe } from '../common/pagination/sayfali-liste';
 import { MediaType } from '@prisma/client';
 import { UploadMediaDto } from './dto/upload-media.dto';
 import { QueryMediaDto } from './dto/query-media.dto';
@@ -81,25 +82,27 @@ export class MediaService {
       ];
     }
 
-    const [items, total] = await Promise.all([
-      this.prisma.media.findMany({
-        where,
-        take: limit + 1,
-        // `createdAt` tek başına unique degil — ozellikle migration ile gelen
-        // kayitlarda binlerce satir ayni damgayi tasiyor. Cursor pagination
-        // deterministik bir siralama sart, yoksa sayfa sinirlarinda satirlar
-        // hem tekrarliyor (React "duplicate key") hem de tamamen atlaniyor.
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
-      }),
-      this.prisma.media.count({ where }),
-    ]);
+    const sonuc = await sayfaliListe({
+      limit,
+      page: query.page,
+      cursor: query.cursor,
+      say: () => this.prisma.media.count({ where }),
+      bul: (args) =>
+        this.prisma.media.findMany({
+          where,
+          // `createdAt` tek başına unique degil — ozellikle migration ile gelen
+          // kayitlarda binlerce satir ayni damgayi tasiyor. Deterministik
+          // siralama sart, yoksa sayfa sinirlarinda satirlar hem tekrarliyor
+          // (React "duplicate key") hem de tamamen atlaniyor.
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          ...args,
+        }),
+    });
 
-    const hasMore = items.length > limit;
-    const data = hasMore ? items.slice(0, limit) : items;
-    const nextCursor = hasMore ? data[data.length - 1].id : null;
-
-    return { data, nextCursor, total };
+    // Tarihî sözleşme: bu ucun kayıt anahtarı `data` — panel ve medya seçici
+    // öyle okuyor. Yardımcının `items`ı burada ada çevrilir.
+    const { items, nextCursor, ...kalan } = sonuc;
+    return { data: items, nextCursor: nextCursor ?? null, ...kalan };
   }
 
   async findById(tenantId: string, id: string) {

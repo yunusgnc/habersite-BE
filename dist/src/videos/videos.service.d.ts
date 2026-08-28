@@ -5,33 +5,30 @@ import type { QueryVideosDto } from './dto/query-videos.dto';
 export declare class VideosService {
     private readonly prisma;
     constructor(prisma: PrismaService);
-    findAll(tenantId: string, query: QueryVideosDto): Promise<{
-        items: {
-            id: string;
-            slug: string;
-            createdAt: Date;
-            updatedAt: Date;
-            tenantId: string;
-            description: string | null;
-            sortOrder: number;
-            seoTitle: string | null;
-            seoDesc: string | null;
-            title: string;
-            status: import("@prisma/client").$Enums.ArticleStatus;
-            publishedAt: Date | null;
-            viewCount: number;
-            source: string;
-            categoryId: string | null;
-            videoUrl: string;
-            headline: string | null;
-            coverImage: string | null;
-            seoKeywords: string | null;
-            embedCode: string | null;
-            duration: number | null;
-            fileSize: number | null;
-        }[];
-        nextCursor: string | undefined;
-    }>;
+    findAll(tenantId: string, query: QueryVideosDto): Promise<import("../common/pagination/sayfali-liste").SayfaliSonuc<{
+        id: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
+        description: string | null;
+        sortOrder: number;
+        seoTitle: string | null;
+        seoDesc: string | null;
+        title: string;
+        status: import("@prisma/client").$Enums.ArticleStatus;
+        publishedAt: Date | null;
+        viewCount: number;
+        source: string;
+        categoryId: string | null;
+        videoUrl: string;
+        headline: string | null;
+        coverImage: string | null;
+        seoKeywords: string | null;
+        embedCode: string | null;
+        duration: number | null;
+        fileSize: number | null;
+    }>>;
     findOne(tenantId: string, id: string): Promise<{
         id: string;
         slug: string;

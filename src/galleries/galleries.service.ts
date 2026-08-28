@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import slugify from 'slugify';
 import { PrismaService } from '../prisma/prisma.service';
+import { sayfaliListe } from '../common/pagination/sayfali-liste';
 import { ArticleStatus } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
 import type { CreateGalleryDto, CreateGalleryImageDto } from './dto/create-gallery.dto';
@@ -12,34 +13,29 @@ export class GalleriesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(tenantId: string, query: QueryGalleriesDto) {
-    const { cursor, limit = 20, status, search } = query;
+    const { cursor, page, limit = 20, status, search } = query;
 
     const where: Prisma.GalleryWhereInput = { tenantId };
 
     if (status) where.status = status;
     if (search) where.title = { contains: search, mode: 'insensitive' };
 
-    const items = await this.prisma.gallery.findMany({
-      where,
-      // id tiebreaker: createdAt unique degil, cursor pagination deterministik siralama ister.
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-      take: limit + 1,
-      ...(cursor && {
-        cursor: { id: cursor },
-        skip: 1,
-      }),
-      include: {
-        _count: { select: { images: true } },
-      },
+    return sayfaliListe({
+      limit,
+      page,
+      cursor,
+      say: () => this.prisma.gallery.count({ where }),
+      bul: (args) =>
+        this.prisma.gallery.findMany({
+          where,
+          // id tiebreaker: createdAt unique degil, deterministik siralama sart.
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          include: {
+            _count: { select: { images: true } },
+          },
+          ...args,
+        }),
     });
-
-    // İmleç döndürülen son kayıt olmalı — `skip: 1` ile birlikte aksi hâlde
-    // her sayfa sınırında bir kayıt atlanıyor (bkz. articles.service findAll).
-    const hasMore = items.length > limit;
-    if (hasMore) items.pop();
-    const nextCursor = hasMore ? items[items.length - 1]?.id : undefined;
-
-    return { items, nextCursor };
   }
 
   async findOne(tenantId: string, id: string) {

@@ -66,7 +66,7 @@ let VideosController = class VideosController {
 exports.VideosController = VideosController;
 __decorate([
     (0, common_1.Get)(),
-    openapi.ApiResponse({ status: 200 }),
+    openapi.ApiResponse({ status: 200, type: Object }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),

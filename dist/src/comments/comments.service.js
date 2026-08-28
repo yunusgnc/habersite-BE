@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommentsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const sayfali_liste_1 = require("../common/pagination/sayfali-liste");
 const client_1 = require("@prisma/client");
 let CommentsService = class CommentsService {
     prisma;
@@ -36,29 +37,23 @@ let CommentsService = class CommentsService {
         });
     }
     async findAll(tenantId, query) {
-        const { articleId, status, cursor, limit = 20 } = query;
+        const { articleId, status, cursor, page, limit = 20 } = query;
         const where = { tenantId };
         if (articleId)
             where.articleId = articleId;
         if (status)
             where.status = status;
-        const [items, total] = await Promise.all([
-            this.prisma.comment.findMany({
+        return (0, sayfali_liste_1.sayfaliListe)({
+            limit,
+            page,
+            cursor,
+            say: () => this.prisma.comment.count({ where }),
+            bul: (args) => this.prisma.comment.findMany({
                 where,
-                take: limit + 1,
-                ...(cursor && {
-                    skip: 1,
-                    cursor: { id: cursor },
-                }),
                 orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+                ...args,
             }),
-            this.prisma.comment.count({ where }),
-        ]);
-        const hasMore = items.length > limit;
-        if (hasMore)
-            items.pop();
-        const nextCursor = hasMore ? items[items.length - 1]?.id : undefined;
-        return { items, nextCursor, total };
+        });
     }
     async create(tenantId, dto, ipAddress) {
         const score = this.spamScore(dto.content, dto.name, dto.email);

@@ -3,20 +3,16 @@ import { UserRole } from '@prisma/client';
 export declare class UsersController {
     private usersService;
     constructor(usersService: UsersService);
-    findAll(tenantId: string, cursor?: string, limit?: string, search?: string, role?: string): Promise<{
-        items: {
-            id: string;
-            name: string;
-            active: boolean;
-            createdAt: Date;
-            email: string;
-            avatar: string | null;
-            role: import("@prisma/client").$Enums.UserRole;
-            lastLoginAt: Date | null;
-        }[];
-        nextCursor: string | undefined;
-        total: number;
-    }>;
+    findAll(tenantId: string, cursor?: string, page?: string, limit?: string, search?: string, role?: string): Promise<import("../common/pagination/sayfali-liste").SayfaliSonuc<{
+        id: string;
+        name: string;
+        active: boolean;
+        createdAt: Date;
+        email: string;
+        avatar: string | null;
+        role: import("@prisma/client").$Enums.UserRole;
+        lastLoginAt: Date | null;
+    }>>;
     findById(tenantId: string, id: string): Promise<{
         id: string;
         name: string;

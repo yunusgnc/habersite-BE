@@ -45,6 +45,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const sayfali_liste_1 = require("../common/pagination/sayfali-liste");
 const bcrypt = __importStar(require("bcryptjs"));
 let UsersService = class UsersService {
     prisma;
@@ -74,23 +75,18 @@ let UsersService = class UsersService {
         }
         if (opts.role)
             where.role = opts.role;
-        const [items, total] = await Promise.all([
-            this.prisma.user.findMany({
+        return (0, sayfali_liste_1.sayfaliListe)({
+            limit,
+            page: opts.page,
+            cursor: opts.cursor,
+            say: () => this.prisma.user.count({ where }),
+            bul: (args) => this.prisma.user.findMany({
                 where,
                 select: this.selectFields,
                 orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-                take: limit + 1,
-                ...(opts.cursor
-                    ? { cursor: { id: opts.cursor }, skip: 1 }
-                    : {}),
+                ...args,
             }),
-            this.prisma.user.count({ where }),
-        ]);
-        const hasMore = items.length > limit;
-        if (hasMore)
-            items.pop();
-        const nextCursor = hasMore ? items[items.length - 1]?.id : undefined;
-        return { items, nextCursor, total };
+        });
     }
     async findById(tenantId, id) {
         const user = await this.prisma.user.findFirst({

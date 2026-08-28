@@ -15,15 +15,23 @@ const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const client_1 = require("@prisma/client");
 class QueryMediaDto {
+    page;
     cursor;
     limit = 30;
     type;
     search;
     static _OPENAPI_METADATA_FACTORY() {
-        return { cursor: { required: false, type: () => String }, limit: { required: false, type: () => Number, default: 30, minimum: 1, maximum: 100 }, type: { required: false, enum: ["VIDEO", "IMAGE", "DOCUMENT"] }, search: { required: false, type: () => String, description: "Dosya ad\u0131, ba\u015Fl\u0131k, alt metin veya adreste arar." } };
+        return { page: { required: false, type: () => Number, description: "Numaral\u0131 sayfalama \u2014 verilirse imle\u00E7 yok say\u0131l\u0131r (bkz. sayfali-liste).", minimum: 1 }, cursor: { required: false, type: () => String }, limit: { required: false, type: () => Number, default: 30, minimum: 1, maximum: 100 }, type: { required: false, enum: ["VIDEO", "IMAGE", "DOCUMENT"] }, search: { required: false, type: () => String, description: "Dosya ad\u0131, ba\u015Fl\u0131k, alt metin veya adreste arar." } };
     }
 }
 exports.QueryMediaDto = QueryMediaDto;
+__decorate([
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], QueryMediaDto.prototype, "page", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),

@@ -16,6 +16,7 @@ exports.VideosService = void 0;
 const common_1 = require("@nestjs/common");
 const slugify_1 = __importDefault(require("slugify"));
 const prisma_service_1 = require("../prisma/prisma.service");
+const sayfali_liste_1 = require("../common/pagination/sayfali-liste");
 const client_1 = require("@prisma/client");
 let VideosService = class VideosService {
     prisma;
@@ -23,26 +24,23 @@ let VideosService = class VideosService {
         this.prisma = prisma;
     }
     async findAll(tenantId, query) {
-        const { cursor, limit = 20, status, search } = query;
+        const { cursor, page, limit = 20, status, search } = query;
         const where = { tenantId };
         if (status)
             where.status = status;
         if (search)
             where.title = { contains: search, mode: 'insensitive' };
-        const items = await this.prisma.video.findMany({
-            where,
-            orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-            take: limit + 1,
-            ...(cursor && {
-                cursor: { id: cursor },
-                skip: 1,
+        return (0, sayfali_liste_1.sayfaliListe)({
+            limit,
+            page,
+            cursor,
+            say: () => this.prisma.video.count({ where }),
+            bul: (args) => this.prisma.video.findMany({
+                where,
+                orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+                ...args,
             }),
         });
-        const hasMore = items.length > limit;
-        if (hasMore)
-            items.pop();
-        const nextCursor = hasMore ? items[items.length - 1]?.id : undefined;
-        return { items, nextCursor };
     }
     async findOne(tenantId, id) {
         const video = await this.prisma.video.findFirst({

@@ -3,6 +3,13 @@ import { Type } from 'class-transformer';
 import { ArticleStatus } from '@prisma/client';
 
 export class QueryVideosDto {
+  /** Numaralı sayfalama — verilirse imleç yok sayılır (bkz. sayfali-liste). */
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  page?: number;
+
   @IsString()
   @IsOptional()
   cursor?: string;
