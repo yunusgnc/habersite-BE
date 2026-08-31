@@ -5,6 +5,9 @@ node_modules
 /generated/prisma
 migration-output/
 
+# Push öncesi TypeScript denetiminin ürettiği geçici artımlı derleme önbelleği.
+dist/tsconfig.tsbuildinfo
+
 # Yüklenen medya — depoya girmemeli.
 # Üretimde bu klasör kalıcı bir volume (docker-compose: api_uploads) ve imaj
 # onu kopyalamıyor; prod ayrıca R2/S3 sürücüsünü kullanıyor. Yani buradaki
