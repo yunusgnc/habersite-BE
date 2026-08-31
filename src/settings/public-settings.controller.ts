@@ -22,6 +22,7 @@ const SENSITIVE_KEYS = [
   'autoShareTelegram',
   'autoShareFacebook',
   'autoShareInstagram',
+  'autoShareTwitter',
   'telegramChatId',
   'facebookPageId',
   'instagramUserId',

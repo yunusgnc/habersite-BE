@@ -19,6 +19,10 @@ export const SECRET_SETTING_KEYS = new Set<string>([
   'telegramBotToken',
   'facebookPageToken',
   'instagramToken',
+  'twitterAccessToken',
+  'twitterRefreshToken',
+  'twitterClientId',
+  'twitterClientSecret',
 ]);
 
 /**

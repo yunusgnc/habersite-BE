@@ -14,5 +14,7 @@ export declare class SocialShareService {
     private telegram;
     private facebook;
     private instagram;
+    private twitter;
+    private twitterToken;
 }
 export {};

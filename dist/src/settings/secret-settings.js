@@ -10,6 +10,10 @@ exports.SECRET_SETTING_KEYS = new Set([
     'telegramBotToken',
     'facebookPageToken',
     'instagramToken',
+    'twitterAccessToken',
+    'twitterRefreshToken',
+    'twitterClientId',
+    'twitterClientSecret',
 ]);
 exports.AI_PROVIDER_SETTING_KEY = 'aiProvider';
 exports.AI_PROVIDER_KEY_SETTING = {
