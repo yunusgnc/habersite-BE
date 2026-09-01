@@ -13,15 +13,16 @@ export declare class MenusController {
         label: string | null;
     }[]>;
     findByLocation(tenantId: string, location: string): Promise<{
-        id: string;
-        updatedAt: Date;
-        tenantId: string;
-        location: string;
-        items: import("@prisma/client/runtime/client").JsonValue;
-        label: string | null;
-    } | {
-        location: string;
-        items: never[];
+        items: {
+            label: string;
+            url: string;
+            order: number;
+        }[];
+        id?: string | undefined;
+        updatedAt?: Date | undefined;
+        tenantId?: string | undefined;
+        location?: string | undefined;
+        label?: string | null | undefined;
     }>;
     upsert(tenantId: string, dto: CreateMenuDto): Promise<{
         id: string;

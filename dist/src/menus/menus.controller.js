@@ -54,7 +54,7 @@ __decorate([
 ], MenusController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':location'),
-    openapi.ApiResponse({ status: 200, type: Object }),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('location')),
     __metadata("design:type", Function),
