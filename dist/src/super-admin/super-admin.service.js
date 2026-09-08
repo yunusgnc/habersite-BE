@@ -176,7 +176,7 @@ let SuperAdminService = SuperAdminService_1 = class SuperAdminService {
                     ['contactAddress', ''],
                     ['primaryColor', dto.primaryColor ?? '#1e40af'],
                     ['secondaryColor', '#111827'],
-                    ['fontFamily', 'MontserratGP'],
+                    ['fontFamily', 'Figtree'],
                     ['copyrightText', `© ${new Date().getFullYear()} ${dto.name}. Tüm hakları saklıdır.`],
                     ['footerDescription', `${dto.name} - Güncel haberler ve son dakika gelişmeleri.`],
                     ['footerDisclaimer', ''],
