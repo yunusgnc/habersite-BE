@@ -9,6 +9,7 @@ const helmet_1 = __importDefault(require("helmet"));
 const swagger_1 = require("@nestjs/swagger");
 const app_module_1 = require("./app.module");
 const prisma_service_1 = require("./prisma/prisma.service");
+const tenant_domain_1 = require("./common/tenant-domain");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.set('trust proxy', 1);
@@ -38,12 +39,8 @@ async function bootstrap() {
             });
             const next = new Set();
             for (const t of tenants) {
-                const d = t.domain?.toLowerCase().trim();
-                if (!d)
-                    continue;
-                next.add(d);
-                if (!d.startsWith('www.'))
-                    next.add(`www.${d}`);
+                for (const domain of (0, tenant_domain_1.tenantDomainCandidates)(t.domain))
+                    next.add(domain);
             }
             tenantHosts = next;
             tenantHostsExpires = Date.now() + CACHE_TTL_MS;

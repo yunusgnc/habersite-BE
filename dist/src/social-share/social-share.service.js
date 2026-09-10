@@ -13,6 +13,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SocialShareService = void 0;
 const common_1 = require("@nestjs/common");
 const settings_service_1 = require("../settings/settings.service");
+function agSecimi(shareTargets) {
+    if (!Array.isArray(shareTargets))
+        return () => true;
+    const secilenler = new Set(shareTargets.map((x) => String(x)));
+    return (ag) => secilenler.has(ag);
+}
 const ZAMAN_ASIMI_MS = 10_000;
 const X_API = 'https://api.x.com';
 function graphApiBase() {
@@ -50,11 +56,20 @@ let SocialShareService = SocialShareService_1 = class SocialShareService {
                 : `/haber/${haber.slug}`;
             const baglanti = `${siteKoku}${yol}`;
             const gorsel = `${siteKoku}/api/social-image/${encodeURIComponent(haber.slug)}`;
+            const secili = agSecimi(haber.shareTargets);
             await Promise.allSettled([
-                this.telegram(tenantId, ayarlar, haber.title, baglanti, gorsel),
-                this.facebook(tenantId, ayarlar, haber.title, baglanti, gorsel),
-                this.instagram(tenantId, ayarlar, haber.title, baglanti, gorsel),
-                this.twitter(tenantId, ayarlar, haber.title, baglanti, gorsel),
+                secili('telegram')
+                    ? this.telegram(tenantId, ayarlar, haber.title, baglanti, gorsel)
+                    : Promise.resolve(),
+                secili('facebook')
+                    ? this.facebook(tenantId, ayarlar, haber.title, baglanti, gorsel)
+                    : Promise.resolve(),
+                secili('instagram')
+                    ? this.instagram(tenantId, ayarlar, haber.title, baglanti, gorsel)
+                    : Promise.resolve(),
+                secili('x')
+                    ? this.twitter(tenantId, ayarlar, haber.title, baglanti, gorsel)
+                    : Promise.resolve(),
             ]);
         }
         catch (err) {

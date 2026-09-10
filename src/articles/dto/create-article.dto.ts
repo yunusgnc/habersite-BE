@@ -1,6 +1,7 @@
 import {
   IsString,
   IsOptional,
+  IsIn,
   IsEnum,
   IsObject,
   IsArray,
@@ -13,6 +14,9 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ArticleType, ArticleStatus } from '@prisma/client';
+
+/** Desteklenen sosyal ağlar — SocialShareService'teki dallarla aynı adlar. */
+export const PAYLASIM_AGLARI = ['telegram', 'facebook', 'instagram', 'x'] as const;
 
 export class CreateArticleDto {
   @IsString()
@@ -50,6 +54,17 @@ export class CreateArticleDto {
   @IsString()
   @IsOptional()
   videoUrl?: string;
+
+  /**
+   * Bu haber hangi sosyal ağlara gönderilsin.
+   *
+   * Gönderilmezse (undefined) davranış eskisi gibi: ayarlarda AÇIK olan tüm
+   * ağlar. Boş dizi "hiçbiri" demek — editör paylaşımı bilinçli kapattı.
+   */
+  @IsArray()
+  @IsIn(PAYLASIM_AGLARI, { each: true })
+  @IsOptional()
+  shareTargets?: string[];
 
   @IsEnum(ArticleStatus)
   @IsOptional()

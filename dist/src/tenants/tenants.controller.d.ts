@@ -210,6 +210,7 @@ export declare class TenantsController {
             reviewedAt: Date | null;
             reviewNote: string | null;
             videoUrl: string | null;
+            shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
             headlineTitle: string | null;
             headlineImage: string | null;
             headlineFontSize: number | null;

@@ -1,4 +1,5 @@
 import { ArticleType, ArticleStatus } from '@prisma/client';
+export declare const PAYLASIM_AGLARI: readonly ["telegram", "facebook", "instagram", "x"];
 export declare class CreateArticleDto {
     title: string;
     slug?: string;
@@ -7,6 +8,7 @@ export declare class CreateArticleDto {
     spot?: string;
     featuredImage?: string;
     videoUrl?: string;
+    shareTargets?: string[];
     status?: ArticleStatus;
     categoryIds?: string[];
     tagNames?: string[];

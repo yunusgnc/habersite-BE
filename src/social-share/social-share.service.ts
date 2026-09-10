@@ -25,7 +25,25 @@ type PaylasilacakHaber = {
   slug: string;
   type?: string | null;
   featuredImage?: string | null;
+  /**
+   * Haber bazında ağ seçimi (panelde haber formundaki kutucuklar).
+   * null/undefined → ayarlarda açık olan TÜM ağlar (RSS içe aktarımı gibi
+   * seçim yapmayan yollar bu davranışta kalır); [] → hiçbiri.
+   */
+  shareTargets?: unknown;
 };
+
+/**
+ * Haberin ağ seçimini okunur bir denetleyiciye çevirir.
+ *
+ * Seçim yoksa her ağa "evet" der — eski kayıtlar ve panel dışından gelen
+ * içerikler eskisi gibi davranmaya devam etsin.
+ */
+function agSecimi(shareTargets: unknown): (ag: string) => boolean {
+  if (!Array.isArray(shareTargets)) return () => true;
+  const secilenler = new Set(shareTargets.map((x) => String(x)));
+  return (ag) => secilenler.has(ag);
+}
 
 const ZAMAN_ASIMI_MS = 10_000;
 const X_API = 'https://api.x.com';
@@ -82,11 +100,22 @@ export class SocialShareService {
       // üretiyor. Kapaksız haber bile boş görselle paylaşılmıyor.
       const gorsel = `${siteKoku}/api/social-image/${encodeURIComponent(haber.slug)}`;
 
+      // Haber formunda seçilmeyen ağ, ayarlarda açık olsa bile atlanır.
+      const secili = agSecimi(haber.shareTargets);
+
       await Promise.allSettled([
-        this.telegram(tenantId, ayarlar, haber.title, baglanti, gorsel),
-        this.facebook(tenantId, ayarlar, haber.title, baglanti, gorsel),
-        this.instagram(tenantId, ayarlar, haber.title, baglanti, gorsel),
-        this.twitter(tenantId, ayarlar, haber.title, baglanti, gorsel),
+        secili('telegram')
+          ? this.telegram(tenantId, ayarlar, haber.title, baglanti, gorsel)
+          : Promise.resolve(),
+        secili('facebook')
+          ? this.facebook(tenantId, ayarlar, haber.title, baglanti, gorsel)
+          : Promise.resolve(),
+        secili('instagram')
+          ? this.instagram(tenantId, ayarlar, haber.title, baglanti, gorsel)
+          : Promise.resolve(),
+        secili('x')
+          ? this.twitter(tenantId, ayarlar, haber.title, baglanti, gorsel)
+          : Promise.resolve(),
       ]);
     } catch (err) {
       this.logger.warn(

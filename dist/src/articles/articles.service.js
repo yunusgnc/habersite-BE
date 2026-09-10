@@ -73,6 +73,7 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
                 slug: true,
                 type: true,
                 featuredImage: true,
+                shareTargets: true,
             },
             take: 100,
         });

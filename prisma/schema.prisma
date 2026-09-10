@@ -224,6 +224,12 @@ model Article {
   /// Ham adres saklanıyor (watch / youtu.be / shorts fark etmez); gömme
   /// adresine çevirme sunum katmanının işi.
   videoUrl       String?       @map("video_url")
+  /// Bu haber hangi sosyal ağlara gönderilsin — haber bazında seçim.
+  /// null  → ayarlarda AÇIK olan bütün ağlar (varsayılan davranış, RSS
+  ///          içe aktarımı gibi seçim yapmayan yollar için)
+  /// []    → hiçbiri (editör bilinçli olarak paylaşımı kapattı)
+  /// [...] → yalnızca sayılan ağlar ('telegram' | 'facebook' | 'instagram' | 'x')
+  shareTargets   Json?         @map("share_targets")
   // Editorial highlights — displayed on the FE homepage manşet slots.
   headlineTitle       String?  @map("headline_title")
   headlineImage       String?  @map("headline_image")

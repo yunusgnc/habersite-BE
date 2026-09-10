@@ -10,6 +10,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { WidgetFeederService } from '../widgets/widget-feeder.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { ResetAdminPasswordDto, UpdateTenantDto } from './dto/update-tenant.dto';
+import {
+  canonicalTenantDomain,
+  tenantDomainCandidates,
+} from '../common/tenant-domain';
 
 const TENANT_LIST_SELECT = {
   id: true,
@@ -89,12 +93,13 @@ export class SuperAdminService {
   }
 
   async create(dto: CreateTenantDto) {
+    const domain = canonicalTenantDomain(dto.domain) || null;
     // Benzersizlik ön kontrolleri — anlaşılır hata mesajları için
     const clash = await this.prisma.tenant.findFirst({
       where: {
         OR: [
           { slug: dto.slug },
-          ...(dto.domain ? [{ domain: dto.domain }] : []),
+          ...(domain ? [{ domain: { in: tenantDomainCandidates(domain) } }] : []),
           ...(dto.subdomain ? [{ subdomain: dto.subdomain }] : []),
         ],
       },
@@ -103,7 +108,7 @@ export class SuperAdminService {
     if (clash) {
       if (clash.slug === dto.slug)
         throw new ConflictException('Bu slug zaten kullanılıyor');
-      if (dto.domain && clash.domain === dto.domain)
+      if (domain && tenantDomainCandidates(domain).includes(clash.domain ?? ''))
         throw new ConflictException('Bu domain zaten kullanılıyor');
       throw new ConflictException('Bu subdomain zaten kullanılıyor');
     }
@@ -117,7 +122,7 @@ export class SuperAdminService {
         data: {
           name: dto.name,
           slug: dto.slug,
-          domain: dto.domain?.trim() || null,
+          domain,
           subdomain: dto.subdomain?.trim() || null,
           logo: dto.logo?.trim() || null,
           plan: dto.plan ?? 'starter',
@@ -141,8 +146,8 @@ export class SuperAdminService {
 
       if (bootstrap) {
         // Site ayarları — FE'nin okuduğu tüm anahtarlar, güvenli default'larla
-        const siteUrl = dto.domain
-          ? `https://${dto.domain}`
+        const siteUrl = domain
+          ? `https://${domain}`
           : dto.subdomain
           ? `https://${dto.subdomain}.habersite.com`
           : `https://${dto.slug}.habersite.com`;
@@ -373,13 +378,27 @@ export class SuperAdminService {
 
   async update(id: string, dto: UpdateTenantDto) {
     await this.ensureExists(id);
+    const domain =
+      dto.domain === undefined ? undefined : canonicalTenantDomain(dto.domain) || null;
+    if (domain) {
+      const domainOwner = await this.prisma.tenant.findFirst({
+        where: {
+          id: { not: id },
+          domain: { in: tenantDomainCandidates(domain) },
+        },
+        select: { id: true },
+      });
+      if (domainOwner) {
+        throw new ConflictException('Bu domain zaten kullanılıyor');
+      }
+    }
     try {
       await this.prisma.tenant.update({
         where: { id },
         data: {
           ...(dto.name !== undefined && { name: dto.name }),
           ...(dto.slug !== undefined && { slug: dto.slug }),
-          ...(dto.domain !== undefined && { domain: dto.domain?.trim() || null }),
+          ...(domain !== undefined && { domain }),
           ...(dto.subdomain !== undefined && { subdomain: dto.subdomain?.trim() || null }),
           ...(dto.logo !== undefined && { logo: dto.logo?.trim() || null }),
           ...(dto.favicon !== undefined && { favicon: dto.favicon?.trim() || null }),

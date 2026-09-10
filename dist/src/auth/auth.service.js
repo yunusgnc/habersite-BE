@@ -49,6 +49,7 @@ const jwt_1 = require("@nestjs/jwt");
 const bcrypt = __importStar(require("bcryptjs"));
 const crypto_1 = require("crypto");
 const prisma_service_1 = require("../prisma/prisma.service");
+const tenant_domain_1 = require("../common/tenant-domain");
 let AuthService = AuthService_1 = class AuthService {
     prisma;
     jwtService;
@@ -99,8 +100,8 @@ let AuthService = AuthService_1 = class AuthService {
         }
         let user = verified.length === 1 ? verified[0] : null;
         if (!user && verified.length > 1 && host) {
-            const domain = host.split(':')[0];
-            const byHost = verified.filter((u) => u.tenant.domain === domain ||
+            const domain = (0, tenant_domain_1.normalizeTenantHost)(host);
+            const byHost = verified.filter((u) => (0, tenant_domain_1.tenantHostMatches)(u.tenant.domain, domain) ||
                 (u.tenant.subdomain && domain.startsWith(`${u.tenant.subdomain}.`)));
             if (byHost.length === 1)
                 user = byHost[0];

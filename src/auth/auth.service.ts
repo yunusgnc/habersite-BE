@@ -11,6 +11,7 @@ import { randomBytes, createHash } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { RegisterDto } from './dto/register.dto';
+import { normalizeTenantHost, tenantHostMatches } from '../common/tenant-domain';
 
 @Injectable()
 export class AuthService {
@@ -84,10 +85,10 @@ export class AuthService {
     let user = verified.length === 1 ? verified[0] : null;
 
     if (!user && verified.length > 1 && host) {
-      const domain = host.split(':')[0];
+      const domain = normalizeTenantHost(host);
       const byHost = verified.filter(
         (u) =>
-          u.tenant.domain === domain ||
+          tenantHostMatches(u.tenant.domain, domain) ||
           (u.tenant.subdomain && domain.startsWith(`${u.tenant.subdomain}.`)),
       );
       if (byHost.length === 1) user = byHost[0];

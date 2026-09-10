@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { normalizeTenantHost, tenantDomainCandidates } from '../tenant-domain';
 
 @Injectable()
 export class TenantGuard implements CanActivate {
@@ -25,23 +26,24 @@ export class TenantGuard implements CanActivate {
         where: { id: tenantId },
       });
     } else if (tenantDomain) {
-      const domain = tenantDomain.split(':')[0];
+      const domain = normalizeTenantHost(tenantDomain);
+      const domains = tenantDomainCandidates(domain);
       tenant = await this.prisma.tenant.findFirst({
         where: {
           OR: [
-            { domain },
+            { domain: { in: domains } },
             { subdomain: domain.split('.')[0] },
             { slug: domain },
           ],
         },
       });
     } else if (host) {
-      // Strip port from host header
-      const domain = host.split(':')[0];
+      const domain = normalizeTenantHost(host);
+      const domains = tenantDomainCandidates(domain);
       tenant = await this.prisma.tenant.findFirst({
         where: {
           OR: [
-            { domain },
+            { domain: { in: domains } },
             { subdomain: domain.split('.')[0] },
           ],
         },

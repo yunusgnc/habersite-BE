@@ -81,6 +81,8 @@ export class ArticlesService {
         slug: true,
         type: true,
         featuredImage: true,
+        // Zamanlanmış yayında da haberin kendi ağ seçimi geçerli.
+        shareTargets: true,
       },
       take: 100,
     });

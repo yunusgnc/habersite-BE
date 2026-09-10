@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TenantGuard = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
+const tenant_domain_1 = require("../tenant-domain");
 let TenantGuard = class TenantGuard {
     prisma;
     constructor(prisma) {
@@ -29,11 +30,12 @@ let TenantGuard = class TenantGuard {
             });
         }
         else if (tenantDomain) {
-            const domain = tenantDomain.split(':')[0];
+            const domain = (0, tenant_domain_1.normalizeTenantHost)(tenantDomain);
+            const domains = (0, tenant_domain_1.tenantDomainCandidates)(domain);
             tenant = await this.prisma.tenant.findFirst({
                 where: {
                     OR: [
-                        { domain },
+                        { domain: { in: domains } },
                         { subdomain: domain.split('.')[0] },
                         { slug: domain },
                     ],
@@ -41,11 +43,12 @@ let TenantGuard = class TenantGuard {
             });
         }
         else if (host) {
-            const domain = host.split(':')[0];
+            const domain = (0, tenant_domain_1.normalizeTenantHost)(host);
+            const domains = (0, tenant_domain_1.tenantDomainCandidates)(domain);
             tenant = await this.prisma.tenant.findFirst({
                 where: {
                     OR: [
-                        { domain },
+                        { domain: { in: domains } },
                         { subdomain: domain.split('.')[0] },
                     ],
                 },

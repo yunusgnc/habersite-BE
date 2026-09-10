@@ -48,6 +48,7 @@ const common_1 = require("@nestjs/common");
 const bcrypt = __importStar(require("bcryptjs"));
 const prisma_service_1 = require("../prisma/prisma.service");
 const widget_feeder_service_1 = require("../widgets/widget-feeder.service");
+const tenant_domain_1 = require("../common/tenant-domain");
 const TENANT_LIST_SELECT = {
     id: true,
     name: true,
@@ -116,11 +117,12 @@ let SuperAdminService = SuperAdminService_1 = class SuperAdminService {
         return tenant;
     }
     async create(dto) {
+        const domain = (0, tenant_domain_1.canonicalTenantDomain)(dto.domain) || null;
         const clash = await this.prisma.tenant.findFirst({
             where: {
                 OR: [
                     { slug: dto.slug },
-                    ...(dto.domain ? [{ domain: dto.domain }] : []),
+                    ...(domain ? [{ domain: { in: (0, tenant_domain_1.tenantDomainCandidates)(domain) } }] : []),
                     ...(dto.subdomain ? [{ subdomain: dto.subdomain }] : []),
                 ],
             },
@@ -129,7 +131,7 @@ let SuperAdminService = SuperAdminService_1 = class SuperAdminService {
         if (clash) {
             if (clash.slug === dto.slug)
                 throw new common_1.ConflictException('Bu slug zaten kullanılıyor');
-            if (dto.domain && clash.domain === dto.domain)
+            if (domain && (0, tenant_domain_1.tenantDomainCandidates)(domain).includes(clash.domain ?? ''))
                 throw new common_1.ConflictException('Bu domain zaten kullanılıyor');
             throw new common_1.ConflictException('Bu subdomain zaten kullanılıyor');
         }
@@ -141,7 +143,7 @@ let SuperAdminService = SuperAdminService_1 = class SuperAdminService {
                 data: {
                     name: dto.name,
                     slug: dto.slug,
-                    domain: dto.domain?.trim() || null,
+                    domain,
                     subdomain: dto.subdomain?.trim() || null,
                     logo: dto.logo?.trim() || null,
                     plan: dto.plan ?? 'starter',
@@ -161,8 +163,8 @@ let SuperAdminService = SuperAdminService_1 = class SuperAdminService {
                 },
             });
             if (bootstrap) {
-                const siteUrl = dto.domain
-                    ? `https://${dto.domain}`
+                const siteUrl = domain
+                    ? `https://${domain}`
                     : dto.subdomain
                         ? `https://${dto.subdomain}.habersite.com`
                         : `https://${dto.slug}.habersite.com`;
@@ -371,13 +373,26 @@ let SuperAdminService = SuperAdminService_1 = class SuperAdminService {
     }
     async update(id, dto) {
         await this.ensureExists(id);
+        const domain = dto.domain === undefined ? undefined : (0, tenant_domain_1.canonicalTenantDomain)(dto.domain) || null;
+        if (domain) {
+            const domainOwner = await this.prisma.tenant.findFirst({
+                where: {
+                    id: { not: id },
+                    domain: { in: (0, tenant_domain_1.tenantDomainCandidates)(domain) },
+                },
+                select: { id: true },
+            });
+            if (domainOwner) {
+                throw new common_1.ConflictException('Bu domain zaten kullanılıyor');
+            }
+        }
         try {
             await this.prisma.tenant.update({
                 where: { id },
                 data: {
                     ...(dto.name !== undefined && { name: dto.name }),
                     ...(dto.slug !== undefined && { slug: dto.slug }),
-                    ...(dto.domain !== undefined && { domain: dto.domain?.trim() || null }),
+                    ...(domain !== undefined && { domain }),
                     ...(dto.subdomain !== undefined && { subdomain: dto.subdomain?.trim() || null }),
                     ...(dto.logo !== undefined && { logo: dto.logo?.trim() || null }),
                     ...(dto.favicon !== undefined && { favicon: dto.favicon?.trim() || null }),

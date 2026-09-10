@@ -6,6 +6,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { PrismaService } from './prisma/prisma.service';
+import { tenantDomainCandidates } from './common/tenant-domain';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -63,10 +64,7 @@ async function bootstrap() {
       });
       const next = new Set<string>();
       for (const t of tenants) {
-        const d = t.domain?.toLowerCase().trim();
-        if (!d) continue;
-        next.add(d);
-        if (!d.startsWith('www.')) next.add(`www.${d}`);
+        for (const domain of tenantDomainCandidates(t.domain)) next.add(domain);
       }
       tenantHosts = next;
       tenantHostsExpires = Date.now() + CACHE_TTL_MS;

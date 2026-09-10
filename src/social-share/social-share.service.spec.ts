@@ -281,3 +281,75 @@ describe('SocialShareService', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * HABER BAZINDA AĞ SEÇİMİ — panelde haber formundaki kutucuklar.
+ *
+ * Kritik iddia: ayarlarda açık olsa bile SEÇİLMEYEN ağa istek gitmez;
+ * seçim hiç gönderilmemişse (eski kayıtlar, RSS içe aktarımı) davranış
+ * eskisi gibi kalır.
+ */
+describe('SocialShareService — haber bazında ağ seçimi', () => {
+  const HABER = {
+    id: 'h1',
+    title: 'Örnek Başlık',
+    slug: 'ornek-baslik',
+    type: 'NEWS',
+    featuredImage: 'https://cdn.example.com/kapak.jpg',
+  };
+
+  let settings: { getAll: jest.Mock; getSecret: jest.Mock };
+  let servis: SocialShareService;
+  let fetchMock: jest.Mock;
+
+  const HEPSI_ACIK = {
+    siteUrl: 'https://ornek.com',
+    autoShareTelegram: 'on',
+    telegramChatId: '@kanal',
+    autoShareFacebook: 'on',
+    facebookPageId: '12345',
+  };
+
+  beforeEach(() => {
+    settings = { getAll: jest.fn(), getSecret: jest.fn() };
+    servis = new SocialShareService(settings as any);
+    fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ ok: true, id: 'kap-1' }),
+    });
+    global.fetch = fetchMock as any;
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    settings.getAll.mockResolvedValue(HEPSI_ACIK);
+    settings.getSecret.mockResolvedValue('TOKEN');
+  });
+
+  afterEach(() => jest.restoreAllMocks());
+
+  const gidilenAdresler = () => fetchMock.mock.calls.map((c) => String(c[0]));
+
+  it('seçim yoksa açık olan tüm ağlara gider (eski davranış)', async () => {
+    await servis.paylas('t1', HABER);
+    const adresler = gidilenAdresler();
+    expect(adresler.some((a) => a.includes('api.telegram.org'))).toBe(true);
+    expect(adresler.some((a) => a.includes('/12345/photos'))).toBe(true);
+  });
+
+  it('yalnızca seçilen ağa gider — açık olan diğeri atlanır', async () => {
+    await servis.paylas('t1', { ...HABER, shareTargets: ['telegram'] });
+    const adresler = gidilenAdresler();
+    expect(adresler.some((a) => a.includes('api.telegram.org'))).toBe(true);
+    expect(adresler.some((a) => a.includes('/12345/photos'))).toBe(false);
+  });
+
+  it('boş seçim hiçbir ağa gitmez', async () => {
+    await servis.paylas('t1', { ...HABER, shareTargets: [] });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('seçili ama ayarlarda KAPALI ağa gitmez', async () => {
+    settings.getAll.mockResolvedValue({ ...HEPSI_ACIK, autoShareTelegram: 'off' });
+    await servis.paylas('t1', { ...HABER, shareTargets: ['telegram'] });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});

@@ -5,6 +5,7 @@ type PaylasilacakHaber = {
     slug: string;
     type?: string | null;
     featuredImage?: string | null;
+    shareTargets?: unknown;
 };
 export declare class SocialShareService {
     private readonly settings;
