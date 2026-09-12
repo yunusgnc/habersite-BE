@@ -9,6 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SocialShareModule = void 0;
 const common_1 = require("@nestjs/common");
 const settings_module_1 = require("../settings/settings.module");
+const social_share_controller_1 = require("./social-share.controller");
 const social_share_service_1 = require("./social-share.service");
 let SocialShareModule = class SocialShareModule {
 };
@@ -16,6 +17,7 @@ exports.SocialShareModule = SocialShareModule;
 exports.SocialShareModule = SocialShareModule = __decorate([
     (0, common_1.Module)({
         imports: [settings_module_1.SettingsModule],
+        controllers: [social_share_controller_1.SocialShareController],
         providers: [social_share_service_1.SocialShareService],
         exports: [social_share_service_1.SocialShareService],
     })

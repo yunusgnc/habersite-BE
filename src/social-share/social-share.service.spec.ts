@@ -6,6 +6,30 @@ import { SocialShareService } from './social-share.service';
  * kapalıyken hiçbir istek atılmaz ve ağ hatası asla dışarı sızmaz
  * (paylaşım yayını bloklayamaz — servisin bir numaralı kuralı).
  */
+
+/** Görsel yoklamasının (HEAD) "evet, bu bir görsel" yanıtı. */
+const GORSEL_YANITI = {
+  ok: true,
+  status: 200,
+  headers: new Headers({ 'content-type': 'image/jpeg' }),
+  body: null,
+};
+
+/** Yoklamaya görsel, diğer her şeye başarılı JSON dönen varsayılan mock. */
+function varsayilanFetch(): jest.Mock {
+  return jest.fn().mockImplementation((_adres: string, secenekler?: any) =>
+    Promise.resolve(
+      secenekler?.method === 'HEAD'
+        ? { ...GORSEL_YANITI }
+        : {
+            ok: true,
+            status: 200,
+            json: async () => ({ ok: true, id: 'kap-1' }),
+          },
+    ),
+  );
+}
+
 describe('SocialShareService', () => {
   const HABER = {
     id: 'h1',
@@ -19,15 +43,17 @@ describe('SocialShareService', () => {
   let servis: SocialShareService;
   let fetchMock: jest.Mock;
 
+  /** Görsel yoklaması hariç, ağlara giden gerçek istekler. */
+  const istekler = () =>
+    fetchMock.mock.calls.filter(
+      ([, secenekler]) => secenekler?.method !== 'HEAD',
+    );
+
   beforeEach(() => {
     delete process.env.META_GRAPH_VERSION;
     settings = { getAll: jest.fn(), getSecret: jest.fn(), upsert: jest.fn() };
     servis = new SocialShareService(settings as any);
-    fetchMock = jest.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({ ok: true, id: 'kap-1' }),
-    });
+    fetchMock = varsayilanFetch();
     global.fetch = fetchMock as any;
     jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
@@ -60,8 +86,8 @@ describe('SocialShareService', () => {
 
     await servis.paylas('t1', HABER);
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [adres, secenekler] = fetchMock.mock.calls[0];
+    expect(istekler()).toHaveLength(1);
+    const [adres, secenekler] = istekler()[0];
     expect(adres).toBe('https://api.telegram.org/botBOT_TOKEN/sendPhoto');
     const govde = JSON.parse(secenekler.body);
     expect(govde.chat_id).toBe('@kanal');
@@ -83,7 +109,7 @@ describe('SocialShareService', () => {
       featuredImage: null,
     });
 
-    const [adres, secenekler] = fetchMock.mock.calls[0];
+    const [adres, secenekler] = istekler()[0];
     expect(adres).toBe('https://api.telegram.org/botBOT_TOKEN/sendPhoto');
     expect(JSON.parse(secenekler.body).caption).toContain(
       '/makale/ornek-baslik',
@@ -100,7 +126,7 @@ describe('SocialShareService', () => {
 
     await servis.paylas('t1', HABER);
 
-    const [adres, secenekler] = fetchMock.mock.calls[0];
+    const [adres, secenekler] = istekler()[0];
     expect(adres).toBe('https://graph.facebook.com/v25.0/12345/photos');
     const govde = Object.fromEntries(
       (secenekler.body as URLSearchParams).entries(),
@@ -120,22 +146,18 @@ describe('SocialShareService', () => {
 
     await servis.paylas('t1', HABER);
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock.mock.calls[0][0]).toBe(
-      'https://graph.facebook.com/v25.0/999/media',
-    );
+    expect(istekler()).toHaveLength(2);
+    expect(istekler()[0][0]).toBe('https://graph.facebook.com/v25.0/999/media');
     expect(
-      Object.fromEntries(
-        (fetchMock.mock.calls[0][1].body as URLSearchParams).entries(),
-      ).image_url,
+      Object.fromEntries((istekler()[0][1].body as URLSearchParams).entries())
+        .image_url,
     ).toBe('https://ornek.com/api/social-image/ornek-baslik');
-    expect(fetchMock.mock.calls[1][0]).toBe(
+    expect(istekler()[1][0]).toBe(
       'https://graph.facebook.com/v25.0/999/media_publish',
     );
     expect(
-      Object.fromEntries(
-        (fetchMock.mock.calls[1][1].body as URLSearchParams).entries(),
-      ).creation_id,
+      Object.fromEntries((istekler()[1][1].body as URLSearchParams).entries())
+        .creation_id,
     ).toBe('kap-1');
   });
 
@@ -148,9 +170,9 @@ describe('SocialShareService', () => {
     settings.getSecret.mockResolvedValue('IG_TOKEN');
 
     await servis.paylas('t1', { ...HABER, featuredImage: null });
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(istekler()).toHaveLength(2);
     const govde = Object.fromEntries(
-      (fetchMock.mock.calls[0][1].body as URLSearchParams).entries(),
+      (istekler()[0][1].body as URLSearchParams).entries(),
     );
     expect(govde.image_url).toBe(
       'https://ornek.com/api/social-image/ornek-baslik',
@@ -166,6 +188,7 @@ describe('SocialShareService', () => {
       Promise.resolve(key === 'twitterAccessToken' ? 'X_USER_TOKEN' : null),
     );
     fetchMock
+      .mockResolvedValueOnce({ ...GORSEL_YANITI }) // görsel yoklaması
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
@@ -185,12 +208,12 @@ describe('SocialShareService', () => {
 
     await servis.paylas('t1', HABER);
 
-    expect(fetchMock.mock.calls[0][0]).toBe(
+    expect(istekler()[0][0]).toBe(
       'https://ornek.com/api/social-image/ornek-baslik',
     );
-    expect(fetchMock.mock.calls[1][0]).toBe('https://api.x.com/2/media/upload');
-    expect(fetchMock.mock.calls[2][0]).toBe('https://api.x.com/2/tweets');
-    const post = JSON.parse(fetchMock.mock.calls[2][1].body);
+    expect(istekler()[1][0]).toBe('https://api.x.com/2/media/upload');
+    expect(istekler()[2][0]).toBe('https://api.x.com/2/tweets');
+    const post = JSON.parse(istekler()[2][1].body);
     expect(post.media.media_ids).toEqual(['media-1']);
     expect(post.text).toContain('https://ornek.com/haber/ornek-baslik');
   });
@@ -210,6 +233,7 @@ describe('SocialShareService', () => {
       Promise.resolve(sirlar[key] ?? null),
     );
     fetchMock
+      .mockResolvedValueOnce({ ...GORSEL_YANITI }) // görsel yoklaması
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
@@ -237,8 +261,8 @@ describe('SocialShareService', () => {
 
     await servis.paylas('t1', HABER);
 
-    expect(fetchMock.mock.calls[0][0]).toBe('https://api.x.com/2/oauth2/token');
-    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe(
+    expect(istekler()[0][0]).toBe('https://api.x.com/2/oauth2/token');
+    expect(istekler()[0][1].headers.Authorization).toBe(
       `Basic ${Buffer.from('CLIENT_ID:CLIENT_SECRET').toString('base64')}`,
     );
     expect(settings.upsert).toHaveBeenCalledWith(
@@ -251,9 +275,7 @@ describe('SocialShareService', () => {
       'twitterRefreshToken',
       'YENI_REFRESH',
     );
-    expect(fetchMock.mock.calls[2][1].headers.Authorization).toBe(
-      'Bearer YENI_TOKEN',
-    );
+    expect(istekler()[2][1].headers.Authorization).toBe('Bearer YENI_TOKEN');
   });
 
   it('ağ hatası dışarı sızmaz — yayın akışını bloklayamaz', async () => {
@@ -278,7 +300,195 @@ describe('SocialShareService', () => {
     });
     settings.getSecret.mockResolvedValue(null);
     await servis.paylas('t1', HABER);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(istekler()).toHaveLength(0);
+  });
+});
+
+/**
+ * GÖRSEL BULUNAMAZSA — canlıda bizi yakan senaryo.
+ *
+ * Site eski sürümdeyse /api/social-image ucu HTML (404 sayfası) döner.
+ * Telegram ve Facebook fotoğrafı indiremeyince gönderiyi tümden reddeder;
+ * eski davranışta haber HİÇ paylaşılmıyordu. Artık sırayla ham kapağa,
+ * o da olmazsa metin/bağlantı gönderisine düşülür.
+ */
+describe('SocialShareService — görsel bulunamadığında', () => {
+  const HABER = {
+    id: 'h1',
+    title: 'Örnek Başlık',
+    slug: 'ornek-baslik',
+    type: 'NEWS',
+    featuredImage: 'https://cdn.example.com/kapak.jpg',
+  };
+
+  let settings: { getAll: jest.Mock; getSecret: jest.Mock };
+  let servis: SocialShareService;
+  let fetchMock: jest.Mock;
+
+  const istekler = () =>
+    fetchMock.mock.calls.filter(
+      ([, secenekler]) => secenekler?.method !== 'HEAD',
+    );
+
+  /** Yoklamada hangi adreslerin görsel sayılacağını belirler. */
+  function yoklama(gorselAdresleri: string[], digerleri?: jest.Mock) {
+    fetchMock = jest
+      .fn()
+      .mockImplementation((adres: string, secenekler?: any) => {
+        if (secenekler?.method === 'HEAD') {
+          return Promise.resolve(
+            gorselAdresleri.includes(adres)
+              ? { ...GORSEL_YANITI }
+              : {
+                  ok: true,
+                  status: 200,
+                  headers: new Headers({ 'content-type': 'text/html' }),
+                  body: null,
+                },
+          );
+        }
+        return digerleri
+          ? digerleri(adres, secenekler)
+          : Promise.resolve({
+              ok: true,
+              status: 200,
+              json: async () => ({ ok: true, id: 'kap-1' }),
+            });
+      });
+    global.fetch = fetchMock as any;
+  }
+
+  beforeEach(() => {
+    settings = { getAll: jest.fn(), getSecret: jest.fn() };
+    servis = new SocialShareService(settings as any);
+    settings.getSecret.mockResolvedValue('TOKEN');
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => jest.restoreAllMocks());
+
+  const TELEGRAM = {
+    siteUrl: 'https://ornek.com',
+    autoShareTelegram: 'on',
+    telegramChatId: '@kanal',
+  };
+
+  it('site ucu görsel dönmezse haberin ham kapağına düşer', async () => {
+    settings.getAll.mockResolvedValue(TELEGRAM);
+    yoklama(['https://cdn.example.com/kapak.jpg']);
+
+    await servis.paylas('t1', HABER);
+
+    const [adres, secenekler] = istekler()[0];
+    expect(adres).toContain('/sendPhoto');
+    expect(JSON.parse(secenekler.body).photo).toBe(
+      'https://cdn.example.com/kapak.jpg',
+    );
+  });
+
+  it('hiçbir görsel yoksa telegram metin gönderisi atar — haber yine kanala düşer', async () => {
+    settings.getAll.mockResolvedValue(TELEGRAM);
+    yoklama([]);
+
+    await servis.paylas('t1', { ...HABER, featuredImage: null });
+
+    expect(istekler()).toHaveLength(1);
+    const [adres, secenekler] = istekler()[0];
+    expect(adres).toBe('https://api.telegram.org/botTOKEN/sendMessage');
+    const govde = JSON.parse(secenekler.body);
+    expect(govde.chat_id).toBe('@kanal');
+    expect(govde.text).toContain('https://ornek.com/haber/ornek-baslik');
+  });
+
+  it('sendPhoto reddedilirse metin gönderisine düşülür', async () => {
+    settings.getAll.mockResolvedValue(TELEGRAM);
+    yoklama(
+      ['https://ornek.com/api/social-image/ornek-baslik'],
+      jest.fn((adres: string) =>
+        Promise.resolve(
+          adres.endsWith('/sendPhoto')
+            ? {
+                ok: false,
+                status: 400,
+                json: async () => ({
+                  ok: false,
+                  description: 'wrong file identifier',
+                }),
+              }
+            : { ok: true, status: 200, json: async () => ({ ok: true }) },
+        ),
+      ),
+    );
+
+    await servis.paylas('t1', HABER);
+
+    expect(istekler().map(([a]) => String(a))).toEqual([
+      'https://api.telegram.org/botTOKEN/sendPhoto',
+      'https://api.telegram.org/botTOKEN/sendMessage',
+    ]);
+  });
+
+  it('facebook görselsizken bağlantı gönderisi atar', async () => {
+    settings.getAll.mockResolvedValue({
+      siteUrl: 'https://ornek.com',
+      autoShareFacebook: 'on',
+      facebookPageId: '12345',
+    });
+    yoklama([]);
+
+    await servis.paylas('t1', { ...HABER, featuredImage: null });
+
+    const [adres, secenekler] = istekler()[0];
+    expect(adres).toBe('https://graph.facebook.com/v25.0/12345/feed');
+    const govde = Object.fromEntries(
+      (secenekler.body as URLSearchParams).entries(),
+    );
+    expect(govde.link).toBe('https://ornek.com/haber/ornek-baslik');
+    expect(govde.message).toBe('Örnek Başlık');
+  });
+
+  it('instagram görselsiz gönderi kabul etmediği için atlanır', async () => {
+    settings.getAll.mockResolvedValue({
+      siteUrl: 'https://ornek.com',
+      autoShareInstagram: 'on',
+      instagramUserId: '999',
+    });
+    yoklama([]);
+
+    await servis.paylas('t1', { ...HABER, featuredImage: null });
+
+    expect(istekler()).toHaveLength(0);
+  });
+
+  it('HEAD desteklenmeyen adreste GET ile doğrular', async () => {
+    settings.getAll.mockResolvedValue(TELEGRAM);
+    fetchMock = jest
+      .fn()
+      .mockImplementation((adres: string, secenekler?: any) => {
+        if (secenekler?.method === 'HEAD') {
+          return Promise.resolve({
+            ok: false,
+            status: 405,
+            headers: new Headers(),
+          });
+        }
+        if (secenekler?.method === 'GET') {
+          return Promise.resolve({ ...GORSEL_YANITI });
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({ ok: true }),
+        });
+      });
+    global.fetch = fetchMock as any;
+
+    await servis.paylas('t1', HABER);
+
+    const gonderi = fetchMock.mock.calls.find(([a]) =>
+      String(a).includes('api.telegram.org'),
+    );
+    expect(String(gonderi?.[0])).toContain('/sendPhoto');
   });
 });
 
@@ -313,11 +523,7 @@ describe('SocialShareService — haber bazında ağ seçimi', () => {
   beforeEach(() => {
     settings = { getAll: jest.fn(), getSecret: jest.fn() };
     servis = new SocialShareService(settings as any);
-    fetchMock = jest.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({ ok: true, id: 'kap-1' }),
-    });
+    fetchMock = varsayilanFetch();
     global.fetch = fetchMock as any;
     jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     settings.getAll.mockResolvedValue(HEPSI_ACIK);
@@ -342,13 +548,17 @@ describe('SocialShareService — haber bazında ağ seçimi', () => {
     expect(adresler.some((a) => a.includes('/12345/photos'))).toBe(false);
   });
 
-  it('boş seçim hiçbir ağa gitmez', async () => {
+  it('boş seçim hiçbir ağa gitmez — görsel bile yoklanmaz', async () => {
     await servis.paylas('t1', { ...HABER, shareTargets: [] });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('seçili ama ayarlarda KAPALI ağa gitmez', async () => {
-    settings.getAll.mockResolvedValue({ ...HEPSI_ACIK, autoShareTelegram: 'off' });
+    settings.getAll.mockResolvedValue({
+      ...HEPSI_ACIK,
+      autoShareTelegram: 'off',
+      autoShareFacebook: 'off',
+    });
     await servis.paylas('t1', { ...HABER, shareTargets: ['telegram'] });
     expect(fetchMock).not.toHaveBeenCalled();
   });

@@ -31,10 +31,10 @@ export declare class ContactMessagesService {
             status: import("@prisma/client").$Enums.MessageStatus;
             ipAddress: string | null;
             targetUrl: string | null;
+            message: string;
             subject: string | null;
             read: boolean;
             phone: string | null;
-            message: string;
             district: string | null;
             attachments: Prisma.JsonValue;
             adminNote: string | null;
@@ -59,10 +59,10 @@ export declare class ContactMessagesService {
         status: import("@prisma/client").$Enums.MessageStatus;
         ipAddress: string | null;
         targetUrl: string | null;
+        message: string;
         subject: string | null;
         read: boolean;
         phone: string | null;
-        message: string;
         district: string | null;
         attachments: Prisma.JsonValue;
         adminNote: string | null;
@@ -79,10 +79,10 @@ export declare class ContactMessagesService {
         status: import("@prisma/client").$Enums.MessageStatus;
         ipAddress: string | null;
         targetUrl: string | null;
+        message: string;
         subject: string | null;
         read: boolean;
         phone: string | null;
-        message: string;
         district: string | null;
         attachments: Prisma.JsonValue;
         adminNote: string | null;

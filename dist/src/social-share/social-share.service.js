@@ -19,6 +19,12 @@ function agSecimi(shareTargets) {
     const secilenler = new Set(shareTargets.map((x) => String(x)));
     return (ag) => secilenler.has(ag);
 }
+const AG_AYARLARI = [
+    ['telegram', 'autoShareTelegram'],
+    ['facebook', 'autoShareFacebook'],
+    ['instagram', 'autoShareInstagram'],
+    ['x', 'autoShareTwitter'],
+];
 const ZAMAN_ASIMI_MS = 10_000;
 const X_API = 'https://api.x.com';
 function graphApiBase() {
@@ -55,8 +61,11 @@ let SocialShareService = SocialShareService_1 = class SocialShareService {
                 ? `/makale/${haber.slug}`
                 : `/haber/${haber.slug}`;
             const baglanti = `${siteKoku}${yol}`;
-            const gorsel = `${siteKoku}/api/social-image/${encodeURIComponent(haber.slug)}`;
             const secili = agSecimi(haber.shareTargets);
+            if (!AG_AYARLARI.some(([ag, anahtar]) => secili(ag) && ayarlar[anahtar] === 'on')) {
+                return;
+            }
+            const gorsel = await this.gorselAdresi(siteKoku, haber);
             await Promise.allSettled([
                 secili('telegram')
                     ? this.telegram(tenantId, ayarlar, haber.title, baglanti, gorsel)
@@ -76,6 +85,179 @@ let SocialShareService = SocialShareService_1 = class SocialShareService {
             this.logger.warn(`Sosyal paylaşım atlandı (${tenantId}): ${err.message}`);
         }
     }
+    async baglantiyiSina(tenantId, ag) {
+        try {
+            const ayarlar = await this.settings.getAll(tenantId);
+            switch (ag) {
+                case 'telegram':
+                    return await this.telegramiSina(tenantId, ayarlar);
+                case 'facebook':
+                    return await this.facebooguSina(tenantId, ayarlar);
+                case 'instagram':
+                    return await this.instagramiSina(tenantId, ayarlar);
+                case 'x':
+                    return await this.xiSina(tenantId);
+                default:
+                    return { tamam: false, mesaj: `Bilinmeyen ağ: ${ag}` };
+            }
+        }
+        catch (err) {
+            return {
+                tamam: false,
+                mesaj: `Sınama tamamlanamadı: ${err.message}`,
+            };
+        }
+    }
+    async telegramiSina(tenantId, ayarlar) {
+        const kanal = String(ayarlar.telegramChatId ?? '').trim();
+        const token = await this.settings.getSecret(tenantId, 'telegramBotToken');
+        if (!token) {
+            return { tamam: false, mesaj: 'Bot Token kayıtlı değil.' };
+        }
+        if (!kanal) {
+            return {
+                tamam: false,
+                mesaj: 'Kanal Kimliği boş. Örnek: @kanaladi',
+            };
+        }
+        const cagir = async (uc, sorgu) => {
+            const adres = new URL(`https://api.telegram.org/bot${token}/${uc}`);
+            for (const [k, v] of Object.entries(sorgu ?? {})) {
+                adres.searchParams.set(k, v);
+            }
+            const yanit = await fetch(adres, {
+                signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+            });
+            const veri = await yanit.json().catch(() => ({}));
+            return { tamam: yanit.ok && veri.ok !== false, veri };
+        };
+        const ben = await cagir('getMe');
+        if (!ben.tamam) {
+            return {
+                tamam: false,
+                mesaj: `Bot Token geçersiz görünüyor (Telegram: ${hataMesaji(ben.veri, 0)}). BotFather'dan yeni bir token alın.`,
+            };
+        }
+        const botAdi = String(ben.veri?.result?.username ?? 'bot');
+        const botId = ben.veri?.result?.id;
+        const sohbet = await cagir('getChat', { chat_id: kanal });
+        if (!sohbet.tamam) {
+            const hata = hataMesaji(sohbet.veri, 0);
+            return {
+                tamam: false,
+                mesaj: /not found/i.test(hata)
+                    ? `Kanal bulunamadı: ${kanal}. Kimliği @kanaladi biçiminde yazın ve @${botAdi} botunu kanala YÖNETİCİ olarak ekleyin.`
+                    : `Kanala erişilemedi (${hata}).`,
+            };
+        }
+        const uye = await cagir('getChatMember', {
+            chat_id: kanal,
+            user_id: String(botId),
+        });
+        const durum = String(uye.veri?.result?.status ?? '');
+        if (!uye.tamam || (durum !== 'administrator' && durum !== 'creator')) {
+            return {
+                tamam: false,
+                mesaj: `@${botAdi} bu kanalda yönetici değil. Telegram'da kanalı açın → Yönet → Yöneticiler → Yönetici Ekle ile @${botAdi} botunu ekleyin.`,
+            };
+        }
+        if (uye.veri?.result?.can_post_messages === false) {
+            return {
+                tamam: false,
+                mesaj: `@${botAdi} yönetici ama "Mesaj gönder" yetkisi kapalı. Yönetici ayarlarından açın.`,
+            };
+        }
+        const kanalAdi = String(sohbet.veri?.result?.title ?? kanal);
+        return {
+            tamam: true,
+            mesaj: `Hazır — "${kanalAdi}" kanalına @${botAdi} olarak gönderim yapılabiliyor.`,
+        };
+    }
+    async facebooguSina(tenantId, ayarlar) {
+        const sayfa = String(ayarlar.facebookPageId ?? '').trim();
+        const token = await this.settings.getSecret(tenantId, 'facebookPageToken');
+        if (!token)
+            return { tamam: false, mesaj: 'Sayfa Erişim Anahtarı kayıtlı değil.' };
+        if (!sayfa)
+            return { tamam: false, mesaj: 'Sayfa Kimliği boş.' };
+        const yanit = await fetch(`${graphApiBase()}/${sayfa}?fields=name&access_token=${encodeURIComponent(token)}`, { signal: AbortSignal.timeout(ZAMAN_ASIMI_MS) });
+        const veri = await yanit.json().catch(() => ({}));
+        return yanit.ok && veri?.name
+            ? { tamam: true, mesaj: `Hazır — "${veri.name}" sayfasına bağlanıldı.` }
+            : {
+                tamam: false,
+                mesaj: `Sayfaya erişilemedi (${hataMesaji(veri, yanit.status)}). Sayfa Kimliğini ve anahtarın süresini kontrol edin.`,
+            };
+    }
+    async instagramiSina(tenantId, ayarlar) {
+        const hesap = String(ayarlar.instagramUserId ?? '').trim();
+        const token = await this.settings.getSecret(tenantId, 'instagramToken');
+        if (!token)
+            return { tamam: false, mesaj: 'Erişim Anahtarı kayıtlı değil.' };
+        if (!hesap)
+            return { tamam: false, mesaj: 'Instagram Hesap Kimliği boş.' };
+        const yanit = await fetch(`${graphApiBase()}/${hesap}?fields=username&access_token=${encodeURIComponent(token)}`, { signal: AbortSignal.timeout(ZAMAN_ASIMI_MS) });
+        const veri = await yanit.json().catch(() => ({}));
+        return yanit.ok && veri?.username
+            ? { tamam: true, mesaj: `Hazır — @${veri.username} hesabına bağlanıldı.` }
+            : {
+                tamam: false,
+                mesaj: `Hesaba erişilemedi (${hataMesaji(veri, yanit.status)}). Hesabın İşletme/İçerik Üretici olduğundan ve bir Facebook sayfasına bağlı olduğundan emin olun.`,
+            };
+    }
+    async xiSina(tenantId) {
+        const token = await this.twitterToken(tenantId);
+        if (!token)
+            return { tamam: false, mesaj: 'Erişim Anahtarı kayıtlı değil.' };
+        const yanit = await fetch(`${X_API}/2/users/me`, {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+        });
+        const veri = await yanit.json().catch(() => ({}));
+        return yanit.ok && veri?.data?.username
+            ? {
+                tamam: true,
+                mesaj: `Hazır — @${veri.data.username} hesabına bağlanıldı.`,
+            }
+            : {
+                tamam: false,
+                mesaj: `Hesaba erişilemedi (${hataMesaji(veri, yanit.status)}). Anahtarın süresi dolmuş olabilir; yenileme anahtarı ve istemci bilgilerini de kaydedin.`,
+            };
+    }
+    async gorselAdresi(siteKoku, haber) {
+        const kapak = String(haber.featuredImage ?? '').trim();
+        const adaylar = [
+            `${siteKoku}/api/social-image/${encodeURIComponent(haber.slug)}`,
+            /^https?:\/\//i.test(kapak) ? kapak : '',
+        ].filter(Boolean);
+        for (const aday of adaylar) {
+            if (await this.gorselMi(aday))
+                return aday;
+        }
+        this.logger.warn(`Paylaşılabilir görsel bulunamadı (${haber.slug}); metin gönderisine düşülüyor`);
+        return null;
+    }
+    async gorselMi(adres) {
+        const iste = (yontem) => fetch(adres, {
+            method: yontem,
+            signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+        });
+        try {
+            let yanit = await iste('HEAD');
+            if (yanit.status === 405 || yanit.status === 501) {
+                yanit = await iste('GET');
+            }
+            await yanit.body?.cancel().catch(() => undefined);
+            const tur = (yanit.headers.get('content-type') ?? '')
+                .split(';')[0]
+                .trim()
+                .toLowerCase();
+            return yanit.ok && tur.startsWith('image/');
+        }
+        catch {
+            return false;
+        }
+    }
     async telegram(tenantId, ayarlar, baslik, baglanti, gorsel) {
         if (ayarlar.autoShareTelegram !== 'on')
             return;
@@ -83,20 +265,33 @@ let SocialShareService = SocialShareService_1 = class SocialShareService {
         const token = await this.settings.getSecret(tenantId, 'telegramBotToken');
         if (!kanal || !token)
             return;
-        try {
-            const yanit = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+        const metin = `${baslik}\n${baglanti}`;
+        const cagir = async (uc, govde) => {
+            const yanit = await fetch(`https://api.telegram.org/bot${token}/${uc}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: kanal,
-                    photo: gorsel,
-                    caption: `${baslik}\n${baglanti}`,
-                }),
+                body: JSON.stringify({ chat_id: kanal, ...govde }),
                 signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
             });
             const veri = await yanit.json().catch(() => ({}));
-            if (!yanit.ok || veri.ok === false) {
-                this.logger.warn(`Telegram paylaşımı reddedildi (${tenantId}): ${hataMesaji(veri, yanit.status)}`);
+            return {
+                tamam: yanit.ok && veri.ok !== false,
+                hata: hataMesaji(veri, yanit.status),
+            };
+        };
+        try {
+            if (gorsel) {
+                const foto = await cagir('sendPhoto', {
+                    photo: gorsel,
+                    caption: metin,
+                });
+                if (foto.tamam)
+                    return;
+                this.logger.warn(`Telegram fotoğraflı gönderi reddedildi (${tenantId}), metin olarak deneniyor: ${foto.hata}`);
+            }
+            const yazi = await cagir('sendMessage', { text: metin });
+            if (!yazi.tamam) {
+                this.logger.warn(`Telegram paylaşımı reddedildi (${tenantId}): ${yazi.hata}`);
             }
         }
         catch (err) {
@@ -110,7 +305,27 @@ let SocialShareService = SocialShareService_1 = class SocialShareService {
         const token = await this.settings.getSecret(tenantId, 'facebookPageToken');
         if (!sayfa || !token)
             return;
+        const baglantiGonderisi = async () => {
+            const yanit = await fetch(`${graphApiBase()}/${sayfa}/feed`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    message: baslik,
+                    link: baglanti,
+                    access_token: token,
+                }),
+                signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+            });
+            if (!yanit.ok) {
+                const veri = await yanit.json().catch(() => ({}));
+                this.logger.warn(`Facebook paylaşımı reddedildi (${tenantId}): ${hataMesaji(veri, yanit.status)}`);
+            }
+        };
         try {
+            if (!gorsel) {
+                await baglantiGonderisi();
+                return;
+            }
             const yanit = await fetch(`${graphApiBase()}/${sayfa}/photos`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -123,7 +338,8 @@ let SocialShareService = SocialShareService_1 = class SocialShareService {
             });
             if (!yanit.ok) {
                 const veri = await yanit.json().catch(() => ({}));
-                this.logger.warn(`Facebook paylaşımı reddedildi (${tenantId}): ${hataMesaji(veri, yanit.status)}`);
+                this.logger.warn(`Facebook fotoğraflı gönderi reddedildi (${tenantId}), bağlantı olarak deneniyor: ${hataMesaji(veri, yanit.status)}`);
+                await baglantiGonderisi();
             }
         }
         catch (err) {
@@ -137,6 +353,10 @@ let SocialShareService = SocialShareService_1 = class SocialShareService {
         const token = await this.settings.getSecret(tenantId, 'instagramToken');
         if (!hesap || !token)
             return;
+        if (!gorsel) {
+            this.logger.warn(`Instagram paylaşımı atlandı (${tenantId}): paylaşılabilir görsel yok`);
+            return;
+        }
         try {
             const kap = await fetch(`${graphApiBase()}/${hesap}/media`, {
                 method: 'POST',
@@ -180,6 +400,8 @@ let SocialShareService = SocialShareService_1 = class SocialShareService {
         try {
             let medyaId = null;
             try {
+                if (!gorsel)
+                    throw new Error('paylaşılabilir görsel yok');
                 const resimYaniti = await fetch(gorsel, {
                     signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
                 });

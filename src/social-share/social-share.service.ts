@@ -14,9 +14,10 @@ import { SettingsService } from '../settings/settings.service';
  * - Yalnızca DURUM GEÇİŞİNDE tetiklenir (taslak → yayında); yayındaki bir
  *   haberi düzenlemek yeniden paylaşmaz — mükerrer gönderi, silinmesi
  *   bizde olmayan bir mecrada kalıcı kirlilik demek.
- * - Bütün ağlar aynı, site tarafından üretilen 1200×630 JPEG'i kullanır.
- *   Böylece ham medya WebP olsa veya eski görsel yolu bozulsa bile sosyal
- *   ağlara her zaman doğrudan indirilebilir, standart bir görsel gider.
+ * - Bütün ağlar aynı görseli kullanır: önce site tarafından üretilen
+ *   1200×630 JPEG denenir, o adres görsel dönmezse haberin ham kapağına,
+ *   o da yoksa metin/bağlantı gönderisine düşülür. Görsel yüzünden haberin
+ *   HİÇ paylaşılmaması kabul edilebilir bir sonuç değil.
  */
 
 type PaylasilacakHaber = {
@@ -44,6 +45,17 @@ function agSecimi(shareTargets: unknown): (ag: string) => boolean {
   const secilenler = new Set(shareTargets.map((x) => String(x)));
   return (ag) => secilenler.has(ag);
 }
+
+/** Ağ adı → onu açıp kapatan kiracı ayarı. */
+const AG_AYARLARI: ReadonlyArray<readonly [string, string]> = [
+  ['telegram', 'autoShareTelegram'],
+  ['facebook', 'autoShareFacebook'],
+  ['instagram', 'autoShareInstagram'],
+  ['x', 'autoShareTwitter'],
+];
+
+/** Panelin "Bağlantıyı Sına" düğmesine dönen sonuç. */
+export type SinamaSonucu = { tamam: boolean; mesaj: string };
 
 const ZAMAN_ASIMI_MS = 10_000;
 const X_API = 'https://api.x.com';
@@ -94,14 +106,23 @@ export class SocialShareService {
           ? `/makale/${haber.slug}`
           : `/haber/${haber.slug}`;
       const baglanti = `${siteKoku}${yol}`;
-      // Ham kapak adresini sosyal ağlara vermiyoruz. Yeni yüklemeler WebP,
-      // Instagram ise JPEG istiyor; eski kayıtlarda da yanlış/bayat yollar var.
-      // Site bu uçta kapağı güvenli biçimde JPEG'e çevirip markalı bir yedek
-      // üretiyor. Kapaksız haber bile boş görselle paylaşılmıyor.
-      const gorsel = `${siteKoku}/api/social-image/${encodeURIComponent(haber.slug)}`;
-
       // Haber formunda seçilmeyen ağ, ayarlarda açık olsa bile atlanır.
       const secili = agSecimi(haber.shareTargets);
+      // Gidecek ağ yoksa görseli yoklamayalım — boşuna iki HTTP isteği.
+      if (
+        !AG_AYARLARI.some(
+          ([ag, anahtar]) => secili(ag) && ayarlar[anahtar] === 'on',
+        )
+      ) {
+        return;
+      }
+
+      // Ham kapak adresini tercih etmiyoruz: yeni yüklemeler WebP, Instagram
+      // ise JPEG istiyor; eski kayıtlarda da yanlış/bayat yollar var. Site
+      // bu uçta kapağı güvenli biçimde JPEG'e çevirip markalı bir yedek
+      // üretiyor. Ama uç GERÇEKTEN görsel dönmeli — dönmezse aşağıdaki
+      // sıralama ham kapağa, o da olmazsa metin gönderisine düşer.
+      const gorsel = await this.gorselAdresi(siteKoku, haber);
 
       await Promise.allSettled([
         secili('telegram')
@@ -124,37 +145,278 @@ export class SocialShareService {
     }
   }
 
+  /**
+   * BAĞLANTI SINAMASI — kanala/sayfaya hiçbir şey GÖNDERMEDEN kurulumu
+   * denetler ve sorunu Türkçe olarak adıyla söyler.
+   *
+   * Var olma sebebi: paylaşım "ateşle ve unut" olduğu için hatalar yalnızca
+   * sunucu günlüğüne düşüyor; panelden bakan kişi haberin neden kanala
+   * düşmediğini göremiyordu. Sınama yalnızca OKUMA uçlarını çağırır —
+   * test gönderisi atıp kanalı kirletmez.
+   */
+  async baglantiyiSina(tenantId: string, ag: string): Promise<SinamaSonucu> {
+    try {
+      const ayarlar = await this.settings.getAll(tenantId);
+      switch (ag) {
+        case 'telegram':
+          return await this.telegramiSina(tenantId, ayarlar);
+        case 'facebook':
+          return await this.facebooguSina(tenantId, ayarlar);
+        case 'instagram':
+          return await this.instagramiSina(tenantId, ayarlar);
+        case 'x':
+          return await this.xiSina(tenantId);
+        default:
+          return { tamam: false, mesaj: `Bilinmeyen ağ: ${ag}` };
+      }
+    } catch (err) {
+      return {
+        tamam: false,
+        mesaj: `Sınama tamamlanamadı: ${(err as Error).message}`,
+      };
+    }
+  }
+
+  private async telegramiSina(
+    tenantId: string,
+    ayarlar: Record<string, any>,
+  ): Promise<SinamaSonucu> {
+    const kanal = String(ayarlar.telegramChatId ?? '').trim();
+    const token = await this.settings.getSecret(tenantId, 'telegramBotToken');
+    if (!token) {
+      return { tamam: false, mesaj: 'Bot Token kayıtlı değil.' };
+    }
+    if (!kanal) {
+      return {
+        tamam: false,
+        mesaj: 'Kanal Kimliği boş. Örnek: @kanaladi',
+      };
+    }
+
+    const cagir = async (uc: string, sorgu?: Record<string, string>) => {
+      const adres = new URL(`https://api.telegram.org/bot${token}/${uc}`);
+      for (const [k, v] of Object.entries(sorgu ?? {})) {
+        adres.searchParams.set(k, v);
+      }
+      const yanit = await fetch(adres, {
+        signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+      });
+      const veri: any = await yanit.json().catch(() => ({}));
+      return { tamam: yanit.ok && veri.ok !== false, veri };
+    };
+
+    const ben = await cagir('getMe');
+    if (!ben.tamam) {
+      return {
+        tamam: false,
+        mesaj: `Bot Token geçersiz görünüyor (Telegram: ${hataMesaji(ben.veri, 0)}). BotFather'dan yeni bir token alın.`,
+      };
+    }
+    const botAdi = String(ben.veri?.result?.username ?? 'bot');
+    const botId = ben.veri?.result?.id;
+
+    const sohbet = await cagir('getChat', { chat_id: kanal });
+    if (!sohbet.tamam) {
+      const hata = hataMesaji(sohbet.veri, 0);
+      return {
+        tamam: false,
+        mesaj: /not found/i.test(hata)
+          ? `Kanal bulunamadı: ${kanal}. Kimliği @kanaladi biçiminde yazın ve @${botAdi} botunu kanala YÖNETİCİ olarak ekleyin.`
+          : `Kanala erişilemedi (${hata}).`,
+      };
+    }
+
+    const uye = await cagir('getChatMember', {
+      chat_id: kanal,
+      user_id: String(botId),
+    });
+    const durum = String(uye.veri?.result?.status ?? '');
+    if (!uye.tamam || (durum !== 'administrator' && durum !== 'creator')) {
+      return {
+        tamam: false,
+        mesaj: `@${botAdi} bu kanalda yönetici değil. Telegram'da kanalı açın → Yönet → Yöneticiler → Yönetici Ekle ile @${botAdi} botunu ekleyin.`,
+      };
+    }
+    if (uye.veri?.result?.can_post_messages === false) {
+      return {
+        tamam: false,
+        mesaj: `@${botAdi} yönetici ama "Mesaj gönder" yetkisi kapalı. Yönetici ayarlarından açın.`,
+      };
+    }
+
+    const kanalAdi = String(sohbet.veri?.result?.title ?? kanal);
+    return {
+      tamam: true,
+      mesaj: `Hazır — "${kanalAdi}" kanalına @${botAdi} olarak gönderim yapılabiliyor.`,
+    };
+  }
+
+  private async facebooguSina(
+    tenantId: string,
+    ayarlar: Record<string, any>,
+  ): Promise<SinamaSonucu> {
+    const sayfa = String(ayarlar.facebookPageId ?? '').trim();
+    const token = await this.settings.getSecret(tenantId, 'facebookPageToken');
+    if (!token)
+      return { tamam: false, mesaj: 'Sayfa Erişim Anahtarı kayıtlı değil.' };
+    if (!sayfa) return { tamam: false, mesaj: 'Sayfa Kimliği boş.' };
+
+    const yanit = await fetch(
+      `${graphApiBase()}/${sayfa}?fields=name&access_token=${encodeURIComponent(token)}`,
+      { signal: AbortSignal.timeout(ZAMAN_ASIMI_MS) },
+    );
+    const veri: any = await yanit.json().catch(() => ({}));
+    return yanit.ok && veri?.name
+      ? { tamam: true, mesaj: `Hazır — "${veri.name}" sayfasına bağlanıldı.` }
+      : {
+          tamam: false,
+          mesaj: `Sayfaya erişilemedi (${hataMesaji(veri, yanit.status)}). Sayfa Kimliğini ve anahtarın süresini kontrol edin.`,
+        };
+  }
+
+  private async instagramiSina(
+    tenantId: string,
+    ayarlar: Record<string, any>,
+  ): Promise<SinamaSonucu> {
+    const hesap = String(ayarlar.instagramUserId ?? '').trim();
+    const token = await this.settings.getSecret(tenantId, 'instagramToken');
+    if (!token)
+      return { tamam: false, mesaj: 'Erişim Anahtarı kayıtlı değil.' };
+    if (!hesap) return { tamam: false, mesaj: 'Instagram Hesap Kimliği boş.' };
+
+    const yanit = await fetch(
+      `${graphApiBase()}/${hesap}?fields=username&access_token=${encodeURIComponent(token)}`,
+      { signal: AbortSignal.timeout(ZAMAN_ASIMI_MS) },
+    );
+    const veri: any = await yanit.json().catch(() => ({}));
+    return yanit.ok && veri?.username
+      ? { tamam: true, mesaj: `Hazır — @${veri.username} hesabına bağlanıldı.` }
+      : {
+          tamam: false,
+          mesaj: `Hesaba erişilemedi (${hataMesaji(veri, yanit.status)}). Hesabın İşletme/İçerik Üretici olduğundan ve bir Facebook sayfasına bağlı olduğundan emin olun.`,
+        };
+  }
+
+  private async xiSina(tenantId: string): Promise<SinamaSonucu> {
+    const token = await this.twitterToken(tenantId);
+    if (!token)
+      return { tamam: false, mesaj: 'Erişim Anahtarı kayıtlı değil.' };
+
+    const yanit = await fetch(`${X_API}/2/users/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+    });
+    const veri: any = await yanit.json().catch(() => ({}));
+    return yanit.ok && veri?.data?.username
+      ? {
+          tamam: true,
+          mesaj: `Hazır — @${veri.data.username} hesabına bağlanıldı.`,
+        }
+      : {
+          tamam: false,
+          mesaj: `Hesaba erişilemedi (${hataMesaji(veri, yanit.status)}). Anahtarın süresi dolmuş olabilir; yenileme anahtarı ve istemci bilgilerini de kaydedin.`,
+        };
+  }
+
+  /**
+   * Ağlara verilecek görsel adresini seçer — ve adresin gerçekten görsel
+   * döndüğünü DOĞRULAR.
+   *
+   * Sıra: sitenin 1200×630 JPEG ucu → haberin ham kapağı → hiçbiri.
+   * Doğrulama şart, çünkü site eski bir sürümdeyse o uç HTML (404 sayfası)
+   * döner; Telegram ve Facebook fotoğrafı indiremeyince gönderiyi tümden
+   * reddeder ve haber hiç paylaşılmamış olur. Görsel bulunamazsa null
+   * döneriz: metin/bağlantı gönderisi atmak, hiç atmamaktan iyidir.
+   */
+  private async gorselAdresi(
+    siteKoku: string,
+    haber: PaylasilacakHaber,
+  ): Promise<string | null> {
+    const kapak = String(haber.featuredImage ?? '').trim();
+    const adaylar = [
+      `${siteKoku}/api/social-image/${encodeURIComponent(haber.slug)}`,
+      /^https?:\/\//i.test(kapak) ? kapak : '',
+    ].filter(Boolean);
+
+    for (const aday of adaylar) {
+      if (await this.gorselMi(aday)) return aday;
+    }
+    this.logger.warn(
+      `Paylaşılabilir görsel bulunamadı (${haber.slug}); metin gönderisine düşülüyor`,
+    );
+    return null;
+  }
+
+  /** Adres görsel mi? HEAD desteklenmiyorsa GET'e düşer, gövdeyi indirmez. */
+  private async gorselMi(adres: string): Promise<boolean> {
+    const iste = (yontem: 'HEAD' | 'GET') =>
+      fetch(adres, {
+        method: yontem,
+        signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+      });
+
+    try {
+      let yanit = await iste('HEAD');
+      if (yanit.status === 405 || yanit.status === 501) {
+        yanit = await iste('GET');
+      }
+      // Gövdeyi okumuyoruz; açık kalan akış bağlantıyı boşuna tutar.
+      await yanit.body?.cancel().catch(() => undefined);
+      const tur = (yanit.headers.get('content-type') ?? '')
+        .split(';')[0]
+        .trim()
+        .toLowerCase();
+      return yanit.ok && tur.startsWith('image/');
+    } catch {
+      return false;
+    }
+  }
+
   private async telegram(
     tenantId: string,
     ayarlar: Record<string, any>,
     baslik: string,
     baglanti: string,
-    gorsel: string,
+    gorsel: string | null,
   ): Promise<void> {
     if (ayarlar.autoShareTelegram !== 'on') return;
     const kanal = String(ayarlar.telegramChatId ?? '').trim();
     const token = await this.settings.getSecret(tenantId, 'telegramBotToken');
     if (!kanal || !token) return;
 
+    const metin = `${baslik}\n${baglanti}`;
+    const cagir = async (uc: string, govde: Record<string, unknown>) => {
+      const yanit = await fetch(`https://api.telegram.org/bot${token}/${uc}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: kanal, ...govde }),
+        signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+      });
+      const veri: any = await yanit.json().catch(() => ({}));
+      return {
+        tamam: yanit.ok && veri.ok !== false,
+        hata: hataMesaji(veri, yanit.status),
+      };
+    };
+
     try {
       // Görsel varsa fotoğraflı gönderi — kanalda kart gibi görünür.
-      const yanit = await fetch(
-        `https://api.telegram.org/bot${token}/sendPhoto`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: kanal,
-            photo: gorsel,
-            caption: `${baslik}\n${baglanti}`,
-          }),
-          signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
-        },
-      );
-      const veri: any = await yanit.json().catch(() => ({}));
-      if (!yanit.ok || veri.ok === false) {
+      if (gorsel) {
+        const foto = await cagir('sendPhoto', {
+          photo: gorsel,
+          caption: metin,
+        });
+        if (foto.tamam) return;
+        // Fotoğrafı yutup sessiz kalmayız: düz metin gönderisi Telegram'ın
+        // kendi bağlantı önizlemesiyle kanala yine de düşer.
         this.logger.warn(
-          `Telegram paylaşımı reddedildi (${tenantId}): ${hataMesaji(veri, yanit.status)}`,
+          `Telegram fotoğraflı gönderi reddedildi (${tenantId}), metin olarak deneniyor: ${foto.hata}`,
+        );
+      }
+      const yazi = await cagir('sendMessage', { text: metin });
+      if (!yazi.tamam) {
+        this.logger.warn(
+          `Telegram paylaşımı reddedildi (${tenantId}): ${yazi.hata}`,
         );
       }
     } catch (err) {
@@ -169,16 +431,40 @@ export class SocialShareService {
     ayarlar: Record<string, any>,
     baslik: string,
     baglanti: string,
-    gorsel: string,
+    gorsel: string | null,
   ): Promise<void> {
     if (ayarlar.autoShareFacebook !== 'on') return;
     const sayfa = String(ayarlar.facebookPageId ?? '').trim();
     const token = await this.settings.getSecret(tenantId, 'facebookPageToken');
     if (!sayfa || !token) return;
 
+    const baglantiGonderisi = async () => {
+      const yanit = await fetch(`${graphApiBase()}/${sayfa}/feed`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          message: baslik,
+          link: baglanti,
+          access_token: token,
+        }),
+        signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+      });
+      if (!yanit.ok) {
+        const veri: any = await yanit.json().catch(() => ({}));
+        this.logger.warn(
+          `Facebook paylaşımı reddedildi (${tenantId}): ${hataMesaji(veri, yanit.status)}`,
+        );
+      }
+    };
+
     try {
       // Fotoğraf gönderisi: link önizlemesi tarayıcısına bel bağlamaz. Görsel
       // doğrudan Facebook'a alınır, haber bağlantısı açıklamada yer alır.
+      // Görsel yoksa ya da reddedilirse bağlantı gönderisine düşeriz.
+      if (!gorsel) {
+        await baglantiGonderisi();
+        return;
+      }
       const yanit = await fetch(`${graphApiBase()}/${sayfa}/photos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -192,8 +478,9 @@ export class SocialShareService {
       if (!yanit.ok) {
         const veri: any = await yanit.json().catch(() => ({}));
         this.logger.warn(
-          `Facebook paylaşımı reddedildi (${tenantId}): ${hataMesaji(veri, yanit.status)}`,
+          `Facebook fotoğraflı gönderi reddedildi (${tenantId}), bağlantı olarak deneniyor: ${hataMesaji(veri, yanit.status)}`,
         );
+        await baglantiGonderisi();
       }
     } catch (err) {
       this.logger.warn(
@@ -207,12 +494,19 @@ export class SocialShareService {
     ayarlar: Record<string, any>,
     baslik: string,
     baglanti: string,
-    gorsel: string,
+    gorsel: string | null,
   ): Promise<void> {
     if (ayarlar.autoShareInstagram !== 'on') return;
     const hesap = String(ayarlar.instagramUserId ?? '').trim();
     const token = await this.settings.getSecret(tenantId, 'instagramToken');
     if (!hesap || !token) return;
+    if (!gorsel) {
+      // Instagram görselsiz gönderi kabul etmez — metne düşemeyiz.
+      this.logger.warn(
+        `Instagram paylaşımı atlandı (${tenantId}): paylaşılabilir görsel yok`,
+      );
+      return;
+    }
     try {
       // İki aşama: önce medya kabı, sonra yayınlama (IG Graph akışı).
       const kap = await fetch(`${graphApiBase()}/${hesap}/media`, {
@@ -260,7 +554,7 @@ export class SocialShareService {
     ayarlar: Record<string, any>,
     baslik: string,
     baglanti: string,
-    gorsel: string,
+    gorsel: string | null,
   ): Promise<void> {
     if (ayarlar.autoShareTwitter !== 'on') return;
     const token = await this.twitterToken(tenantId);
@@ -273,6 +567,7 @@ export class SocialShareService {
       // olarak media/upload'a aktar. Görsel adımı başarısız olsa bile haber
       // bağlantısını metin gönderisi olarak yayınlamaya devam ederiz.
       try {
+        if (!gorsel) throw new Error('paylaşılabilir görsel yok');
         const resimYaniti = await fetch(gorsel, {
           signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
         });
