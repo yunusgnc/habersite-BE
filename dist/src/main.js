@@ -39,7 +39,7 @@ async function bootstrap() {
             });
             const next = new Set();
             for (const t of tenants) {
-                for (const domain of (0, tenant_domain_1.tenantDomainCandidates)(t.domain))
+                for (const domain of (0, tenant_domain_1.corsHostCandidates)(t.domain))
                     next.add(domain);
             }
             tenantHosts = next;
@@ -93,7 +93,7 @@ async function bootstrap() {
         }
         const swaggerConfig = new swagger_1.DocumentBuilder()
             .setTitle('HaberSite API')
-            .setDescription('Çok-kiracılı haber CMS. Tüm endpoint\'ler tenant header ile çağrılır ' +
+            .setDescription("Çok-kiracılı haber CMS. Tüm endpoint'ler tenant header ile çağrılır " +
             '(`x-tenant-id` veya `x-tenant-domain`).')
             .setVersion('1.0')
             .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' })
@@ -107,7 +107,7 @@ async function bootstrap() {
         console.log(`[Swagger] /api/docs açık${isProd ? ' (Basic Auth korumalı)' : ' (dev — public)'}`);
     }
     else {
-        console.log('[Swagger] devre dışı — prod\'da SWAGGER_USER/PASSWORD yok');
+        console.log("[Swagger] devre dışı — prod'da SWAGGER_USER/PASSWORD yok");
     }
     const port = process.env.PORT ?? 4000;
     await app.listen(port);

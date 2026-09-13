@@ -6,7 +6,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { PrismaService } from './prisma/prisma.service';
-import { tenantDomainCandidates } from './common/tenant-domain';
+import { corsHostCandidates } from './common/tenant-domain';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -47,7 +47,8 @@ async function bootstrap() {
   const staticOrigins = (process.env.CORS_ORIGIN?.split(',') ?? [])
     .map((s) => s.trim())
     .filter(Boolean);
-  const localhostPattern = /^http:\/\/(localhost|127\.0\.0\.1):(300[0-9]|3010)$/;
+  const localhostPattern =
+    /^http:\/\/(localhost|127\.0\.0\.1):(300[0-9]|3010)$/;
 
   // Tenant domain'lerini DB'den 5 dakikada bir yenile.
   // Böylece yeni müşteri eklendiğinde CORS_ORIGIN'i güncellemeye gerek yok.
@@ -64,13 +65,16 @@ async function bootstrap() {
       });
       const next = new Set<string>();
       for (const t of tenants) {
-        for (const domain of tenantDomainCandidates(t.domain)) next.add(domain);
+        for (const domain of corsHostCandidates(t.domain)) next.add(domain);
       }
       tenantHosts = next;
       tenantHostsExpires = Date.now() + CACHE_TTL_MS;
     } catch (err) {
       // DB henüz hazır değilse cache'i boş bırak — statik origin'lere düşer.
-      console.warn('[CORS] tenant host cache refresh failed:', (err as Error).message);
+      console.warn(
+        '[CORS] tenant host cache refresh failed:',
+        (err as Error).message,
+      );
     }
   }
 
@@ -119,7 +123,9 @@ async function bootstrap() {
         if (!req.path.startsWith('/api/docs')) return next();
         const header = req.headers.authorization ?? '';
         if (header.startsWith('Basic ')) {
-          const decoded = Buffer.from(header.slice(6), 'base64').toString('utf-8');
+          const decoded = Buffer.from(header.slice(6), 'base64').toString(
+            'utf-8',
+          );
           const [u, p] = decoded.split(':');
           if (u === swaggerUser && p === swaggerPass) return next();
         }
@@ -130,13 +136,19 @@ async function bootstrap() {
     const swaggerConfig = new DocumentBuilder()
       .setTitle('HaberSite API')
       .setDescription(
-        'Çok-kiracılı haber CMS. Tüm endpoint\'ler tenant header ile çağrılır ' +
+        "Çok-kiracılı haber CMS. Tüm endpoint'ler tenant header ile çağrılır " +
           '(`x-tenant-id` veya `x-tenant-domain`).',
       )
       .setVersion('1.0')
       .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' })
-      .addApiKey({ type: 'apiKey', name: 'x-tenant-domain', in: 'header' }, 'tenant-domain')
-      .addApiKey({ type: 'apiKey', name: 'x-tenant-id', in: 'header' }, 'tenant-id')
+      .addApiKey(
+        { type: 'apiKey', name: 'x-tenant-domain', in: 'header' },
+        'tenant-domain',
+      )
+      .addApiKey(
+        { type: 'apiKey', name: 'x-tenant-id', in: 'header' },
+        'tenant-id',
+      )
       .build();
     const document = SwaggerModule.createDocument(app, swaggerConfig);
     SwaggerModule.setup('api/docs', app, document, {
@@ -146,13 +158,15 @@ async function bootstrap() {
       `[Swagger] /api/docs açık${isProd ? ' (Basic Auth korumalı)' : ' (dev — public)'}`,
     );
   } else {
-    console.log('[Swagger] devre dışı — prod\'da SWAGGER_USER/PASSWORD yok');
+    console.log("[Swagger] devre dışı — prod'da SWAGGER_USER/PASSWORD yok");
   }
 
   const port = process.env.PORT ?? 4000;
   await app.listen(port);
   console.log(`HaberSite API running on http://localhost:${port}`);
-  console.log(`[CORS] ${staticOrigins.length} static origins, ${tenantHosts.size} tenant hosts`);
+  console.log(
+    `[CORS] ${staticOrigins.length} static origins, ${tenantHosts.size} tenant hosts`,
+  );
 }
 
 bootstrap();

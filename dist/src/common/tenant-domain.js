@@ -4,6 +4,7 @@ exports.normalizeTenantHost = normalizeTenantHost;
 exports.canonicalTenantDomain = canonicalTenantDomain;
 exports.tenantDomainCandidates = tenantDomainCandidates;
 exports.tenantHostMatches = tenantHostMatches;
+exports.corsHostCandidates = corsHostCandidates;
 function normalizeTenantHost(value) {
     const raw = value?.trim();
     if (!raw)
@@ -32,6 +33,19 @@ function tenantDomainCandidates(value) {
 }
 function tenantHostMatches(storedDomain, requestHost) {
     const stored = canonicalTenantDomain(storedDomain);
-    return Boolean(stored && stored === canonicalTenantDomain(requestHost));
+    const gelen = canonicalTenantDomain(requestHost);
+    if (!stored || !gelen)
+        return false;
+    if (stored === gelen)
+        return true;
+    return gelen.startsWith('admin.') && gelen.slice('admin.'.length) === stored;
+}
+function corsHostCandidates(value) {
+    const adaylar = tenantDomainCandidates(value);
+    const canonical = canonicalTenantDomain(value);
+    if (canonical.includes('.') && !/^\d+(?:\.\d+){3}$/.test(canonical)) {
+        adaylar.push(`admin.${canonical}`);
+    }
+    return [...new Set(adaylar)];
 }
 //# sourceMappingURL=tenant-domain.js.map
