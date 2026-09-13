@@ -37,6 +37,14 @@ COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder --chown=nestjs:nodejs /app/package.json ./package.json
 
+# Bakım betikleri (yeni müşteri açarken haber aktarımı, veri düzeltmeleri).
+# `scripts/` derlemeye dahil değil ve `tsx` bir geliştirme bağımlılığı —
+# prune sonrası imajda kalmıyordu, dolayısıyla aktarımı sunucuda
+# çalıştırmanın hiçbir yolu yoktu. İkisini de açıkça ekliyoruz.
+COPY --from=builder --chown=nestjs:nodejs /app/scripts ./scripts
+COPY --from=builder --chown=nestjs:nodejs /app/tsconfig.json ./tsconfig.json
+RUN npm install -g tsx@4
+
 RUN mkdir -p /app/uploads && chown -R nestjs:nodejs /app/uploads
 
 USER nestjs
