@@ -1,4 +1,5 @@
 import { ArticleType, ArticleStatus } from '@prisma/client';
+export declare const MANSET_FONTLARI: readonly ["merriweather", "playfair", "roboto-slab", "oswald", "montserrat", "serif", "sans", "condensed"];
 export declare const PAYLASIM_AGLARI: readonly ["telegram", "facebook", "instagram", "x"];
 export declare class CreateArticleDto {
     title: string;
@@ -21,6 +22,7 @@ export declare class CreateArticleDto {
     nationalFeatured?: boolean;
     headlineTitle?: string;
     headlineImage?: string;
+    spotTitle?: string;
     headlineFontSize?: number;
     headlineFontFamily?: string;
     hideHeadlineOverlay?: boolean;

@@ -244,6 +244,9 @@ model Article {
   // Editorial highlights — displayed on the FE homepage manşet slots.
   headlineTitle       String?       @map("headline_title")
   headlineImage       String?       @map("headline_image")
+  /// Manşet slider'ında ana başlığın altında, görselin ortasında gösterilen
+  /// kısa satır. Boşsa yalnızca ana başlık görünür. Özet (`spot`) ayrı alan.
+  spotTitle           String?       @map("spot_title")
   headlineFontSize    Int?          @map("headline_font_size")
   headlineFontFamily  String?       @map("headline_font_family")
   /// Manşet slider'ı ve öne çıkan haber alanında görselin üzerine başlık +

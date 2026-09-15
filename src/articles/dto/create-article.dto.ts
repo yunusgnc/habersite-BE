@@ -8,6 +8,8 @@ import {
   IsBoolean,
   IsDateString,
   IsInt,
+  Max,
+  MaxLength,
   Min,
   MinLength,
   ValidateIf,
@@ -15,8 +17,24 @@ import {
 import { Type } from 'class-transformer';
 import { ArticleType, ArticleStatus } from '@prisma/client';
 
+export const MANSET_FONTLARI = [
+  'merriweather',
+  'playfair',
+  'roboto-slab',
+  'oswald',
+  'montserrat',
+  'serif',
+  'sans',
+  'condensed',
+] as const;
+
 /** Desteklenen sosyal ağlar — SocialShareService'teki dallarla aynı adlar. */
-export const PAYLASIM_AGLARI = ['telegram', 'facebook', 'instagram', 'x'] as const;
+export const PAYLASIM_AGLARI = [
+  'telegram',
+  'facebook',
+  'instagram',
+  'x',
+] as const;
 
 export class CreateArticleDto {
   @IsString()
@@ -119,12 +137,24 @@ export class CreateArticleDto {
   @IsOptional()
   headlineImage?: string;
 
+  /** Manşette ana başlığın altındaki kısa satır — boşsa gösterilmez. */
+  @IsString()
+  @MaxLength(160)
+  @IsOptional()
+  spotTitle?: string;
+
   @IsInt()
   @Min(12)
+  @Max(96)
   @IsOptional()
   headlineFontSize?: number;
 
-  @IsString()
+  /**
+   * Manşet yazı tipi anahtarı. Site anahtarı kendi font listesine çeviriyor;
+   * serbest metin kabul edilmiyor. `serif` / `sans` / `condensed` eski
+   * panelin değerleri — kayıtlı haberler bozulmasın diye geçerli.
+   */
+  @IsIn(MANSET_FONTLARI)
   @IsOptional()
   headlineFontFamily?: string;
 

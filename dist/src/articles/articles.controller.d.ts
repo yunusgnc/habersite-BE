@@ -109,6 +109,7 @@ export declare class ArticlesController {
             shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
             headlineTitle: string | null;
             headlineImage: string | null;
+            spotTitle: string | null;
             headlineFontSize: number | null;
             headlineFontFamily: string | null;
             hideHeadlineOverlay: boolean;
@@ -220,6 +221,7 @@ export declare class ArticlesController {
         shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
         headlineTitle: string | null;
         headlineImage: string | null;
+        spotTitle: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -319,6 +321,7 @@ export declare class ArticlesController {
         shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
         headlineTitle: string | null;
         headlineImage: string | null;
+        spotTitle: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -399,6 +402,7 @@ export declare class ArticlesController {
         shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
         headlineTitle: string | null;
         headlineImage: string | null;
+        spotTitle: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -484,6 +488,7 @@ export declare class ArticlesController {
         shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
         headlineTitle: string | null;
         headlineImage: string | null;
+        spotTitle: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -565,6 +570,7 @@ export declare class ArticlesController {
             shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
             headlineTitle: string | null;
             headlineImage: string | null;
+            spotTitle: string | null;
             headlineFontSize: number | null;
             headlineFontFamily: string | null;
             hideHeadlineOverlay: boolean;
@@ -667,6 +673,7 @@ export declare class ArticlesController {
         shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
         headlineTitle: string | null;
         headlineImage: string | null;
+        spotTitle: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -758,6 +765,7 @@ export declare class ArticlesController {
         shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
         headlineTitle: string | null;
         headlineImage: string | null;
+        spotTitle: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -849,6 +857,7 @@ export declare class ArticlesController {
         shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
         headlineTitle: string | null;
         headlineImage: string | null;
+        spotTitle: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -960,6 +969,7 @@ export declare class ArticlesController {
         shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
         headlineTitle: string | null;
         headlineImage: string | null;
+        spotTitle: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -1005,6 +1015,7 @@ export declare class ArticlesController {
         shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
         headlineTitle: string | null;
         headlineImage: string | null;
+        spotTitle: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -1058,6 +1069,7 @@ export declare class ArticlesController {
         shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
         headlineTitle: string | null;
         headlineImage: string | null;
+        spotTitle: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -1114,6 +1126,7 @@ export declare class ArticlesController {
         shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
         headlineTitle: string | null;
         headlineImage: string | null;
+        spotTitle: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -1177,6 +1190,7 @@ export declare class ArticlesController {
         shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
         headlineTitle: string | null;
         headlineImage: string | null;
+        spotTitle: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -1219,6 +1233,7 @@ export declare class ArticlesController {
         shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
         headlineTitle: string | null;
         headlineImage: string | null;
+        spotTitle: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -1263,6 +1278,7 @@ export declare class ArticlesController {
         shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
         headlineTitle: string | null;
         headlineImage: string | null;
+        spotTitle: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -1314,6 +1330,7 @@ export declare class ArticlesController {
         shareTargets: import("@prisma/client/runtime/client").JsonValue | null;
         headlineTitle: string | null;
         headlineImage: string | null;
+        spotTitle: string | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
