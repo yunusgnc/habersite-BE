@@ -9,53 +9,53 @@ datasource db {
 // ─── TENANT (Kiracı / Müşteri Sitesi) ───
 
 model Tenant {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  domain    String?  @unique
-  subdomain String?  @unique
-  logo      String?
-  favicon   String?
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  domain       String?  @unique
+  subdomain    String?  @unique
+  logo         String?
+  favicon      String?
   /// Bu müşterinin medya CDN adresi — ör. "https://cdn.kayseritimes.com".
   /// Tek R2 bucket'ına birden çok özel domain bağlanabilir; dosyalar zaten
   /// uploads/{tenantId}/ altında ayrışır. Boşsa S3_PUBLIC_URL'e düşer.
-  mediaBaseUrl String? @map("media_base_url")
-  theme     String   @default("classic")
-  locale    String   @default("tr")
-  timezone  String   @default("Europe/Istanbul")
-  settings  Json     @default("{}")
-  plan      String   @default("starter")
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  mediaBaseUrl String?  @map("media_base_url")
+  theme        String   @default("classic")
+  locale       String   @default("tr")
+  timezone     String   @default("Europe/Istanbul")
+  settings     Json     @default("{}")
+  plan         String   @default("starter")
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  users          User[]
-  categories     Category[]
-  articles       Article[]
-  tags           Tag[]
-  media          Media[]
-  authors        Author[]
-  comments       Comment[]
-  breakingNews   BreakingNews[]
-  ads            Ad[]
-  menus          Menu[]
-  redirects      Redirect[]
-  auditLogs      AuditLog[]
-  personProfiles PersonProfile[]
-  announcements  Announcement[]
-  contactMessages ContactMessage[]
-  popups         Popup[]
-  newsletters    NewsletterSubscriber[]
+  users               User[]
+  categories          Category[]
+  articles            Article[]
+  tags                Tag[]
+  media               Media[]
+  authors             Author[]
+  comments            Comment[]
+  breakingNews        BreakingNews[]
+  ads                 Ad[]
+  menus               Menu[]
+  redirects           Redirect[]
+  auditLogs           AuditLog[]
+  personProfiles      PersonProfile[]
+  announcements       Announcement[]
+  contactMessages     ContactMessage[]
+  popups              Popup[]
+  newsletters         NewsletterSubscriber[]
   newsletterCampaigns NewsletterCampaign[]
-  rssSources     RssSource[]
-  readers        Reader[]
-  widgets          Widget[]
-  pages            Page[]
-  galleries        Gallery[]
-  videos           Video[]
-  authorCategories AuthorCategory[]
-  siteSettings     Setting[]
-  officialNotices  OfficialNotice[]
+  rssSources          RssSource[]
+  readers             Reader[]
+  widgets             Widget[]
+  pages               Page[]
+  galleries           Gallery[]
+  videos              Video[]
+  authorCategories    AuthorCategory[]
+  siteSettings        Setting[]
+  officialNotices     OfficialNotice[]
 
   @@map("tenants")
 }
@@ -71,28 +71,28 @@ enum UserRole {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  tenantId     String   @map("tenant_id")
+  id           String    @id @default(cuid())
+  tenantId     String    @map("tenant_id")
   email        String
   username     String?
-  passwordHash String   @map("password_hash")
+  passwordHash String    @map("password_hash")
   name         String
   avatar       String?
-  role         UserRole @default(REPORTER)
-  active       Boolean  @default(true)
+  role         UserRole  @default(REPORTER)
+  active       Boolean   @default(true)
   lastLoginAt  DateTime? @map("last_login_at")
 
   // Password reset — token hash'i saklıyoruz (rainbow-table önleme)
   passwordResetTokenHash String?   @map("password_reset_token_hash")
   passwordResetExpiresAt DateTime? @map("password_reset_expires_at")
 
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  articles  Article[]  @relation("ArticleCreator")
-  approved  Article[]  @relation("ArticleApprover")
-  assigned  Article[]  @relation("ArticleAssignee")
+  tenant    Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  articles  Article[]         @relation("ArticleCreator")
+  approved  Article[]         @relation("ArticleApprover")
+  assigned  Article[]         @relation("ArticleAssignee")
   revised   ArticleRevision[] @relation("ArticleReviser")
   auditLogs AuditLog[]
 
@@ -120,9 +120,9 @@ model Category {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  tenant   Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children Category[] @relation("CategoryHierarchy")
+  tenant   Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  parent   Category?         @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[]        @relation("CategoryHierarchy")
   articles ArticleCategory[]
 
   @@unique([tenantId, slug])
@@ -148,19 +148,30 @@ model Tag {
 
 // ─── AUTHOR (Köşe Yazarı) ───
 
+/// Yazarın sitede hangi başlık altında listelendiği. Anasayfadaki Köşe
+/// Yazarları bölümü bu gruplardan hangilerini göstereceğini seçebiliyor.
+enum AuthorGroup {
+  STAFF // Yazarlar
+  OTHER // Diğer Yazarlar
+  GUEST // Misafir Yazarlar
+}
+
 model Author {
-  id        String   @id @default(cuid())
-  tenantId  String   @map("tenant_id")
+  id        String      @id @default(cuid())
+  tenantId  String      @map("tenant_id")
   name      String
   slug      String
   bio       String?
   avatar    String?
   email     String?
-  social    Json     @default("{}")
-  active    Boolean  @default(true)
-  sortOrder Int      @default(0) @map("sort_order")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  social    Json        @default("{}")
+  active    Boolean     @default(true)
+  /// Varsayılan STAFF: grup alanından önce eklenen yazarlar "Yazarlar"
+  /// başlığında kalır, anasayfa vitrini değişmez.
+  group     AuthorGroup @default(STAFF) @map("author_group")
+  sortOrder Int         @default(0) @map("sort_order")
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
 
   tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   articles Article[]
@@ -188,60 +199,60 @@ enum ArticleType {
 }
 
 model Article {
-  id             String        @id @default(cuid())
-  tenantId       String        @map("tenant_id")
-  type           ArticleType   @default(NEWS)
-  title          String
-  slug           String
-  spot           String?
-  content        Json
-  featuredImage  String?       @map("featured_image")
-  status         ArticleStatus @default(DRAFT)
-  publishedAt    DateTime?     @map("published_at")
-  scheduledAt    DateTime?     @map("scheduled_at")
-  authorId       String?       @map("author_id")
-  createdById    String        @map("created_by_id")
-  approvedById   String?       @map("approved_by_id")
+  id                  String        @id @default(cuid())
+  tenantId            String        @map("tenant_id")
+  type                ArticleType   @default(NEWS)
+  title               String
+  slug                String
+  spot                String?
+  content             Json
+  featuredImage       String?       @map("featured_image")
+  status              ArticleStatus @default(DRAFT)
+  publishedAt         DateTime?     @map("published_at")
+  scheduledAt         DateTime?     @map("scheduled_at")
+  authorId            String?       @map("author_id")
+  createdById         String        @map("created_by_id")
+  approvedById        String?       @map("approved_by_id")
   // Editoryal iş akışı — atama, deadline, inceleme
-  assignedToId   String?       @map("assigned_to_id")
-  deadline       DateTime?
-  submittedAt    DateTime?     @map("submitted_at")
-  reviewedAt     DateTime?     @map("reviewed_at")
-  reviewNote     String?       @map("review_note")
-  viewCount      Int           @default(0) @map("view_count")
-  commentCount   Int           @default(0) @map("comment_count")
-  readingTime    Int?          @map("reading_time")
-  featured       Boolean       @default(false)
-  breakingLabel  String?       @map("breaking_label")
-  seoTitle       String?       @map("seo_title")
-  seoDesc        String?       @map("seo_desc")
-  canonicalUrl   String?       @map("canonical_url")
-  ogImage        String?       @map("og_image")
-  source         String?
-  sourceUrl      String?       @map("source_url")
+  assignedToId        String?       @map("assigned_to_id")
+  deadline            DateTime?
+  submittedAt         DateTime?     @map("submitted_at")
+  reviewedAt          DateTime?     @map("reviewed_at")
+  reviewNote          String?       @map("review_note")
+  viewCount           Int           @default(0) @map("view_count")
+  commentCount        Int           @default(0) @map("comment_count")
+  readingTime         Int?          @map("reading_time")
+  featured            Boolean       @default(false)
+  breakingLabel       String?       @map("breaking_label")
+  seoTitle            String?       @map("seo_title")
+  seoDesc             String?       @map("seo_desc")
+  canonicalUrl        String?       @map("canonical_url")
+  ogImage             String?       @map("og_image")
+  source              String?
+  sourceUrl           String?       @map("source_url")
   /// Haberin YouTube videosu — içerik editöründen BAĞIMSIZ ayrı alan.
   /// Doluysa site haber detayında gövdenin üstünde oynatıcı çiziliyor.
   /// Ham adres saklanıyor (watch / youtu.be / shorts fark etmez); gömme
   /// adresine çevirme sunum katmanının işi.
-  videoUrl       String?       @map("video_url")
+  videoUrl            String?       @map("video_url")
   /// Bu haber hangi sosyal ağlara gönderilsin — haber bazında seçim.
   /// null  → ayarlarda AÇIK olan bütün ağlar (varsayılan davranış, RSS
   ///          içe aktarımı gibi seçim yapmayan yollar için)
   /// []    → hiçbiri (editör bilinçli olarak paylaşımı kapattı)
   /// [...] → yalnızca sayılan ağlar ('telegram' | 'facebook' | 'instagram' | 'x')
-  shareTargets   Json?         @map("share_targets")
+  shareTargets        Json?         @map("share_targets")
   // Editorial highlights — displayed on the FE homepage manşet slots.
-  headlineTitle       String?  @map("headline_title")
-  headlineImage       String?  @map("headline_image")
-  headlineFontSize    Int?     @map("headline_font_size")
-  headlineFontFamily  String?  @map("headline_font_family")
+  headlineTitle       String?       @map("headline_title")
+  headlineImage       String?       @map("headline_image")
+  headlineFontSize    Int?          @map("headline_font_size")
+  headlineFontFamily  String?       @map("headline_font_family")
   /// Manşet slider'ı ve öne çıkan haber alanında görselin üzerine başlık +
   /// özet bindirilmesini kapatır. Görselin kendisi yazı taşıyorsa (afiş,
   /// infografik, pankart) bindirme okunaklılığı bozuyor.
-  hideHeadlineOverlay Boolean  @default(false) @map("hide_headline_overlay")
-  nationalFeatured    Boolean  @default(false) @map("national_featured")
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
+  hideHeadlineOverlay Boolean       @default(false) @map("hide_headline_overlay")
+  nationalFeatured    Boolean       @default(false) @map("national_featured")
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
 
   tenant     Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   author     Author?           @relation(fields: [authorId], references: [id], onDelete: SetNull)
@@ -261,6 +272,8 @@ model Article {
   @@index([tenantId, status, publishedAt(sort: Desc)])
   @@index([tenantId, type])
   @@index([tenantId, featured])
+  /// Yazar sayfası, yazar başına son yazı ve yazar başına yazı sayısı.
+  @@index([authorId, status, publishedAt(sort: Desc)])
   @@map("articles")
 }
 
@@ -287,8 +300,8 @@ model ArticleRevision {
 }
 
 model ArticleCategory {
-  articleId  String @map("article_id")
-  categoryId String @map("category_id")
+  articleId  String  @map("article_id")
+  categoryId String  @map("category_id")
   primary    Boolean @default(false)
 
   article  Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
@@ -342,9 +355,9 @@ model Media {
 }
 
 model ArticleMedia {
-  articleId String @map("article_id")
-  mediaId   String @map("media_id")
-  sortOrder Int    @default(0) @map("sort_order")
+  articleId String  @map("article_id")
+  mediaId   String  @map("media_id")
+  sortOrder Int     @default(0) @map("sort_order")
   caption   String?
 
   article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
@@ -418,14 +431,14 @@ model Comment {
 // ─── BREAKING NEWS ───
 
 model BreakingNews {
-  id        String   @id @default(cuid())
-  tenantId  String   @map("tenant_id")
+  id        String    @id @default(cuid())
+  tenantId  String    @map("tenant_id")
   title     String
   url       String?
-  active    Boolean  @default(true)
-  sortOrder Int      @default(0) @map("sort_order")
+  active    Boolean   @default(true)
+  sortOrder Int       @default(0) @map("sort_order")
   expiresAt DateTime? @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -492,12 +505,12 @@ model Ad {
 // ─── MENU ───
 
 model Menu {
-  id       String     @id @default(cuid())
-  tenantId String     @map("tenant_id")
-  location String
-  label    String?
-  items    Json       @default("[]")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  location  String
+  label     String?
+  items     Json     @default("[]")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -619,19 +632,19 @@ model NewsletterSubscriber {
 // tenant'la ilişkili; farklı sitede aynı e-posta ile kayıt olabilir.
 
 model Reader {
-  id             String   @id @default(cuid())
-  tenantId       String   @map("tenant_id")
-  email          String
-  passwordHash   String   @map("password_hash")
-  name           String
-  active         Boolean  @default(true)
-  emailVerified  Boolean  @default(false) @map("email_verified")
+  id                     String    @id @default(cuid())
+  tenantId               String    @map("tenant_id")
+  email                  String
+  passwordHash           String    @map("password_hash")
+  name                   String
+  active                 Boolean   @default(true)
+  emailVerified          Boolean   @default(false) @map("email_verified")
   /// Şifre sıfırlama — SMTP kurulunca aktive edilecek.
   passwordResetTokenHash String?   @map("password_reset_token_hash")
   passwordResetExpiresAt DateTime? @map("password_reset_expires_at")
-  lastLoginAt    DateTime? @map("last_login_at")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  lastLoginAt            DateTime? @map("last_login_at")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
 
   tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   bookmarks Bookmark[]
@@ -658,24 +671,24 @@ model Bookmark {
 // ─── RSS IMPORT (Ajans/kaynak beslemesi) ───
 
 model RssSource {
-  id                   String   @id @default(cuid())
-  tenantId             String   @map("tenant_id")
+  id                   String    @id @default(cuid())
+  tenantId             String    @map("tenant_id")
   name                 String
   url                  String
   /// Yeni haberlerin varsayılan kategorisi — boşsa ilk kategoriye düşer.
-  defaultCategoryId    String?  @map("default_category_id")
+  defaultCategoryId    String?   @map("default_category_id")
   /// Otomatik import edilen haberler bu yazara atanır (istenirse).
-  defaultAuthorName    String?  @map("default_author_name")
-  active               Boolean  @default(true)
+  defaultAuthorName    String?   @map("default_author_name")
+  active               Boolean   @default(true)
   /// Kaç dakikada bir çekilecek. Default 30 dk; cron her 5 dk kontrol eder.
-  fetchIntervalMinutes Int      @default(30) @map("fetch_interval_minutes")
+  fetchIntervalMinutes Int       @default(30) @map("fetch_interval_minutes")
   lastFetchedAt        DateTime? @map("last_fetched_at")
   lastFetchStatus      String?   @map("last_fetch_status")
-  itemsImported        Int      @default(0) @map("items_imported")
-  createdAt            DateTime @default(now()) @map("created_at")
-  updatedAt            DateTime @updatedAt @map("updated_at")
+  itemsImported        Int       @default(0) @map("items_imported")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   items  RssImportedItem[]
 
   @@index([tenantId, active])
@@ -711,26 +724,26 @@ enum NewsletterCampaignStatus {
 }
 
 model NewsletterCampaign {
-  id           String   @id @default(cuid())
-  tenantId     String   @map("tenant_id")
-  subject      String
-  preheader    String?
+  id          String                   @id @default(cuid())
+  tenantId    String                   @map("tenant_id")
+  subject     String
+  preheader   String?
   /// HTML gövde; TipTap/wysiwyg çıkışı. `null` seçiciyle DRAFT olarak kaydedilebilir.
-  htmlBody     String   @map("html_body")
+  htmlBody    String                   @map("html_body")
   /// Otomatik türetilebilir düz metin — spam filtresi için lazım. Boşsa gönderim
   /// katmanı HTML'den strip eder.
-  textBody     String?  @map("text_body")
-  status       NewsletterCampaignStatus @default(DRAFT)
+  textBody    String?                  @map("text_body")
+  status      NewsletterCampaignStatus @default(DRAFT)
   /// Zamanlanmış tarih — SCHEDULED durumundaysa cron bunu bekler.
-  scheduledAt  DateTime? @map("scheduled_at")
-  sentAt       DateTime? @map("sent_at")
+  scheduledAt DateTime?                @map("scheduled_at")
+  sentAt      DateTime?                @map("sent_at")
   /// Snapshot istatistikleri — gönderim bittiğinde doldurulur (recipients =
   /// kuyruğa yazılan abone sayısı; failed = SMTP hatası dönmüş).
-  recipients   Int      @default(0)
-  failed       Int      @default(0)
-  createdBy    String?  @map("created_by")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  recipients  Int                      @default(0)
+  failed      Int                      @default(0)
+  createdBy   String?                  @map("created_by")
+  createdAt   DateTime                 @default(now()) @map("created_at")
+  updatedAt   DateTime                 @updatedAt @map("updated_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -742,12 +755,12 @@ model NewsletterCampaign {
 // ─── WIDGET (Hava Durumu, Namaz Vakti, Döviz vb.) ───
 
 model Widget {
-  id        String   @id @default(cuid())
-  tenantId  String   @map("tenant_id")
+  id        String    @id @default(cuid())
+  tenantId  String    @map("tenant_id")
   type      String
-  config    Json     @default("{}")
-  active    Boolean  @default(true)
-  sortOrder Int      @default(0) @map("sort_order")
+  config    Json      @default("{}")
+  active    Boolean   @default(true)
+  sortOrder Int       @default(0) @map("sort_order")
   cache     Json?
   cachedAt  DateTime? @map("cached_at")
 
@@ -780,23 +793,23 @@ model Page {
 // ─── GALLERY (Foto Galeri) ───
 
 model Gallery {
-  id          String   @id @default(cuid())
-  tenantId    String   @map("tenant_id")
+  id          String        @id @default(cuid())
+  tenantId    String        @map("tenant_id")
   title       String
   headline    String?
   slug        String
   description String?
-  coverImage  String?  @map("cover_image")
-  categoryId  String?  @map("category_id")
+  coverImage  String?       @map("cover_image")
+  categoryId  String?       @map("category_id")
   status      ArticleStatus @default(DRAFT)
-  publishedAt DateTime?  @map("published_at")
-  viewCount   Int      @default(0) @map("view_count")
-  sortOrder   Int      @default(0) @map("sort_order")
-  seoTitle    String?  @map("seo_title")
-  seoDesc     String?  @map("seo_desc")
-  seoKeywords String?  @map("seo_keywords")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  publishedAt DateTime?     @map("published_at")
+  viewCount   Int           @default(0) @map("view_count")
+  sortOrder   Int           @default(0) @map("sort_order")
+  seoTitle    String?       @map("seo_title")
+  seoDesc     String?       @map("seo_desc")
+  seoKeywords String?       @map("seo_keywords")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
 
   tenant Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   images GalleryImage[]
@@ -824,28 +837,28 @@ model GalleryImage {
 // ─── VIDEO ───
 
 model Video {
-  id          String   @id @default(cuid())
-  tenantId    String   @map("tenant_id")
+  id          String        @id @default(cuid())
+  tenantId    String        @map("tenant_id")
   title       String
   headline    String?
   slug        String
   description String?
-  coverImage  String?  @map("cover_image")
-  videoUrl    String   @map("video_url")
-  embedCode   String?  @map("embed_code")
-  source      String   @default("youtube")
+  coverImage  String?       @map("cover_image")
+  videoUrl    String        @map("video_url")
+  embedCode   String?       @map("embed_code")
+  source      String        @default("youtube")
   duration    Int?
-  fileSize    Int?     @map("file_size")
-  categoryId  String?  @map("category_id")
+  fileSize    Int?          @map("file_size")
+  categoryId  String?       @map("category_id")
   status      ArticleStatus @default(DRAFT)
-  publishedAt DateTime?  @map("published_at")
-  viewCount   Int      @default(0) @map("view_count")
-  sortOrder   Int      @default(0) @map("sort_order")
-  seoTitle    String?  @map("seo_title")
-  seoDesc     String?  @map("seo_desc")
-  seoKeywords String?  @map("seo_keywords")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  publishedAt DateTime?     @map("published_at")
+  viewCount   Int           @default(0) @map("view_count")
+  sortOrder   Int           @default(0) @map("sort_order")
+  seoTitle    String?       @map("seo_title")
+  seoDesc     String?       @map("seo_desc")
+  seoKeywords String?       @map("seo_keywords")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -914,28 +927,28 @@ model AuditLog {
 /// KVKK içerik kaldırma talebi. `type` hangi akış olduğunu belirler,
 /// tipe özel alanlar (targetUrl, district, attachments) opsiyoneldir.
 model ContactMessage {
-  id        String        @id @default(cuid())
-  tenantId  String        @map("tenant_id")
-  type      MessageType   @default(CONTACT)
-  status    MessageStatus @default(NEW)
-  name      String
-  email     String
-  phone     String?
-  subject   String?
-  message   String
+  id          String        @id @default(cuid())
+  tenantId    String        @map("tenant_id")
+  type        MessageType   @default(CONTACT)
+  status      MessageStatus @default(NEW)
+  name        String
+  email       String
+  phone       String?
+  subject     String?
+  message     String
   /// KVKK talebinde kaldırılması istenen içeriğin adresi.
-  targetUrl String?       @map("target_url")
+  targetUrl   String?       @map("target_url")
   /// İhbarda olayın geçtiği ilçe / mahalle.
-  district  String?
+  district    String?
   /// İhbara eklenen medya URL'leri: string[]
-  attachments Json        @default("[]")
+  attachments Json          @default("[]")
   /// Editörün dahili notu — okuyucuya gösterilmez.
-  adminNote String?       @map("admin_note")
-  handledAt DateTime?     @map("handled_at")
-  read      Boolean       @default(false)
-  ipAddress String?       @map("ip_address")
-  userAgent String?       @map("user_agent")
-  createdAt DateTime      @default(now()) @map("created_at")
+  adminNote   String?       @map("admin_note")
+  handledAt   DateTime?     @map("handled_at")
+  read        Boolean       @default(false)
+  ipAddress   String?       @map("ip_address")
+  userAgent   String?       @map("user_agent")
+  createdAt   DateTime      @default(now()) @map("created_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 

@@ -5,6 +5,8 @@ export declare class AuthorsController {
     private readonly authorsService;
     constructor(authorsService: AuthorsService);
     findAll(tenantId: string): Promise<{
+        newsCount: number;
+        columnCount: number;
         id: string;
         name: string;
         slug: string;
@@ -17,8 +19,9 @@ export declare class AuthorsController {
         sortOrder: number;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
+        group: import("@prisma/client").$Enums.AuthorGroup;
     }[]>;
-    findWithLatest(tenantId: string, limit?: string): Promise<{
+    findWithLatest(tenantId: string, limit?: string, groups?: string): Promise<{
         latestArticle: {
             id: string;
             slug: string;
@@ -27,11 +30,14 @@ export declare class AuthorsController {
             featuredImage: string | null;
             publishedAt: Date | null;
         } | null;
+        newsCount: number;
+        columnCount: number;
         id: string;
         name: string;
         slug: string;
         avatar: string | null;
         bio: string | null;
+        group: import("@prisma/client").$Enums.AuthorGroup;
     }[]>;
     findBySlug(tenantId: string, slug: string): Promise<{
         id: string;
@@ -46,6 +52,7 @@ export declare class AuthorsController {
         sortOrder: number;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
+        group: import("@prisma/client").$Enums.AuthorGroup;
     }>;
     create(tenantId: string, dto: CreateAuthorDto): Promise<{
         id: string;
@@ -60,6 +67,7 @@ export declare class AuthorsController {
         sortOrder: number;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
+        group: import("@prisma/client").$Enums.AuthorGroup;
     }>;
     update(tenantId: string, id: string, dto: UpdateAuthorDto): Promise<{
         id: string;
@@ -74,6 +82,7 @@ export declare class AuthorsController {
         sortOrder: number;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
+        group: import("@prisma/client").$Enums.AuthorGroup;
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
@@ -88,5 +97,6 @@ export declare class AuthorsController {
         sortOrder: number;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
+        group: import("@prisma/client").$Enums.AuthorGroup;
     }>;
 }

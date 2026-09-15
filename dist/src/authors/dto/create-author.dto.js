@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateAuthorDto = void 0;
 const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
+const client_1 = require("@prisma/client");
 class CreateAuthorDto {
     name;
     bio;
@@ -19,9 +20,10 @@ class CreateAuthorDto {
     email;
     social;
     active;
+    group;
     sortOrder;
     static _OPENAPI_METADATA_FACTORY() {
-        return { name: { required: true, type: () => String, minLength: 1 }, bio: { required: false, type: () => String }, avatar: { required: false, type: () => String }, email: { required: false, type: () => String, format: "email" }, social: { required: false, type: "object", additionalProperties: { type: "string" } }, active: { required: false, type: () => Boolean }, sortOrder: { required: false, type: () => Number } };
+        return { name: { required: true, type: () => String, minLength: 1 }, bio: { required: false, type: () => String }, avatar: { required: false, type: () => String }, email: { required: false, type: () => String, format: "email" }, social: { required: false, type: "object", additionalProperties: { type: "string" } }, active: { required: false, type: () => Boolean }, group: { required: false, description: "STAFF = Yazarlar, OTHER = Di\u011Fer Yazarlar, GUEST = Misafir Yazarlar.", enum: ["STAFF", "OTHER", "GUEST"] }, sortOrder: { required: false, type: () => Number } };
     }
 }
 exports.CreateAuthorDto = CreateAuthorDto;
@@ -55,6 +57,11 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Boolean)
 ], CreateAuthorDto.prototype, "active", void 0);
+__decorate([
+    (0, class_validator_1.IsEnum)(client_1.AuthorGroup),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateAuthorDto.prototype, "group", void 0);
 __decorate([
     (0, class_validator_1.IsInt)(),
     (0, class_validator_1.IsOptional)(),

@@ -6,7 +6,9 @@ import {
   IsObject,
   IsBoolean,
   IsInt,
+  IsEnum,
 } from 'class-validator';
+import { AuthorGroup } from '@prisma/client';
 
 export class CreateAuthorDto {
   @IsString()
@@ -32,6 +34,11 @@ export class CreateAuthorDto {
   @IsBoolean()
   @IsOptional()
   active?: boolean;
+
+  /** STAFF = Yazarlar, OTHER = Diğer Yazarlar, GUEST = Misafir Yazarlar. */
+  @IsEnum(AuthorGroup)
+  @IsOptional()
+  group?: AuthorGroup;
 
   @IsInt()
   @IsOptional()

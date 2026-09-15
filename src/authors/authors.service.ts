@@ -1,33 +1,94 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { AuthorGroup } from '@prisma/client';
 import slugify from 'slugify';
 import { PrismaService } from '../prisma/prisma.service';
 import { RevalidationService } from '../common/revalidation/revalidation.service';
 import { CreateAuthorDto } from './dto/create-author.dto';
 import { UpdateAuthorDto } from './dto/update-author.dto';
 
+type YaziSayisi = { newsCount: number; columnCount: number };
+const BOS_SAYI: YaziSayisi = { newsCount: 0, columnCount: 0 };
+
 @Injectable()
 export class AuthorsService {
-  constructor(private readonly prisma: PrismaService, private readonly revalidation: RevalidationService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly revalidation: RevalidationService,
+  ) {}
 
   async findAll(tenantId: string) {
-    return this.prisma.author.findMany({
-      where: { tenantId },
-      orderBy: { sortOrder: 'asc' },
+    const [authors, sayilar] = await Promise.all([
+      this.prisma.author.findMany({
+        where: { tenantId },
+        orderBy: { sortOrder: 'asc' },
+      }),
+      this.yaziSayilari(tenantId),
+    ]);
+    return authors.map((a) => ({ ...a, ...(sayilar.get(a.id) ?? BOS_SAYI) }));
+  }
+
+  /**
+   * Yazar başına YAYINDAKİ haber ve makale sayısı — tek sorguda.
+   *
+   * Taslaklar sayılmıyor: panelde görünen sayı okurun sitede gördüğüyle aynı
+   * olmalı; taslakları katmak "12 makalesi var" deyip yazar sayfasında 4
+   * yazı göstermek demek.
+   */
+  private async yaziSayilari(
+    tenantId: string,
+    authorIds?: string[],
+  ): Promise<Map<string, YaziSayisi>> {
+    const gruplar = await this.prisma.article.groupBy({
+      by: ['authorId', 'type'],
+      where: {
+        tenantId,
+        status: 'PUBLISHED',
+        type: { in: ['NEWS', 'COLUMN'] },
+        authorId: authorIds ? { in: authorIds } : { not: null },
+      },
+      _count: { _all: true },
     });
+
+    const sayilar = new Map<string, YaziSayisi>();
+    for (const g of gruplar) {
+      if (!g.authorId) continue;
+      const kayit = sayilar.get(g.authorId) ?? { ...BOS_SAYI };
+      if (g.type === 'NEWS') kayit.newsCount = g._count._all;
+      if (g.type === 'COLUMN') kayit.columnCount = g._count._all;
+      sayilar.set(g.authorId, kayit);
+    }
+    return sayilar;
   }
 
   /**
    * Köşe Yazarları vitrini: aktif yazarlar + her birinin son yayınlanmış yazısı.
    * Yazısı olmayan yazarlar listeden düşer — anasayfada boş kart istemiyoruz.
    */
-  async findWithLatest(tenantId: string, limit = 12) {
+  async findWithLatest(tenantId: string, limit = 12, groups?: AuthorGroup[]) {
     const authors = await this.prisma.author.findMany({
-      where: { tenantId, active: true },
+      where: {
+        tenantId,
+        active: true,
+        // Boş/verilmemiş seçim = bütün gruplar (eski davranış).
+        ...(groups && groups.length > 0 ? { group: { in: groups } } : {}),
+      },
       orderBy: { sortOrder: 'asc' },
-      select: { id: true, name: true, slug: true, avatar: true, bio: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        avatar: true,
+        bio: true,
+        group: true,
+      },
     });
 
     if (authors.length === 0) return [];
+
+    const sayilar = await this.yaziSayilari(
+      tenantId,
+      authors.map((a) => a.id),
+    );
 
     // Yazar başına son yazıyı tek sorguda almak Prisma'da mümkün değil;
     // yazar sayısı düşük (onlarca) olduğu için paralel sorgu kabul edilebilir.
@@ -50,7 +111,11 @@ export class AuthorsService {
             publishedAt: true,
           },
         });
-        return { ...author, latestArticle: latest };
+        return {
+          ...author,
+          ...(sayilar.get(author.id) ?? BOS_SAYI),
+          latestArticle: latest,
+        };
       }),
     );
 
@@ -89,6 +154,7 @@ export class AuthorsService {
         email: dto.email,
         social: dto.social ?? {},
         active: dto.active ?? true,
+        group: dto.group,
         sortOrder: dto.sortOrder ?? 0,
       },
     });

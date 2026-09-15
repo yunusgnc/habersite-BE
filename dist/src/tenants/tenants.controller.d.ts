@@ -253,6 +253,7 @@ export declare class TenantsController {
             sortOrder: number;
             bio: string | null;
             social: import("@prisma/client/runtime/client").JsonValue;
+            group: import("@prisma/client").$Enums.AuthorGroup;
         }[];
         media: {
             url: string;

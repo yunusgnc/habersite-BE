@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const slugify_1 = __importDefault(require("slugify"));
 const prisma_service_1 = require("../prisma/prisma.service");
 const revalidation_service_1 = require("../common/revalidation/revalidation.service");
+const BOS_SAYI = { newsCount: 0, columnCount: 0 };
 let AuthorsService = class AuthorsService {
     prisma;
     revalidation;
@@ -25,19 +26,59 @@ let AuthorsService = class AuthorsService {
         this.revalidation = revalidation;
     }
     async findAll(tenantId) {
-        return this.prisma.author.findMany({
-            where: { tenantId },
-            orderBy: { sortOrder: 'asc' },
-        });
+        const [authors, sayilar] = await Promise.all([
+            this.prisma.author.findMany({
+                where: { tenantId },
+                orderBy: { sortOrder: 'asc' },
+            }),
+            this.yaziSayilari(tenantId),
+        ]);
+        return authors.map((a) => ({ ...a, ...(sayilar.get(a.id) ?? BOS_SAYI) }));
     }
-    async findWithLatest(tenantId, limit = 12) {
+    async yaziSayilari(tenantId, authorIds) {
+        const gruplar = await this.prisma.article.groupBy({
+            by: ['authorId', 'type'],
+            where: {
+                tenantId,
+                status: 'PUBLISHED',
+                type: { in: ['NEWS', 'COLUMN'] },
+                authorId: authorIds ? { in: authorIds } : { not: null },
+            },
+            _count: { _all: true },
+        });
+        const sayilar = new Map();
+        for (const g of gruplar) {
+            if (!g.authorId)
+                continue;
+            const kayit = sayilar.get(g.authorId) ?? { ...BOS_SAYI };
+            if (g.type === 'NEWS')
+                kayit.newsCount = g._count._all;
+            if (g.type === 'COLUMN')
+                kayit.columnCount = g._count._all;
+            sayilar.set(g.authorId, kayit);
+        }
+        return sayilar;
+    }
+    async findWithLatest(tenantId, limit = 12, groups) {
         const authors = await this.prisma.author.findMany({
-            where: { tenantId, active: true },
+            where: {
+                tenantId,
+                active: true,
+                ...(groups && groups.length > 0 ? { group: { in: groups } } : {}),
+            },
             orderBy: { sortOrder: 'asc' },
-            select: { id: true, name: true, slug: true, avatar: true, bio: true },
+            select: {
+                id: true,
+                name: true,
+                slug: true,
+                avatar: true,
+                bio: true,
+                group: true,
+            },
         });
         if (authors.length === 0)
             return [];
+        const sayilar = await this.yaziSayilari(tenantId, authors.map((a) => a.id));
         const withLatest = await Promise.all(authors.map(async (author) => {
             const latest = await this.prisma.article.findFirst({
                 where: {
@@ -56,7 +97,11 @@ let AuthorsService = class AuthorsService {
                     publishedAt: true,
                 },
             });
-            return { ...author, latestArticle: latest };
+            return {
+                ...author,
+                ...(sayilar.get(author.id) ?? BOS_SAYI),
+                latestArticle: latest,
+            };
         }));
         return withLatest
             .filter((a) => a.latestArticle !== null)
@@ -88,6 +133,7 @@ let AuthorsService = class AuthorsService {
                 email: dto.email,
                 social: dto.social ?? {},
                 active: dto.active ?? true,
+                group: dto.group,
                 sortOrder: dto.sortOrder ?? 0,
             },
         });
@@ -141,6 +187,7 @@ let AuthorsService = class AuthorsService {
 exports.AuthorsService = AuthorsService;
 exports.AuthorsService = AuthorsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService, revalidation_service_1.RevalidationService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        revalidation_service_1.RevalidationService])
 ], AuthorsService);
 //# sourceMappingURL=authors.service.js.map

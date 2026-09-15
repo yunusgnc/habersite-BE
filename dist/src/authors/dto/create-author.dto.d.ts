@@ -1,3 +1,4 @@
+import { AuthorGroup } from '@prisma/client';
 export declare class CreateAuthorDto {
     name: string;
     bio?: string;
@@ -5,5 +6,6 @@ export declare class CreateAuthorDto {
     email?: string;
     social?: Record<string, string>;
     active?: boolean;
+    group?: AuthorGroup;
     sortOrder?: number;
 }

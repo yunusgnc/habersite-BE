@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { AuthorGroup } from '@prisma/client';
 import { TenantGuard } from '../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard, Roles } from '../auth/guards/roles.guard';
@@ -34,29 +35,31 @@ export class AuthorsController {
   findWithLatest(
     @CurrentTenant() tenantId: string,
     @Query('limit') limit?: string,
+    /** Virgülle ayrılmış grup listesi: `STAFF,GUEST`. Bilinmeyenler yok sayılır. */
+    @Query('groups') groups?: string,
   ) {
+    const gecerli = new Set<string>(Object.values(AuthorGroup));
+    const secilen = (groups ?? '')
+      .split(',')
+      .map((g) => g.trim().toUpperCase())
+      .filter((g): g is AuthorGroup => gecerli.has(g));
     return this.authorsService.findWithLatest(
       tenantId,
       limit ? parseInt(limit, 10) : undefined,
+      secilen,
     );
   }
 
   @Get(':slug')
   @UseGuards(TenantGuard)
-  findBySlug(
-    @CurrentTenant() tenantId: string,
-    @Param('slug') slug: string,
-  ) {
+  findBySlug(@CurrentTenant() tenantId: string, @Param('slug') slug: string) {
     return this.authorsService.findBySlug(tenantId, slug);
   }
 
   @Post()
   @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
   @Roles('ADMIN', 'EDITOR')
-  create(
-    @CurrentTenant() tenantId: string,
-    @Body() dto: CreateAuthorDto,
-  ) {
+  create(@CurrentTenant() tenantId: string, @Body() dto: CreateAuthorDto) {
     return this.authorsService.create(tenantId, dto);
   }
 
@@ -74,10 +77,7 @@ export class AuthorsController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
   @Roles('EDITOR')
-  remove(
-    @CurrentTenant() tenantId: string,
-    @Param('id') id: string,
-  ) {
+  remove(@CurrentTenant() tenantId: string, @Param('id') id: string) {
     return this.authorsService.remove(tenantId, id);
   }
 }

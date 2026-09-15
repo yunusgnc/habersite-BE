@@ -62,6 +62,7 @@ export declare class ArticlesService {
                 sortOrder: number;
                 bio: string | null;
                 social: Prisma.JsonValue;
+                group: import("@prisma/client").$Enums.AuthorGroup;
             } | null;
             createdBy: {
                 id: string;
@@ -191,6 +192,7 @@ export declare class ArticlesService {
                 sortOrder: number;
                 bio: string | null;
                 social: Prisma.JsonValue;
+                group: import("@prisma/client").$Enums.AuthorGroup;
             } | null;
         } & {
             id: string;
@@ -280,6 +282,7 @@ export declare class ArticlesService {
             sortOrder: number;
             bio: string | null;
             social: Prisma.JsonValue;
+            group: import("@prisma/client").$Enums.AuthorGroup;
         } | null;
         createdBy: {
             id: string;
@@ -382,6 +385,7 @@ export declare class ArticlesService {
             sortOrder: number;
             bio: string | null;
             social: Prisma.JsonValue;
+            group: import("@prisma/client").$Enums.AuthorGroup;
         } | null;
         createdBy: {
             id: string;
@@ -486,6 +490,7 @@ export declare class ArticlesService {
             sortOrder: number;
             bio: string | null;
             social: Prisma.JsonValue;
+            group: import("@prisma/client").$Enums.AuthorGroup;
         } | null;
     } & {
         id: string;
@@ -576,6 +581,7 @@ export declare class ArticlesService {
             sortOrder: number;
             bio: string | null;
             social: Prisma.JsonValue;
+            group: import("@prisma/client").$Enums.AuthorGroup;
         } | null;
     } & {
         id: string;
@@ -675,6 +681,7 @@ export declare class ArticlesService {
             sortOrder: number;
             bio: string | null;
             social: Prisma.JsonValue;
+            group: import("@prisma/client").$Enums.AuthorGroup;
         } | null;
         assignedTo: {
             id: string;
@@ -1032,6 +1039,7 @@ export declare class ArticlesService {
             sortOrder: number;
             bio: string | null;
             social: Prisma.JsonValue;
+            group: import("@prisma/client").$Enums.AuthorGroup;
         } | null;
     } & {
         id: string;
@@ -1227,6 +1235,7 @@ export declare class ArticlesService {
             sortOrder: number;
             bio: string | null;
             social: Prisma.JsonValue;
+            group: import("@prisma/client").$Enums.AuthorGroup;
         } | null;
     } & {
         id: string;
@@ -1318,6 +1327,7 @@ export declare class ArticlesService {
                 sortOrder: number;
                 bio: string | null;
                 social: Prisma.JsonValue;
+                group: import("@prisma/client").$Enums.AuthorGroup;
             } | null;
         } & {
             id: string;

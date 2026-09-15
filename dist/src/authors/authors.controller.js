@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthorsController = void 0;
 const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
+const client_1 = require("@prisma/client");
 const tenant_guard_1 = require("../common/guards/tenant.guard");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const roles_guard_1 = require("../auth/guards/roles.guard");
@@ -30,8 +31,13 @@ let AuthorsController = class AuthorsController {
     findAll(tenantId) {
         return this.authorsService.findAll(tenantId);
     }
-    findWithLatest(tenantId, limit) {
-        return this.authorsService.findWithLatest(tenantId, limit ? parseInt(limit, 10) : undefined);
+    findWithLatest(tenantId, limit, groups) {
+        const gecerli = new Set(Object.values(client_1.AuthorGroup));
+        const secilen = (groups ?? '')
+            .split(',')
+            .map((g) => g.trim().toUpperCase())
+            .filter((g) => gecerli.has(g));
+        return this.authorsService.findWithLatest(tenantId, limit ? parseInt(limit, 10) : undefined, secilen);
     }
     findBySlug(tenantId, slug) {
         return this.authorsService.findBySlug(tenantId, slug);
@@ -58,13 +64,15 @@ __decorate([
 ], AuthorsController.prototype, "findAll", null);
 __decorate([
     openapi.ApiQuery({ name: "limit", required: false }),
+    openapi.ApiQuery({ name: "groups", required: false }),
     (0, common_1.Get)('with-latest'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),
     openapi.ApiResponse({ status: 200 }),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('limit')),
+    __param(2, (0, common_1.Query)('groups')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], AuthorsController.prototype, "findWithLatest", null);
 __decorate([
