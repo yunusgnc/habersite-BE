@@ -14,7 +14,7 @@ import { ArticlesService } from './articles.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { QueryArticlesDto } from './dto/query-articles.dto';
-import { BulkArticleDto } from './dto/bulk-article.dto';
+import { BulkArticleDto, BulkCategoryDto } from './dto/bulk-article.dto';
 import { ReactDto, UnreactDto } from './dto/react.dto';
 import { TenantGuard } from '../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -261,7 +261,7 @@ export class ArticlesController {
   @Roles('ADMIN', 'EDITOR')
   bulkUpdateCategory(
     @CurrentTenant() tenantId: string,
-    @Body() dto: { ids: string[]; categoryId: string },
+    @Body() dto: BulkCategoryDto,
   ) {
     return this.articlesService.bulkUpdateCategory(tenantId, dto.ids, dto.categoryId);
   }

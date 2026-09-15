@@ -342,7 +342,7 @@ __decorate([
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, bulk_article_dto_1.BulkCategoryDto]),
     __metadata("design:returntype", void 0)
 ], ArticlesController.prototype, "bulkUpdateCategory", null);
 __decorate([

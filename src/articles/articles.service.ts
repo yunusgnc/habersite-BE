@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import slugify from 'slugify';
 import { PrismaService } from '../prisma/prisma.service';
@@ -426,7 +432,11 @@ export class ArticlesService {
     dto: CreateArticleDto,
     userRole?: string,
   ) {
-    const { categoryIds, tagNames, ...data } = dto;
+    const { categoryIds: istenenKategoriler, tagNames, ...data } = dto;
+    const categoryIds = await this.kategorileriDogrula(
+      tenantId,
+      istenenKategoriler,
+    );
 
     // Muhabir ve köşe yazarları haberi yayınlayamaz — DRAFT'a zorlanır.
     if (userRole && !canPublishArticle(userRole)) {
@@ -532,7 +542,17 @@ export class ArticlesService {
       }
     }
 
-    const { categoryIds, tagNames, publishedAt: publishedAtStr, scheduledAt: scheduledAtStr, ...rest } = dto;
+    const {
+      categoryIds: istenenKategoriler,
+      tagNames,
+      publishedAt: publishedAtStr,
+      scheduledAt: scheduledAtStr,
+      ...rest
+    } = dto;
+    const categoryIds = await this.kategorileriDogrula(
+      tenantId,
+      istenenKategoriler,
+    );
 
     // REPORTER/COLUMNIST yayınlama gerçekleştiremez — status'ü DRAFT'a zorla.
     if (userRole && !canPublishArticle(userRole) && rest.status) {
@@ -1133,18 +1153,68 @@ export class ArticlesService {
     });
   }
 
-  async bulkUpdateCategory(tenantId: string, ids: string[], categoryId: string) {
-    await this.prisma.articleCategory.deleteMany({
-      where: { articleId: { in: ids } },
+  async bulkUpdateCategory(
+    tenantId: string,
+    ids: string[],
+    categoryId: string,
+  ) {
+    await this.kategorileriDogrula(tenantId, [categoryId]);
+
+    // Kimlikler istemciden geliyor: yalnızca bu sitenin haberleri. Eskiden
+    // silme `articleId in ids` ile yapılıyordu ve başka bir sitenin haber
+    // kimliğini gönderen, o haberin kategorilerini silebiliyordu.
+    const haberler = await this.prisma.article.findMany({
+      where: { tenantId, id: { in: ids } },
+      select: { id: true },
     });
+    const kimlikler = haberler.map((h) => h.id);
+    if (kimlikler.length === 0) return { count: 0 };
 
-    const creates = ids.map((articleId) => ({
-      articleId,
-      categoryId,
-      primary: true,
-    }));
+    const [, sonuc] = await this.prisma.$transaction([
+      this.prisma.articleCategory.deleteMany({
+        where: { articleId: { in: kimlikler } },
+      }),
+      this.prisma.articleCategory.createMany({
+        data: kimlikler.map((articleId) => ({
+          articleId,
+          categoryId,
+          primary: true,
+        })),
+      }),
+    ]);
 
-    return this.prisma.articleCategory.createMany({ data: creates });
+    this.revalidation.revalidateTenant(tenantId, ['articles', 'categories']);
+    return sonuc;
+  }
+
+  /**
+   * Bir habere bağlanacak kategorileri süzer.
+   *
+   * Sıra korunur — ilk kategori haberin ANA kategorisidir (sitede rozet,
+   * bağlantı yolu). Tekrarlar ve boş değerler atılır. Başka bir siteye ait
+   * ya da silinmiş bir kategori gelirse kayıt reddedilir; aksi halde haber o
+   * sitenin kategori sayfasına sızabilirdi.
+   *
+   * `undefined` "dokunma" demek (güncellemede kategoriler değişmez); boş
+   * dizi "hepsini kaldır".
+   */
+  private async kategorileriDogrula(
+    tenantId: string,
+    kimlikler: string[] | undefined,
+  ): Promise<string[] | undefined> {
+    if (kimlikler === undefined) return undefined;
+    const temiz = [...new Set(kimlikler.map((k) => k?.trim()).filter(Boolean))];
+    if (temiz.length === 0) return [];
+
+    const bulunan = await this.prisma.category.count({
+      where: { tenantId, id: { in: temiz } },
+    });
+    if (bulunan !== temiz.length) {
+      throw new BadRequestException(
+        'Seçilen kategorilerden biri bulunamadı. Sayfayı yenileyip tekrar seçin.',
+      );
+    }
+    return temiz;
   }
 
   // ─── Private helpers ───

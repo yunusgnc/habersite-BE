@@ -1376,6 +1376,7 @@ export declare class ArticlesService {
     bulkUpdateStatus(tenantId: string, ids: string[], status: ArticleStatus): Promise<Prisma.BatchPayload>;
     bulkDelete(tenantId: string, ids: string[]): Promise<Prisma.BatchPayload>;
     bulkUpdateCategory(tenantId: string, ids: string[], categoryId: string): Promise<Prisma.BatchPayload>;
+    private kategorileriDogrula;
     private generateUniqueSlug;
     private calculateReadingTime;
     private extractTextFromContent;

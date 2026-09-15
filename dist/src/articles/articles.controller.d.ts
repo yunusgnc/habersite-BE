@@ -2,7 +2,7 @@ import { ArticlesService } from './articles.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { QueryArticlesDto } from './dto/query-articles.dto';
-import { BulkArticleDto } from './dto/bulk-article.dto';
+import { BulkArticleDto, BulkCategoryDto } from './dto/bulk-article.dto';
 import { ReactDto, UnreactDto } from './dto/react.dto';
 export declare class ArticlesController {
     private readonly articlesService;
@@ -1011,10 +1011,7 @@ export declare class ArticlesController {
         nationalFeatured: boolean;
     }>;
     bulkUpdateStatus(tenantId: string, dto: BulkArticleDto): Promise<import("@prisma/client").Prisma.BatchPayload>;
-    bulkUpdateCategory(tenantId: string, dto: {
-        ids: string[];
-        categoryId: string;
-    }): Promise<import("@prisma/client").Prisma.BatchPayload>;
+    bulkUpdateCategory(tenantId: string, dto: BulkCategoryDto): Promise<import("@prisma/client").Prisma.BatchPayload>;
     myTasks(tenantId: string, user: any): Promise<({
         author: {
             id: string;

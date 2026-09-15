@@ -9,3 +9,12 @@ export class BulkArticleDto {
   @IsEnum(ArticleStatus)
   status: ArticleStatus;
 }
+
+export class BulkCategoryDto {
+  @IsArray()
+  @IsString({ each: true })
+  ids: string[];
+
+  @IsString()
+  categoryId: string;
+}

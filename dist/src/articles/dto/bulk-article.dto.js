@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BulkArticleDto = void 0;
+exports.BulkCategoryDto = exports.BulkArticleDto = void 0;
 const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const client_1 = require("@prisma/client");
@@ -30,4 +30,21 @@ __decorate([
     (0, class_validator_1.IsEnum)(client_1.ArticleStatus),
     __metadata("design:type", String)
 ], BulkArticleDto.prototype, "status", void 0);
+class BulkCategoryDto {
+    ids;
+    categoryId;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { ids: { required: true, type: () => [String] }, categoryId: { required: true, type: () => String } };
+    }
+}
+exports.BulkCategoryDto = BulkCategoryDto;
+__decorate([
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    __metadata("design:type", Array)
+], BulkCategoryDto.prototype, "ids", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], BulkCategoryDto.prototype, "categoryId", void 0);
 //# sourceMappingURL=bulk-article.dto.js.map

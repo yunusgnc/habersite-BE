@@ -322,7 +322,8 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
         return article;
     }
     async create(tenantId, userId, dto, userRole) {
-        const { categoryIds, tagNames, ...data } = dto;
+        const { categoryIds: istenenKategoriler, tagNames, ...data } = dto;
+        const categoryIds = await this.kategorileriDogrula(tenantId, istenenKategoriler);
         if (userRole && !canPublishArticle(userRole)) {
             data.status = client_1.ArticleStatus.DRAFT;
         }
@@ -399,7 +400,8 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
                 throw new common_1.ForbiddenException('Bu haberi düzenleme yetkiniz yok.');
             }
         }
-        const { categoryIds, tagNames, publishedAt: publishedAtStr, scheduledAt: scheduledAtStr, ...rest } = dto;
+        const { categoryIds: istenenKategoriler, tagNames, publishedAt: publishedAtStr, scheduledAt: scheduledAtStr, ...rest } = dto;
+        const categoryIds = await this.kategorileriDogrula(tenantId, istenenKategoriler);
         if (userRole && !canPublishArticle(userRole) && rest.status) {
             rest.status = client_1.ArticleStatus.DRAFT;
         }
@@ -846,15 +848,42 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
         });
     }
     async bulkUpdateCategory(tenantId, ids, categoryId) {
-        await this.prisma.articleCategory.deleteMany({
-            where: { articleId: { in: ids } },
+        await this.kategorileriDogrula(tenantId, [categoryId]);
+        const haberler = await this.prisma.article.findMany({
+            where: { tenantId, id: { in: ids } },
+            select: { id: true },
         });
-        const creates = ids.map((articleId) => ({
-            articleId,
-            categoryId,
-            primary: true,
-        }));
-        return this.prisma.articleCategory.createMany({ data: creates });
+        const kimlikler = haberler.map((h) => h.id);
+        if (kimlikler.length === 0)
+            return { count: 0 };
+        const [, sonuc] = await this.prisma.$transaction([
+            this.prisma.articleCategory.deleteMany({
+                where: { articleId: { in: kimlikler } },
+            }),
+            this.prisma.articleCategory.createMany({
+                data: kimlikler.map((articleId) => ({
+                    articleId,
+                    categoryId,
+                    primary: true,
+                })),
+            }),
+        ]);
+        this.revalidation.revalidateTenant(tenantId, ['articles', 'categories']);
+        return sonuc;
+    }
+    async kategorileriDogrula(tenantId, kimlikler) {
+        if (kimlikler === undefined)
+            return undefined;
+        const temiz = [...new Set(kimlikler.map((k) => k?.trim()).filter(Boolean))];
+        if (temiz.length === 0)
+            return [];
+        const bulunan = await this.prisma.category.count({
+            where: { tenantId, id: { in: temiz } },
+        });
+        if (bulunan !== temiz.length) {
+            throw new common_1.BadRequestException('Seçilen kategorilerden biri bulunamadı. Sayfayı yenileyip tekrar seçin.');
+        }
+        return temiz;
     }
     async generateUniqueSlug(tenantId, kaynak) {
         let slug = (0, slugify_1.default)(kaynak, { lower: true, strict: true, locale: 'tr' });
