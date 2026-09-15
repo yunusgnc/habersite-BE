@@ -39,6 +39,9 @@ describe('Manşet alanları doğrulaması', () => {
     expect(await hatalar({ headlineFontSize: 500 })).toEqual([
       'headlineFontSize',
     ]);
+    expect(
+      await hatalar({ spotTitleFontFamily: 'yok', spotTitleFontSize: 5 }),
+    ).toEqual(['spotTitleFontFamily', 'spotTitleFontSize']);
   });
 
   it('düzenlemede null alanı temizler (doğrulamaya takılmaz)', async () => {

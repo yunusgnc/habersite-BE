@@ -110,6 +110,8 @@ export declare class ArticlesController {
             headlineTitle: string | null;
             headlineImage: string | null;
             spotTitle: string | null;
+            spotTitleFontFamily: string | null;
+            spotTitleFontSize: number | null;
             headlineFontSize: number | null;
             headlineFontFamily: string | null;
             hideHeadlineOverlay: boolean;
@@ -222,6 +224,8 @@ export declare class ArticlesController {
         headlineTitle: string | null;
         headlineImage: string | null;
         spotTitle: string | null;
+        spotTitleFontFamily: string | null;
+        spotTitleFontSize: number | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -322,6 +326,8 @@ export declare class ArticlesController {
         headlineTitle: string | null;
         headlineImage: string | null;
         spotTitle: string | null;
+        spotTitleFontFamily: string | null;
+        spotTitleFontSize: number | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -403,6 +409,8 @@ export declare class ArticlesController {
         headlineTitle: string | null;
         headlineImage: string | null;
         spotTitle: string | null;
+        spotTitleFontFamily: string | null;
+        spotTitleFontSize: number | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -489,6 +497,8 @@ export declare class ArticlesController {
         headlineTitle: string | null;
         headlineImage: string | null;
         spotTitle: string | null;
+        spotTitleFontFamily: string | null;
+        spotTitleFontSize: number | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -571,6 +581,8 @@ export declare class ArticlesController {
             headlineTitle: string | null;
             headlineImage: string | null;
             spotTitle: string | null;
+            spotTitleFontFamily: string | null;
+            spotTitleFontSize: number | null;
             headlineFontSize: number | null;
             headlineFontFamily: string | null;
             hideHeadlineOverlay: boolean;
@@ -674,6 +686,8 @@ export declare class ArticlesController {
         headlineTitle: string | null;
         headlineImage: string | null;
         spotTitle: string | null;
+        spotTitleFontFamily: string | null;
+        spotTitleFontSize: number | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -766,6 +780,8 @@ export declare class ArticlesController {
         headlineTitle: string | null;
         headlineImage: string | null;
         spotTitle: string | null;
+        spotTitleFontFamily: string | null;
+        spotTitleFontSize: number | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -858,6 +874,8 @@ export declare class ArticlesController {
         headlineTitle: string | null;
         headlineImage: string | null;
         spotTitle: string | null;
+        spotTitleFontFamily: string | null;
+        spotTitleFontSize: number | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -970,6 +988,8 @@ export declare class ArticlesController {
         headlineTitle: string | null;
         headlineImage: string | null;
         spotTitle: string | null;
+        spotTitleFontFamily: string | null;
+        spotTitleFontSize: number | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -1016,6 +1036,8 @@ export declare class ArticlesController {
         headlineTitle: string | null;
         headlineImage: string | null;
         spotTitle: string | null;
+        spotTitleFontFamily: string | null;
+        spotTitleFontSize: number | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -1070,6 +1092,8 @@ export declare class ArticlesController {
         headlineTitle: string | null;
         headlineImage: string | null;
         spotTitle: string | null;
+        spotTitleFontFamily: string | null;
+        spotTitleFontSize: number | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -1127,6 +1151,8 @@ export declare class ArticlesController {
         headlineTitle: string | null;
         headlineImage: string | null;
         spotTitle: string | null;
+        spotTitleFontFamily: string | null;
+        spotTitleFontSize: number | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -1191,6 +1217,8 @@ export declare class ArticlesController {
         headlineTitle: string | null;
         headlineImage: string | null;
         spotTitle: string | null;
+        spotTitleFontFamily: string | null;
+        spotTitleFontSize: number | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -1234,6 +1262,8 @@ export declare class ArticlesController {
         headlineTitle: string | null;
         headlineImage: string | null;
         spotTitle: string | null;
+        spotTitleFontFamily: string | null;
+        spotTitleFontSize: number | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -1279,6 +1309,8 @@ export declare class ArticlesController {
         headlineTitle: string | null;
         headlineImage: string | null;
         spotTitle: string | null;
+        spotTitleFontFamily: string | null;
+        spotTitleFontSize: number | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;
@@ -1331,6 +1363,8 @@ export declare class ArticlesController {
         headlineTitle: string | null;
         headlineImage: string | null;
         spotTitle: string | null;
+        spotTitleFontFamily: string | null;
+        spotTitleFontSize: number | null;
         headlineFontSize: number | null;
         headlineFontFamily: string | null;
         hideHeadlineOverlay: boolean;

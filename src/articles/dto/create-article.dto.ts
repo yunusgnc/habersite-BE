@@ -137,11 +137,21 @@ export class CreateArticleDto {
   @IsOptional()
   headlineImage?: string;
 
-  /** Manşette ana başlığın altındaki kısa satır — boşsa gösterilmez. */
+  /** Manşette görselin ortasındaki kısa satır — boşsa gösterilmez. */
   @IsString()
   @MaxLength(160)
   @IsOptional()
   spotTitle?: string;
+
+  @IsIn(MANSET_FONTLARI)
+  @IsOptional()
+  spotTitleFontFamily?: string;
+
+  @IsInt()
+  @Min(12)
+  @Max(96)
+  @IsOptional()
+  spotTitleFontSize?: number;
 
   @IsInt()
   @Min(12)

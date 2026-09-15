@@ -244,9 +244,12 @@ model Article {
   // Editorial highlights — displayed on the FE homepage manşet slots.
   headlineTitle       String?       @map("headline_title")
   headlineImage       String?       @map("headline_image")
-  /// Manşet slider'ında ana başlığın altında, görselin ortasında gösterilen
-  /// kısa satır. Boşsa yalnızca ana başlık görünür. Özet (`spot`) ayrı alan.
+  /// Manşet slider'ında görselin ortasında gösterilen kısa satır; ana başlık
+  /// kendi yerinde (altta) kalır. Boşsa gösterilmez. Özet (`spot`) ayrı alan.
   spotTitle           String?       @map("spot_title")
+  /// Spot başlığın kendi yazı tipi / boyutu — manşet başlığınınkinden bağımsız.
+  spotTitleFontFamily String?       @map("spot_title_font_family")
+  spotTitleFontSize   Int?          @map("spot_title_font_size")
   headlineFontSize    Int?          @map("headline_font_size")
   headlineFontFamily  String?       @map("headline_font_family")
   /// Manşet slider'ı ve öne çıkan haber alanında görselin üzerine başlık +

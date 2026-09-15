@@ -23,6 +23,8 @@ export declare class CreateArticleDto {
     headlineTitle?: string;
     headlineImage?: string;
     spotTitle?: string;
+    spotTitleFontFamily?: string;
+    spotTitleFontSize?: number;
     headlineFontSize?: number;
     headlineFontFamily?: string;
     hideHeadlineOverlay?: boolean;
