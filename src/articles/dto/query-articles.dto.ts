@@ -7,6 +7,7 @@ import {
   IsDateString,
   Min,
   Max,
+  MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ArticleStatus, ArticleType } from '@prisma/client';
@@ -54,6 +55,16 @@ export class QueryArticlesDto {
   @IsString()
   @IsOptional()
   authorSlug?: string;
+
+  /**
+   * Virgülle ayrılmış yazar kimlikleri — anasayfa "Son Makaleler" bölümü
+   * yalnızca seçilen yazarların yazılarını gösterebilsin. Tek istekte en
+   * fazla 50 yazar.
+   */
+  @IsString()
+  @MaxLength(2000)
+  @IsOptional()
+  authorIds?: string;
 
   @IsString()
   @IsOptional()

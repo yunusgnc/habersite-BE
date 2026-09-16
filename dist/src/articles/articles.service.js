@@ -104,7 +104,7 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
         this.logger.log(`${due.length} zamanlanmış haber yayınlandı.`);
     }
     async findAll(tenantId, query) {
-        const { cursor, limit = 20, status, type, categorySlug, categoryId, authorSlug, page, search, searchScope, from, to, tagSlug, featured, createdById, sort = 'latest', } = query;
+        const { cursor, limit = 20, status, type, categorySlug, categoryId, authorSlug, authorIds, page, search, searchScope, from, to, tagSlug, featured, createdById, sort = 'latest', } = query;
         const where = { tenantId };
         if (status)
             where.status = status;
@@ -148,6 +148,12 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
         }
         if (authorSlug) {
             where.author = { slug: authorSlug };
+        }
+        const yazarKimlikleri = [
+            ...new Set((authorIds ?? '').split(',').map((k) => k.trim()).filter(Boolean)),
+        ].slice(0, 50);
+        if (yazarKimlikleri.length > 0) {
+            where.authorId = { in: yazarKimlikleri };
         }
         let orderBy;
         switch (sort) {

@@ -133,6 +133,7 @@ export class ArticlesService {
       categorySlug,
       categoryId,
       authorSlug,
+      authorIds,
       page,
       search,
       searchScope,
@@ -191,6 +192,13 @@ export class ArticlesService {
 
     if (authorSlug) {
       where.author = { slug: authorSlug };
+    }
+
+    const yazarKimlikleri = [
+      ...new Set((authorIds ?? '').split(',').map((k) => k.trim()).filter(Boolean)),
+    ].slice(0, 50);
+    if (yazarKimlikleri.length > 0) {
+      where.authorId = { in: yazarKimlikleri };
     }
 
     // Her siralamanin sonunda `id` tiebreaker'i var: sirasi tek basina belirsiz

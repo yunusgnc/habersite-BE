@@ -78,13 +78,11 @@ describe('ArticlesService — çoklu kategori', () => {
   });
 
   it('güncellemede kategori gönderilmezse mevcut kategorilere dokunulmaz', async () => {
-    jest
-      .spyOn(servis, 'findById')
-      .mockResolvedValue({
-        id: 'h1',
-        createdById: 'u1',
-        status: 'DRAFT',
-      } as any);
+    jest.spyOn(servis, 'findById').mockResolvedValue({
+      id: 'h1',
+      createdById: 'u1',
+      status: 'DRAFT',
+    } as any);
 
     await servis.update(
       'site-a',
@@ -101,13 +99,11 @@ describe('ArticlesService — çoklu kategori', () => {
   });
 
   it('güncellemede boş liste tüm kategorileri kaldırır', async () => {
-    jest
-      .spyOn(servis, 'findById')
-      .mockResolvedValue({
-        id: 'h1',
-        createdById: 'u1',
-        status: 'DRAFT',
-      } as any);
+    jest.spyOn(servis, 'findById').mockResolvedValue({
+      id: 'h1',
+      createdById: 'u1',
+      status: 'DRAFT',
+    } as any);
 
     await servis.update(
       'site-a',
@@ -149,5 +145,44 @@ describe('ArticlesService — çoklu kategori', () => {
         { articleId: 'h2', categoryId: 'spor', primary: true },
       ],
     });
+  });
+});
+
+describe('ArticlesService — yazar filtresi', () => {
+  it('virgülle ayrılmış yazar kimlikleri tekrarsız ve kiracı içinde süzülür', async () => {
+    const prisma: any = {
+      article: {
+        findMany: jest.fn().mockResolvedValue([]),
+        count: jest.fn().mockResolvedValue(0),
+      },
+    };
+    const servis = new ArticlesService(prisma, {} as any, {} as any, {} as any);
+
+    await servis.findAll('site-a', {
+      type: 'COLUMN',
+      authorIds: ' y1, y2 ,y1,, ',
+      limit: 8,
+    } as any);
+
+    const where = prisma.article.findMany.mock.calls[0][0].where;
+    expect(where).toMatchObject({
+      tenantId: 'site-a',
+      type: 'COLUMN',
+      authorId: { in: ['y1', 'y2'] },
+    });
+  });
+
+  it('boş yazar listesi filtre uygulamaz', async () => {
+    const prisma: any = {
+      article: {
+        findMany: jest.fn().mockResolvedValue([]),
+        count: jest.fn().mockResolvedValue(0),
+      },
+    };
+    const servis = new ArticlesService(prisma, {} as any, {} as any, {} as any);
+    await servis.findAll('site-a', { authorIds: '' } as any);
+    expect(
+      prisma.article.findMany.mock.calls[0][0].where.authorId,
+    ).toBeUndefined();
   });
 });
