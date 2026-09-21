@@ -209,10 +209,41 @@ export async function* readRows(
   tables: Set<string>,
   columnOrder: Map<string, string[]>,
 ): AsyncGenerator<{ table: string; row: Row }> {
+  /**
+   * Açık INSERT bloğu. mariadb-dump 10.11 `VALUES` sözcüğünden sonra satır
+   * atlayıp her kaydı ayrı satıra yazıyor:
+   *
+   *   INSERT INTO `news` VALUES
+   *   (1,...),
+   *   (2,...);
+   *
+   * Eski dump'larda (Kayseri Times) değerler aynı satırdaydı. İki biçimi de
+   * desteklemek zorundayız; aksi halde okuyucu sessizce SIFIR satır döndürür.
+   * Metin içindeki satır sonları dump'ta `\n` olarak kaçışlandığı için bir
+   * kayıt asla satır bölmez — her satırı tek başına ayrıştırmak güvenli.
+   */
+  let acikTablo: string | null = null;
+
   for await (const line of readLines(dumpPath)) {
+    if (acikTablo) {
+      const cols = columnOrder.get(acikTablo);
+      if (cols) {
+        for (const values of parseValueGroups(line)) {
+          const row: Row = {};
+          for (let c = 0; c < cols.length && c < values.length; c++) {
+            row[cols[c]] = values[c];
+          }
+          yield { table: acikTablo, row };
+        }
+      }
+      // Blok noktalı virgülle biter.
+      if (line.trimEnd().endsWith(';')) acikTablo = null;
+      continue;
+    }
+
     if (!line.startsWith('INSERT INTO')) continue;
 
-    const m = line.match(/^INSERT INTO `([^`]+)` VALUES /);
+    const m = line.match(/^INSERT INTO `([^`]+)` VALUES/);
     if (!m) continue;
     const table = m[1];
     if (!tables.has(table)) continue;
@@ -221,6 +252,12 @@ export async function* readRows(
     if (!cols) continue;
 
     const segment = line.slice(m[0].length);
+    if (segment.trim() === '') {
+      // Değerler sonraki satırlarda — bloğu açık bırak.
+      acikTablo = table;
+      continue;
+    }
+
     for (const values of parseValueGroups(segment)) {
       const row: Row = {};
       // Kolon sayısı uyuşmazsa (şema değişikliği) eldeki kadarını al.
