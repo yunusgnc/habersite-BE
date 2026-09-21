@@ -77,6 +77,16 @@ const TABLOLAR = new Set([
 
 const YIGIN = 200;
 
+/**
+ * Eski kategori adı → kiracıdaki kategori slug'ı. Ada göre otomatik eşleşme
+ * yetmeyen tek durum: eski sitede "MAKALELER" adlı bir HABER kategorisi var
+ * (11 haber, hepsi "X'in kaleminden …" duyurusu). Yeni sitede makale ayrı bir
+ * bölüm (COLUMN); aynı adla bir haber kategorisi açmak menüde ikizleme yapar.
+ */
+const KATEGORI_ESLEMESI: Record<string, string> = {
+  makaleler: 'guncel',
+};
+
 // ── Sayaçlar ──────────────────────────────────────────────────────
 
 const sayac: Record<string, number> = {};
@@ -231,7 +241,10 @@ async function main() {
       `galeri görseli ${eski.galleryItems.length} · yorum ${eski.comments.length}\n`,
   );
 
-  const kategoriHarita = await kategorileriEsle(eski.categories);
+  const kategoriHarita = await kategorileriEsle(
+    eski.categories,
+    await kategoriKullanimi(kolonlar),
+  );
   const yazarHarita = await yazarlariAktar(eski.authors);
 
   const { harita: haberHarita, sluglar } = await haberleriAktar(
@@ -275,6 +288,23 @@ async function icerikSahibi() {
 // ── Kategoriler ───────────────────────────────────────────────────
 
 /**
+ * Hangi eski kategoride kaç haber var. İçi boş kategoriyi kiracıya eklemek
+ * menüye "hiç haber yok" sayfası koymak demek — Kayseri aktarımında aynı
+ * sorun yaşanmıştı.
+ */
+async function kategoriKullanimi(
+  kolonlar: Map<string, string[]>,
+): Promise<Map<number, number>> {
+  const sayim = new Map<number, number>();
+  for await (const { row } of readRows(DUMP, new Set(['news']), kolonlar)) {
+    if (asStr(row.deleted_at).trim()) continue;
+    const k = asInt(row.category_id);
+    sayim.set(k, (sayim.get(k) ?? 0) + 1);
+  }
+  return sayim;
+}
+
+/**
  * Eski kategorileri kiracıda HÂLİHAZIRDA DURAN kategorilere bağlar.
  *
  * NEDEN yeni kategori oluşturmuyoruz: müşteri panelde 12 kategori kurmuş
@@ -286,7 +316,10 @@ async function icerikSahibi() {
  * temizlenir (".GÜNCEL" → "guncel"). Eşleşmeyen ve içinde haber olan
  * kategoriler oluşturulur; "deneme" kayıtları atlanır.
  */
-async function kategorileriEsle(satirlar: Row[]): Promise<Map<number, string>> {
+async function kategorileriEsle(
+  satirlar: Row[],
+  kullanim: Map<number, number>,
+): Promise<Map<number, string>> {
   console.log('Kategoriler…');
   const harita = new Map<number, string>();
 
@@ -306,11 +339,19 @@ async function kategorileriEsle(satirlar: Row[]): Promise<Map<number, string>> {
       continue;
     }
 
+    const elleEslenen = KATEGORI_ESLEMESI[anahtar(ad)];
     const bulunan =
-      adIndeksi.get(anahtar(ad)) ?? slugIndeksi.get(asStr(r.slug).trim());
+      (elleEslenen ? slugIndeksi.get(elleEslenen) : undefined) ??
+      adIndeksi.get(anahtar(ad)) ??
+      slugIndeksi.get(asStr(r.slug).trim());
     if (bulunan) {
       harita.set(eskiId, bulunan);
       say('kategori (mevcutla eşleşti)');
+      continue;
+    }
+
+    if (!(kullanim.get(eskiId) ?? 0)) {
+      say('kategori (içi boş, oluşturulmadı)');
       continue;
     }
 
@@ -344,7 +385,8 @@ async function kategorileriEsle(satirlar: Row[]): Promise<Map<number, string>> {
   console.log(
     `  eşleşen ${sayac['kategori (mevcutla eşleşti)'] ?? 0} · ` +
       `yeni ${sayac['kategori (yeni oluşturuldu)'] ?? 0} · ` +
-      `atlanan ${sayac['kategori (deneme, atlandı)'] ?? 0}\n`,
+      `içi boş ${sayac['kategori (içi boş, oluşturulmadı)'] ?? 0} · ` +
+      `deneme ${sayac['kategori (deneme, atlandı)'] ?? 0}\n`,
   );
   return harita;
 }
