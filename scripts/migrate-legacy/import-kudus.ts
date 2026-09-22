@@ -107,6 +107,42 @@ const metin = (...degerler: unknown[]): string | null => {
   return null;
 };
 
+/**
+ * Eski panelde düz metin alanlarına HTML yapıştırılmış. Ölçüm:
+ *   news.headline_title      26 kayıt  → `<span style="font-size: 28px…">`
+ *   articles.seo_description 128 kayıt → `GEN&Ccedil;LİK&nbsp;VE…`
+ *   authors.bio                2 kayıt → Word'den gelen `<p class="MsoNormal">`
+ * Site bu alanları metin olarak bastığı için manşetin üstünde ham `<span
+ * style=…>` görünüyordu. Etiketler atılıp varlık kodları çözülüyor.
+ * İÇERİK GÖVDESİNE UYGULANMAZ — orası gerçek HTML.
+ */
+const VARLIKLAR: Record<string, string> = {
+  nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', apos: "'",
+  uuml: 'ü', Uuml: 'Ü', ccedil: 'ç', Ccedil: 'Ç', ouml: 'ö', Ouml: 'Ö',
+  acirc: 'â', Acirc: 'Â', icirc: 'î', Icirc: 'Î', ucirc: 'û', Ucirc: 'Û',
+  scedil: 'ş', Scedil: 'Ş', ge: 'ğ', shy: '',
+  rsquo: '\u2019', lsquo: '\u2018', ldquo: '\u201C', rdquo: '\u201D',
+  hellip: '…', ndash: '–', mdash: '—',
+};
+
+function duzMetin(...degerler: unknown[]): string | null {
+  for (const d of degerler) {
+    const ham = asStr(d);
+    if (!ham.trim()) continue;
+    const temiz = ham
+      // Satır sonu üreten etiketler boşluğa dönsün, kelimeler birleşmesin.
+      .replace(/<br\s*\/?>|<\/(p|div|li|h[1-6])>/gi, ' ')
+      .replace(/<[^>]*>/g, '')
+      .replace(/&#(\d+);/g, (_m, k) => String.fromCodePoint(Number(k)))
+      .replace(/&#x([0-9a-f]+);/gi, (_m, k) => String.fromCodePoint(parseInt(k, 16)))
+      .replace(/&([a-zA-Z]+);/g, (tam, ad) => VARLIKLAR[ad] ?? tam)
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (temiz) return temiz;
+  }
+  return null;
+}
+
 function slugla(kaynak: string, yedekId: number | string): string {
   const s = slugify(kaynak, { lower: true, strict: true, locale: 'tr' });
   return s || `icerik-${yedekId}`;
@@ -406,7 +442,7 @@ async function yazarlariAktar(satirlar: Row[]): Promise<Map<number, string>> {
 
   for (const r of satirlar) {
     const eskiId = asInt(r.id);
-    const ad = asStr(r.name).trim();
+    const ad = duzMetin(r.name) ?? '';
     if (!ad || /^deneme$/i.test(ad)) {
       say('yazar (deneme/boş, atlandı)');
       continue;
@@ -422,7 +458,7 @@ async function yazarlariAktar(satirlar: Row[]): Promise<Map<number, string>> {
       twitter: metin(r.twitter),
       instagram: metin(r.instagram),
     };
-    const bio = metin(r.bio);
+    const bio = duzMetin(r.bio);
 
     // Kiracıda zaten varsa yalnızca eksikleri tamamla — müşterinin panelden
     // düzelttiği ad/slug'ı eski kayıtla ezmiyoruz.
@@ -533,7 +569,7 @@ async function haberleriAktar(
       say('haber (silinmiş, atlandı)');
       continue;
     }
-    const baslik = metin(row.title);
+    const baslik = duzMetin(row.title);
     if (!baslik) {
       uyar(`Haber ${eskiId}: başlık boş, atlandı`);
       continue;
@@ -568,9 +604,9 @@ async function haberleriAktar(
       tenantId: KIRACI,
       title: baslik,
       slug,
-      spot: metin(row.summary),
+      spot: duzMetin(row.summary),
       // Eski panelde "manşet başlığı" — bizde fotoğrafın üstündeki spot başlık.
-      spotTitle: metin(row.headline_title),
+      spotTitle: duzMetin(row.headline_title),
       content: govde(icerik),
       featuredImage: kapak,
       ogImage: medya.dosya('resimler/icerikler', asStr(row.og_image)),
@@ -578,8 +614,8 @@ async function haberleriAktar(
       publishedAt: yayinTarihi,
       viewCount: asInt(row.hit),
       readingTime: okumaSuresi(icerik, asInt(row.read_time)),
-      seoTitle: metin(row.seo_title),
-      seoDesc: metin(row.seo_description),
+      seoTitle: duzMetin(row.seo_title),
+      seoDesc: duzMetin(row.seo_description),
       canonicalUrl: metin(row.canonical_url),
       videoUrl: metin(row.video_url),
       authorId: yazarId && !yazarId.startsWith('KURU-') ? yazarId : null,
@@ -630,7 +666,7 @@ async function makaleleriAktar(
       say('makale (silinmiş, atlandı)');
       continue;
     }
-    const baslik = metin(row.title);
+    const baslik = duzMetin(row.title);
     if (!baslik || /^deneme$/i.test(baslik)) {
       say('makale (deneme/boş, atlandı)');
       continue;
@@ -653,7 +689,7 @@ async function makaleleriAktar(
       type: 'COLUMN' as const,
       title: baslik,
       slug,
-      spot: metin(row.summary),
+      spot: duzMetin(row.summary),
       content: govde(icerik),
       // `articles` tablosunda kapak kolonu yok; site yazarın fotoğrafını kullanır.
       ogImage: medya.dosya('resimler/icerikler', asStr(row.og_image)),
@@ -661,7 +697,7 @@ async function makaleleriAktar(
       publishedAt: yayinTarihi,
       viewCount: asInt(row.hit),
       readingTime: okumaSuresi(icerik, asInt(row.read_time)),
-      seoDesc: metin(row.seo_description),
+      seoDesc: duzMetin(row.seo_description),
       canonicalUrl: metin(row.canonical_url),
       authorId: yazarId && !yazarId.startsWith('KURU-') ? yazarId : null,
       createdAt: yayinTarihi ?? undefined,
@@ -696,7 +732,7 @@ async function videolariAktar(satirlar: Row[]) {
 
   for (const r of satirlar) {
     const eskiId = asInt(r.id);
-    const baslik = metin(r.title);
+    const baslik = duzMetin(r.title);
     if (!baslik || /^deneme$/i.test(baslik)) {
       say('video (deneme/boş, atlandı)');
       continue;
@@ -726,9 +762,9 @@ async function videolariAktar(satirlar: Row[]) {
     const veri = {
       tenantId: KIRACI,
       title: baslik,
-      headline: metin(r.headline_title),
+      headline: duzMetin(r.headline_title),
       slug,
-      description: metin(r.summary),
+      description: duzMetin(r.summary),
       coverImage: medya.dosya('resimler/video', asStr(r.image)),
       videoUrl: videoAdresi,
       embedCode: gomme,
@@ -736,8 +772,8 @@ async function videolariAktar(satirlar: Row[]) {
       status: asInt(r.is_active) === 1 ? ArticleStatus.PUBLISHED : ArticleStatus.DRAFT,
       publishedAt: tarih,
       viewCount: asInt(r.hit),
-      seoTitle: metin(r.seo_title),
-      seoDesc: metin(r.seo_description),
+      seoTitle: duzMetin(r.seo_title),
+      seoDesc: duzMetin(r.seo_description),
       createdAt: tarih ?? undefined,
     };
 
@@ -769,7 +805,7 @@ async function galerileriAktar(galeriler: Row[], gorseller: Row[]) {
 
   for (const g of galeriler) {
     const eskiId = asInt(g.id);
-    const baslik = metin(g.title);
+    const baslik = duzMetin(g.title);
     if (!baslik || /^deneme$/i.test(baslik)) {
       say('galeri (deneme/boş, atlandı)');
       continue;
@@ -783,7 +819,7 @@ async function galerileriAktar(galeriler: Row[], gorseller: Row[]) {
     const gorselVerisi = ogeler
       .map((o, i) => ({
         url: medya.dosya('resimler/galeriresim', asStr(o.image)) ?? '',
-        caption: metin(o.description),
+        caption: duzMetin(o.description),
         sortOrder: asInt(o.sort_order) || i,
       }))
       .filter((v) => v.url);
@@ -798,7 +834,7 @@ async function galerileriAktar(galeriler: Row[], gorseller: Row[]) {
         where: { tenantId_slug: { tenantId: KIRACI, slug } },
         update: {
           title: baslik,
-          description: metin(g.summary),
+          description: duzMetin(g.summary),
           coverImage: medya.dosya('resimler/galeri', asStr(g.image)),
           status: asInt(g.is_active) === 1 ? ArticleStatus.PUBLISHED : ArticleStatus.DRAFT,
           publishedAt: tarih,
@@ -808,7 +844,7 @@ async function galerileriAktar(galeriler: Row[], gorseller: Row[]) {
           tenantId: KIRACI,
           title: baslik,
           slug,
-          description: metin(g.summary),
+          description: duzMetin(g.summary),
           coverImage: medya.dosya('resimler/galeri', asStr(g.image)),
           status: asInt(g.is_active) === 1 ? ArticleStatus.PUBLISHED : ArticleStatus.DRAFT,
           publishedAt: tarih,
