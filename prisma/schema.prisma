@@ -250,6 +250,11 @@ model Article {
   /// Spot başlığın kendi yazı tipi / boyutu — manşet başlığınınkinden bağımsız.
   spotTitleFontFamily String?       @map("spot_title_font_family")
   spotTitleFontSize   Int?          @map("spot_title_font_size")
+  /// Spot başlığın manşet görselindeki yüzde tabanlı yerleşimi. Null olan eski
+  /// kayıtlarda site merkezdeki varsayılan konumu kullanır.
+  spotTitleX          Float?        @map("spot_title_x")
+  spotTitleY          Float?        @map("spot_title_y")
+  spotTitleWidth      Float?        @map("spot_title_width")
   headlineFontSize    Int?          @map("headline_font_size")
   headlineFontFamily  String?       @map("headline_font_family")
   /// Manşet slider'ı ve öne çıkan haber alanında görselin üzerine başlık +

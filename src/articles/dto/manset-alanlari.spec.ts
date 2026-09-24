@@ -17,6 +17,9 @@ describe('Manşet alanları doğrulaması', () => {
     expect(
       await hatalar({
         spotTitle: 'Kısa satır',
+        spotTitleX: 62.5,
+        spotTitleY: 38,
+        spotTitleWidth: 64,
         headlineFontFamily: 'oswald',
         headlineFontSize: 56,
       }),
@@ -42,6 +45,9 @@ describe('Manşet alanları doğrulaması', () => {
     expect(
       await hatalar({ spotTitleFontFamily: 'yok', spotTitleFontSize: 5 }),
     ).toEqual(['spotTitleFontFamily', 'spotTitleFontSize']);
+    expect(
+      await hatalar({ spotTitleX: -1, spotTitleY: 101, spotTitleWidth: 10 }),
+    ).toEqual(['spotTitleX', 'spotTitleY', 'spotTitleWidth']);
   });
 
   it('düzenlemede null alanı temizler (doğrulamaya takılmaz)', async () => {
@@ -50,6 +56,9 @@ describe('Manşet alanları doğrulaması', () => {
         spotTitle: null,
         headlineFontFamily: null,
         headlineFontSize: null,
+        spotTitleX: null,
+        spotTitleY: null,
+        spotTitleWidth: null,
       }),
     ).toEqual([]);
   });

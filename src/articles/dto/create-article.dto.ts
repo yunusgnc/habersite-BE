@@ -8,6 +8,7 @@ import {
   IsBoolean,
   IsDateString,
   IsInt,
+  IsNumber,
   Max,
   MaxLength,
   Min,
@@ -152,6 +153,25 @@ export class CreateArticleDto {
   @Max(96)
   @IsOptional()
   spotTitleFontSize?: number;
+
+  /** Manşet görseli içinde yüzde tabanlı spot başlık merkezi ve kutu genişliği. */
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  spotTitleX?: number;
+
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  spotTitleY?: number;
+
+  @IsNumber()
+  @Min(20)
+  @Max(96)
+  @IsOptional()
+  spotTitleWidth?: number;
 
   @IsInt()
   @Min(12)
