@@ -29,7 +29,7 @@ let AuthorsService = class AuthorsService {
         const [authors, sayilar] = await Promise.all([
             this.prisma.author.findMany({
                 where: { tenantId },
-                orderBy: { sortOrder: 'asc' },
+                orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
             }),
             this.yaziSayilari(tenantId),
         ]);
@@ -66,7 +66,7 @@ let AuthorsService = class AuthorsService {
                 active: true,
                 ...(groups && groups.length > 0 ? { group: { in: groups } } : {}),
             },
-            orderBy: { sortOrder: 'asc' },
+            orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
             select: {
                 id: true,
                 name: true,

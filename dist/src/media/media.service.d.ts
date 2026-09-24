@@ -48,7 +48,31 @@ export declare class MediaService {
         alt: string | null;
         credit: string | null;
     }>;
+    private dosyayiIsleVeYukle;
     create(tenantId: string, file: Express.Multer.File, dto: UploadMediaDto): Promise<{
+        url: string;
+        id: string;
+        createdAt: Date;
+        tenantId: string;
+        type: import("@prisma/client").$Enums.MediaType;
+        title: string | null;
+        filename: string;
+        originalName: string;
+        mimeType: string;
+        size: number;
+        thumbnailUrl: string | null;
+        width: number | null;
+        height: number | null;
+        alt: string | null;
+        credit: string | null;
+    }>;
+    hamIcerik(tenantId: string, id: string): Promise<{
+        govde: Buffer<ArrayBuffer>;
+        mimeType: string;
+    }>;
+    private adresiHerYerdeDegistir;
+    kirpilaniUygula(tenantId: string, id: string, file: Express.Multer.File): Promise<{
+        guncellenenReferans: number;
         url: string;
         id: string;
         createdAt: Date;

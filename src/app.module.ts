@@ -38,6 +38,7 @@ import { MenusModule } from './menus/menus.module';
 import { SuperAdminModule } from './super-admin/super-admin.module';
 import { ContactMessagesModule } from './contact-messages/contact-messages.module';
 import { OfficialNoticesModule } from './official-notices/official-notices.module';
+import { CartoonsModule } from './cartoons/cartoons.module';
 import { AuditModule } from './common/audit/audit.module';
 import { SeoModule } from './seo/seo.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -87,6 +88,7 @@ import { ReadersModule } from './readers/readers.module';
     SuperAdminModule,
     ContactMessagesModule,
     OfficialNoticesModule,
+    CartoonsModule,
     AuditModule,
     SeoModule,
     NotificationsModule,

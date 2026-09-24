@@ -130,7 +130,7 @@ let MediaService = class MediaService {
         }
         return media;
     }
-    async create(tenantId, file, dto) {
+    async dosyayiIsleVeYukle(tenantId, file) {
         if (!file || !file.buffer) {
             throw new common_1.BadRequestException('File is required');
         }
@@ -224,23 +224,116 @@ let MediaService = class MediaService {
             catch {
             }
         }
-        const type = this.resolveMediaType(finalMime);
+        return {
+            key,
+            url,
+            thumbnailUrl,
+            width,
+            height,
+            mimeType: finalMime,
+            size: processedBuffer.length,
+            type: this.resolveMediaType(finalMime),
+        };
+    }
+    async create(tenantId, file, dto) {
+        const yuklenen = await this.dosyayiIsleVeYukle(tenantId, file);
         return this.prisma.media.create({
             data: {
                 tenantId,
-                type,
-                filename: key,
+                type: yuklenen.type,
+                filename: yuklenen.key,
                 originalName: file.originalname,
-                mimeType: finalMime,
-                size: processedBuffer.length,
-                url,
-                thumbnailUrl,
-                width,
-                height,
+                mimeType: yuklenen.mimeType,
+                size: yuklenen.size,
+                url: yuklenen.url,
+                thumbnailUrl: yuklenen.thumbnailUrl,
+                width: yuklenen.width,
+                height: yuklenen.height,
                 title: dto.title,
                 alt: dto.alt,
                 credit: dto.credit,
             },
+        });
+    }
+    async hamIcerik(tenantId, id) {
+        const medya = await this.findById(tenantId, id);
+        const yanit = await fetch(medya.url);
+        if (!yanit.ok) {
+            throw new common_1.NotFoundException('Görsel kaynağa ulaşılamadı');
+        }
+        return {
+            govde: Buffer.from(await yanit.arrayBuffer()),
+            mimeType: medya.mimeType,
+        };
+    }
+    async adresiHerYerdeDegistir(tx, tenantId, eski, yeni) {
+        if (!eski || eski === yeni)
+            return 0;
+        const duzSutunlar = [
+            ['tenants', 'logo'],
+            ['tenants', 'favicon'],
+            ['users', 'avatar'],
+            ['categories', 'image'],
+            ['authors', 'avatar'],
+            ['articles', 'featured_image'],
+            ['articles', 'og_image'],
+            ['articles', 'headline_image'],
+            ['ads', 'image_url'],
+            ['person_profiles', 'image'],
+            ['popups', 'image_url'],
+            ['galleries', 'cover_image'],
+            ['videos', 'cover_image'],
+        ];
+        let etkilenen = 0;
+        for (const [tablo, sutun] of duzSutunlar) {
+            const kiraciSutunu = tablo === 'tenants' ? 'id' : 'tenant_id';
+            etkilenen += await tx.$executeRawUnsafe(`UPDATE "${tablo}" SET "${sutun}" = $1 WHERE "${kiraciSutunu}" = $2 AND "${sutun}" = $3`, yeni, tenantId, eski);
+        }
+        etkilenen += await tx.$executeRawUnsafe(`UPDATE "gallery_images" gi
+          SET "url" = $1
+         FROM "galleries" g
+        WHERE gi."gallery_id" = g."id"
+          AND g."tenant_id" = $2
+          AND gi."url" = $3`, yeni, tenantId, eski);
+        const jsonSutunlar = [
+            ['articles', 'content'],
+            ['pages', 'content'],
+            ['settings', 'value'],
+            ['widgets', 'config'],
+        ];
+        for (const [tablo, sutun] of jsonSutunlar) {
+            etkilenen += await tx.$executeRawUnsafe(`UPDATE "${tablo}"
+            SET "${sutun}" = REPLACE("${sutun}"::text, $1, $2)::jsonb
+          WHERE "tenant_id" = $3
+            AND "${sutun}"::text LIKE '%' || $1 || '%'`, eski, yeni, tenantId);
+        }
+        return etkilenen;
+    }
+    async kirpilaniUygula(tenantId, id, file) {
+        const mevcut = await this.findById(tenantId, id);
+        if (mevcut.type !== client_1.MediaType.IMAGE) {
+            throw new common_1.BadRequestException('Yalnızca görseller yeniden kırpılabilir');
+        }
+        const yuklenen = await this.dosyayiIsleVeYukle(tenantId, file);
+        return this.prisma.$transaction(async (tx) => {
+            const guncel = await tx.media.update({
+                where: { id },
+                data: {
+                    filename: yuklenen.key,
+                    mimeType: yuklenen.mimeType,
+                    size: yuklenen.size,
+                    url: yuklenen.url,
+                    thumbnailUrl: yuklenen.thumbnailUrl,
+                    width: yuklenen.width,
+                    height: yuklenen.height,
+                },
+            });
+            const guncellenen = await this.adresiHerYerdeDegistir(tx, tenantId, mevcut.url, yuklenen.url);
+            let kucukGuncellenen = 0;
+            if (mevcut.thumbnailUrl && yuklenen.thumbnailUrl) {
+                kucukGuncellenen = await this.adresiHerYerdeDegistir(tx, tenantId, mevcut.thumbnailUrl, yuklenen.thumbnailUrl);
+            }
+            return { ...guncel, guncellenenReferans: guncellenen + kucukGuncellenen };
         });
     }
     looksLikeSvg(buffer) {

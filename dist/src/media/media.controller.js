@@ -34,6 +34,17 @@ let MediaController = class MediaController {
     upload(tenantId, file, dto) {
         return this.mediaService.create(tenantId, file, dto);
     }
+    async ham(tenantId, id, res) {
+        const { govde, mimeType } = await this.mediaService.hamIcerik(tenantId, id);
+        res.set({
+            'Content-Type': mimeType,
+            'Cache-Control': 'no-store',
+        });
+        return new common_1.StreamableFile(govde);
+    }
+    kirp(tenantId, id, file) {
+        return this.mediaService.kirpilaniUygula(tenantId, id, file);
+    }
     update(tenantId, id, dto) {
         return this.mediaService.update(tenantId, id, dto);
     }
@@ -62,6 +73,31 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, upload_media_dto_1.UploadMediaDto]),
     __metadata("design:returntype", void 0)
 ], MediaController.prototype, "upload", null);
+__decorate([
+    openapi.ApiOperation({ summary: "Yeniden k\u0131rpma ekran\u0131n\u0131n okudu\u011Fu ham g\u00F6rsel. M\u00FC\u015Fterinin CDN'i CORS\nba\u015Fl\u0131\u011F\u0131 g\u00F6ndermedi\u011Fi i\u00E7in taray\u0131c\u0131 o adresi tuvale \u00E7izemiyor; baytlar\u0131\nburadan ge\u00E7irince panel g\u00F6rseli kendi origin'indeymi\u015F gibi i\u015Fleyebiliyor." }),
+    (0, common_1.Get)(':id/ham'),
+    openapi.ApiResponse({ status: 200 }),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Res)({ passthrough: true })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], MediaController.prototype, "ham", null);
+__decorate([
+    openapi.ApiOperation({ summary: "Yeniden k\u0131rp\u0131lm\u0131\u015F g\u00F6rseli mevcut kayd\u0131n yerine koyar ve adresi ge\u00E7en t\u00FCm\nkay\u0131tlar\u0131 g\u00FCnceller. Yaln\u0131zca i\u00E7erik \u00FCzerinde yetkisi olan roller." }),
+    (0, common_1.Post)(':id/kirp'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, roles_guard_1.Roles)('ADMIN', 'EDITOR'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
+    openapi.ApiResponse({ status: 201 }),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", void 0)
+], MediaController.prototype, "kirp", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     openapi.ApiResponse({ status: 200 }),

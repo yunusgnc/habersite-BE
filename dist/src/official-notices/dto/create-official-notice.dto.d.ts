@@ -10,7 +10,7 @@ export declare class CreateOfficialNoticeDto {
     institution: string;
     referenceNo?: string;
     summary?: string;
-    content: string;
+    content?: string;
     attachments?: NoticeAttachmentDto[];
     publishedAt?: string;
     expiresAt?: string | null;

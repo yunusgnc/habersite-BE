@@ -20,7 +20,11 @@ export class AuthorsService {
     const [authors, sayilar] = await Promise.all([
       this.prisma.author.findMany({
         where: { tenantId },
-        orderBy: { sortOrder: 'asc' },
+        // `sortOrder` elle verilen sıra; kimse dokunmadığında hepsi 0 kalıyor
+        // ve Postgres eşitlikte rastgele sıralıyordu — panelin yazar açılırı
+        // her açılışta farklı diziliyordu. Ada göre ikincil sıra listeyi
+        // kararlı kılıyor.
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       }),
       this.yaziSayilari(tenantId),
     ]);
@@ -72,7 +76,7 @@ export class AuthorsService {
         // Boş/verilmemiş seçim = bütün gruplar (eski davranış).
         ...(groups && groups.length > 0 ? { group: { in: groups } } : {}),
       },
-      orderBy: { sortOrder: 'asc' },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       select: {
         id: true,
         name: true,

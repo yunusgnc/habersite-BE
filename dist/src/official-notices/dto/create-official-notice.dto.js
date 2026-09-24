@@ -46,7 +46,7 @@ class CreateOfficialNoticeDto {
     expiresAt;
     active;
     static _OPENAPI_METADATA_FACTORY() {
-        return { title: { required: true, type: () => String, minLength: 3, maxLength: 300 }, slug: { required: false, type: () => String, maxLength: 300 }, noticeType: { required: false, enum: ["OTHER", "TENDER", "AUCTION", "RECRUITMENT", "ZONING", "COURT", "ANNOUNCEMENT"] }, institution: { required: true, type: () => String, minLength: 2, maxLength: 200 }, referenceNo: { required: false, type: () => String, maxLength: 120 }, summary: { required: false, type: () => String, maxLength: 600 }, content: { required: true, type: () => String, minLength: 3 }, attachments: { required: false, type: () => [require("./create-official-notice.dto").NoticeAttachmentDto] }, publishedAt: { required: false, type: () => String }, expiresAt: { required: false, type: () => String, nullable: true }, active: { required: false, type: () => Boolean } };
+        return { title: { required: true, type: () => String, minLength: 3, maxLength: 300 }, slug: { required: false, type: () => String, maxLength: 300 }, noticeType: { required: false, enum: ["OTHER", "TENDER", "AUCTION", "RECRUITMENT", "ZONING", "COURT", "ANNOUNCEMENT"] }, institution: { required: true, type: () => String, minLength: 2, maxLength: 200 }, referenceNo: { required: false, type: () => String, maxLength: 120 }, summary: { required: false, type: () => String, maxLength: 4000 }, content: { required: false, type: () => String, description: "Zengin metin g\u00F6vdesi \u2014 ARTIK KULLANILMIYOR.\n\nResmi ilan formu sadele\u015Ftirildi: ilan\u0131n anlat\u0131m\u0131 `summary`, belgesi ise\n`attachments` \u00FCzerinden giriliyor. Alan \u015Femada duruyor ki eski ilanlar\u0131n\ng\u00F6vdesi kaybolmas\u0131n; yeni kay\u0131tlarda bo\u015F ge\u00E7iliyor." }, attachments: { required: false, type: () => [require("./create-official-notice.dto").NoticeAttachmentDto] }, publishedAt: { required: false, type: () => String }, expiresAt: { required: false, type: () => String, nullable: true }, active: { required: false, type: () => Boolean } };
     }
 }
 exports.CreateOfficialNoticeDto = CreateOfficialNoticeDto;
@@ -82,12 +82,12 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(600),
+    (0, class_validator_1.MaxLength)(4000),
     __metadata("design:type", String)
 ], CreateOfficialNoticeDto.prototype, "summary", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(3),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateOfficialNoticeDto.prototype, "content", void 0);
 __decorate([

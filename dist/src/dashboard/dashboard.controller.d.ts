@@ -58,8 +58,17 @@ export declare class DashboardController {
             spotTitle: string | null;
             spotTitleFontFamily: string | null;
             spotTitleFontSize: number | null;
+            spotTitleX: number | null;
+            spotTitleY: number | null;
+            spotTitleWidth: number | null;
             headlineFontSize: number | null;
             headlineFontFamily: string | null;
+            headlineX: number | null;
+            headlineY: number | null;
+            headlineWidth: number | null;
+            headlineImageScale: number | null;
+            headlineImageX: number | null;
+            headlineImageY: number | null;
             hideHeadlineOverlay: boolean;
             nationalFeatured: boolean;
         }[];

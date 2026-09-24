@@ -56,6 +56,7 @@ model Tenant {
   authorCategories    AuthorCategory[]
   siteSettings        Setting[]
   officialNotices     OfficialNotice[]
+  cartoons            Cartoon[]
 
   @@map("tenants")
 }
@@ -1037,4 +1038,41 @@ enum NoticeType {
   COURT /// Mahkeme / icra
   ANNOUNCEMENT /// Genel duyuru
   OTHER
+}
+
+// ─── KARİKATÜR ───
+
+/// Günlük karikatür. Haberden ayrı bir model: taşıdığı tek zorunlu içerik
+/// GÖRSEL, metni yok. Article olarak tutulsaydı gövdesi boş kayıtlar haber
+/// listelerine, RSS'e ve Google News sitemap'ine karışırdı.
+model Cartoon {
+  id       String @id @default(cuid())
+  tenantId String @map("tenant_id")
+  title    String
+  slug     String
+  /// Karikatürün kendisi — tek zorunlu içerik alanı.
+  image    String
+  /// Görsel alt metni; boş bırakılırsa başlık kullanılır.
+  imageAlt String? @map("image_alt")
+  /// Karikatüristin adı. Serbest metin: çizerlerin çoğu yazar tablosunda yok.
+  artist   String?
+  /// Karikatürün altındaki açıklama. ZORUNLU DEĞİL.
+  caption  String?
+
+  publishedAt DateTime @default(now()) @map("published_at")
+  active      Boolean  @default(true)
+  viewCount   Int      @default(0) @map("view_count")
+
+  seoTitle String? @map("seo_title")
+  seoDesc  String? @map("seo_desc")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, active, publishedAt(sort: Desc)])
+  @@index([tenantId, artist])
+  @@map("cartoons")
 }

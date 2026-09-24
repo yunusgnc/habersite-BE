@@ -47,6 +47,7 @@ const menus_module_1 = require("./menus/menus.module");
 const super_admin_module_1 = require("./super-admin/super-admin.module");
 const contact_messages_module_1 = require("./contact-messages/contact-messages.module");
 const official_notices_module_1 = require("./official-notices/official-notices.module");
+const cartoons_module_1 = require("./cartoons/cartoons.module");
 const audit_module_1 = require("./common/audit/audit.module");
 const seo_module_1 = require("./seo/seo.module");
 const notifications_module_1 = require("./notifications/notifications.module");
@@ -99,6 +100,7 @@ exports.AppModule = AppModule = __decorate([
             super_admin_module_1.SuperAdminModule,
             contact_messages_module_1.ContactMessagesModule,
             official_notices_module_1.OfficialNoticesModule,
+            cartoons_module_1.CartoonsModule,
             audit_module_1.AuditModule,
             seo_module_1.SeoModule,
             notifications_module_1.NotificationsModule,

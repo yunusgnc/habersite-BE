@@ -160,7 +160,7 @@ let OfficialNoticesService = class OfficialNoticesService {
                 institution: dto.institution.trim(),
                 referenceNo: dto.referenceNo?.trim() || null,
                 summary: dto.summary?.trim() || null,
-                content: dto.content,
+                content: dto.content ?? '',
                 attachments: (dto.attachments ?? []),
                 publishedAt: dto.publishedAt ? new Date(dto.publishedAt) : new Date(),
                 expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
