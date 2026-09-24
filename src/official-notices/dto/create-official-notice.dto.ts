@@ -49,14 +49,22 @@ export class CreateOfficialNoticeDto {
   @MaxLength(120)
   referenceNo?: string;
 
+  /// İlan açıklaması — ilanın gövdesi. Listelerde ve detayda gösterilir.
   @IsString()
   @IsOptional()
-  @MaxLength(600)
+  @MaxLength(4000)
   summary?: string;
 
+  /**
+   * Zengin metin gövdesi — ARTIK KULLANILMIYOR.
+   *
+   * Resmi ilan formu sadeleştirildi: ilanın anlatımı `summary`, belgesi ise
+   * `attachments` üzerinden giriliyor. Alan şemada duruyor ki eski ilanların
+   * gövdesi kaybolmasın; yeni kayıtlarda boş geçiliyor.
+   */
   @IsString()
-  @MinLength(3)
-  content: string;
+  @IsOptional()
+  content?: string;
 
   @IsArray()
   @IsOptional()

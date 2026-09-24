@@ -183,7 +183,8 @@ export class OfficialNoticesService {
         institution: dto.institution.trim(),
         referenceNo: dto.referenceNo?.trim() || null,
         summary: dto.summary?.trim() || null,
-        content: dto.content,
+        // Form artık gövde almıyor; sütun NOT NULL olduğu için boş geçiliyor.
+        content: dto.content ?? '',
         attachments: (dto.attachments ?? []) as unknown as Prisma.InputJsonValue,
         publishedAt: dto.publishedAt ? new Date(dto.publishedAt) : new Date(),
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
