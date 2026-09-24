@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { sayfaliListe } from '../common/pagination/sayfali-liste';
-import { MediaType } from '@prisma/client';
+import { MediaType, Prisma } from '@prisma/client';
 import { UploadMediaDto } from './dto/upload-media.dto';
 import { QueryMediaDto } from './dto/query-media.dto';
 import { STORAGE_ADAPTER } from './storage/storage.module';
@@ -117,10 +117,18 @@ export class MediaService {
     return media;
   }
 
-  async create(
+  /**
+   * Yükleme hattı: doğrulama, sharp ile yeniden kodlama, küçük görsel üretimi
+   * ve depoya yazma.
+   *
+   * `create` ile yeniden kırpma aynı hattı kullanır. Kırpılan dosya ilk
+   * yüklemeyle birebir aynı işlemlerden geçmeli (EXIF temizliği, WebP'ye
+   * çevirme, boyut sınırı); iki yerde ayrı yazılsaydı biri güncellenip
+   * diğeri unutulurdu.
+   */
+  private async dosyayiIsleVeYukle(
     tenantId: string,
     file: Express.Multer.File,
-    dto: UploadMediaDto,
   ) {
     if (!file || !file.buffer) {
       throw new BadRequestException('File is required');
@@ -249,24 +257,214 @@ export class MediaService {
       }
     }
 
-    const type = this.resolveMediaType(finalMime);
+    return {
+      key,
+      url,
+      thumbnailUrl,
+      width,
+      height,
+      mimeType: finalMime,
+      size: processedBuffer.length,
+      type: this.resolveMediaType(finalMime),
+    };
+  }
+
+  async create(
+    tenantId: string,
+    file: Express.Multer.File,
+    dto: UploadMediaDto,
+  ) {
+    const yuklenen = await this.dosyayiIsleVeYukle(tenantId, file);
 
     return this.prisma.media.create({
       data: {
         tenantId,
-        type,
-        filename: key,
+        type: yuklenen.type,
+        filename: yuklenen.key,
         originalName: file.originalname,
-        mimeType: finalMime,
-        size: processedBuffer.length,
-        url,
-        thumbnailUrl,
-        width,
-        height,
+        mimeType: yuklenen.mimeType,
+        size: yuklenen.size,
+        url: yuklenen.url,
+        thumbnailUrl: yuklenen.thumbnailUrl,
+        width: yuklenen.width,
+        height: yuklenen.height,
         title: dto.title,
         alt: dto.alt,
         credit: dto.credit,
       },
+    });
+  }
+
+  /**
+   * Görselin ham baytları — panelin yeniden kırpma ekranı için.
+   *
+   * Neden aracıya ihtiyaç var: dosyalar müşterinin CDN'inde (ayrı origin) ve
+   * o adres CORS başlığı göndermiyor. Tarayıcı böyle bir görseli tuvale
+   * çizdiğinde tuval "kirleniyor" ve kırpılan çıktı alınamıyor. Baytları
+   * kendi API'mizden geçirince panel bunu blob'a alıp aynı origin gibi
+   * kullanıyor; kırpma sorunsuz çalışıyor.
+   */
+  async hamIcerik(tenantId: string, id: string) {
+    const medya = await this.findById(tenantId, id);
+
+    const yanit = await fetch(medya.url);
+    if (!yanit.ok) {
+      throw new NotFoundException('Görsel kaynağa ulaşılamadı');
+    }
+
+    return {
+      govde: Buffer.from(await yanit.arrayBuffer()),
+      mimeType: medya.mimeType,
+    };
+  }
+
+  /**
+   * Bir görselin adresini geçen tüm kayıtlarda yenisiyle değiştirir.
+   *
+   * Haberler görseli Media kaydına referansla değil, ADRES METNİ olarak
+   * saklıyor (`featured_image`, gövde HTML'i, reklam afişi...). Dolayısıyla
+   * Media satırını güncellemek tek başına yetmez; eski adres nerede geçiyorsa
+   * orada da değişmeli, yoksa haber eski kadrajı göstermeye devam eder.
+   *
+   * `article_revisions` bilinçli olarak DIŞARIDA: o tablo geçmişin kaydı,
+   * geriye dönük değiştirilmesi doğru olmaz. Eski dosya depodan silinmediği
+   * için o kayıtlar çalışmaya devam eder.
+   */
+  private async adresiHerYerdeDegistir(
+    tx: Prisma.TransactionClient,
+    tenantId: string,
+    eski: string,
+    yeni: string,
+  ): Promise<number> {
+    if (!eski || eski === yeni) return 0;
+
+    // Düz metin sütunları: tam eşleşme yeterli, adres bütün olarak saklanıyor.
+    const duzSutunlar: [string, string][] = [
+      ['tenants', 'logo'],
+      ['tenants', 'favicon'],
+      ['users', 'avatar'],
+      ['categories', 'image'],
+      ['authors', 'avatar'],
+      ['articles', 'featured_image'],
+      ['articles', 'og_image'],
+      ['articles', 'headline_image'],
+      ['ads', 'image_url'],
+      ['person_profiles', 'image'],
+      ['popups', 'image_url'],
+      ['galleries', 'cover_image'],
+      ['videos', 'cover_image'],
+    ];
+
+    let etkilenen = 0;
+
+    for (const [tablo, sutun] of duzSutunlar) {
+      // tenants'ın kendi anahtarı "id"; diğerlerinde "tenant_id".
+      const kiraciSutunu = tablo === 'tenants' ? 'id' : 'tenant_id';
+      etkilenen += await tx.$executeRawUnsafe(
+        `UPDATE "${tablo}" SET "${sutun}" = $1 WHERE "${kiraciSutunu}" = $2 AND "${sutun}" = $3`,
+        yeni,
+        tenantId,
+        eski,
+      );
+    }
+
+    // Galeri görselleri kiracıyı doğrudan taşımıyor, bağlı olduğu galeriden
+    // alıyor; bu yüzden ayrı ve JOIN'li.
+    etkilenen += await tx.$executeRawUnsafe(
+      `UPDATE "gallery_images" gi
+          SET "url" = $1
+         FROM "galleries" g
+        WHERE gi."gallery_id" = g."id"
+          AND g."tenant_id" = $2
+          AND gi."url" = $3`,
+      yeni,
+      tenantId,
+      eski,
+    );
+
+    // JSON sütunları: adres gövde HTML'inin ya da yerleşim ayarının içinde
+    // gömülü geçiyor, tam eşleşme işe yaramaz. Metne çevirip değiştiriyoruz.
+    const jsonSutunlar: [string, string][] = [
+      ['articles', 'content'],
+      ['pages', 'content'],
+      ['settings', 'value'],
+      ['widgets', 'config'],
+    ];
+
+    for (const [tablo, sutun] of jsonSutunlar) {
+      etkilenen += await tx.$executeRawUnsafe(
+        `UPDATE "${tablo}"
+            SET "${sutun}" = REPLACE("${sutun}"::text, $1, $2)::jsonb
+          WHERE "tenant_id" = $3
+            AND "${sutun}"::text LIKE '%' || $1 || '%'`,
+        eski,
+        yeni,
+        tenantId,
+      );
+    }
+
+    return etkilenen;
+  }
+
+  /**
+   * Yüklenmiş bir görseli yeniden kırpılmış haliyle değiştirir.
+   *
+   * Dosya YENİ bir anahtara yazılır, eskisinin üzerine yazılmaz: depodaki
+   * nesneler bir yıllık `immutable` önbellek başlığıyla sunuluyor, aynı
+   * adrese yazmak tarayıcılarda ve CDN'de eski görüntünün asılı kalması
+   * demekti. Yeni adres kullanılınca değişiklik anında görünür.
+   *
+   * Eski dosya depodan SİLİNMİYOR. Dışarıdan verilmiş bağlantılar, arama
+   * motoru önbellekleri ve haber geçmişi ona işaret ediyor olabilir; R2'de
+   * saklama ucuz, kırık görsel pahalı.
+   */
+  async kirpilaniUygula(
+    tenantId: string,
+    id: string,
+    file: Express.Multer.File,
+  ) {
+    const mevcut = await this.findById(tenantId, id);
+
+    if (mevcut.type !== MediaType.IMAGE) {
+      throw new BadRequestException('Yalnızca görseller yeniden kırpılabilir');
+    }
+
+    const yuklenen = await this.dosyayiIsleVeYukle(tenantId, file);
+
+    return this.prisma.$transaction(async (tx) => {
+      const guncel = await tx.media.update({
+        where: { id },
+        data: {
+          filename: yuklenen.key,
+          mimeType: yuklenen.mimeType,
+          size: yuklenen.size,
+          url: yuklenen.url,
+          thumbnailUrl: yuklenen.thumbnailUrl,
+          width: yuklenen.width,
+          height: yuklenen.height,
+        },
+      });
+
+      const guncellenen = await this.adresiHerYerdeDegistir(
+        tx,
+        tenantId,
+        mevcut.url,
+        yuklenen.url,
+      );
+
+      // Küçük görselin adresi de gövdelerde geçebiliyor (eski editör
+      // sürümleri thumbnail gömüyordu); o da güncellensin.
+      let kucukGuncellenen = 0;
+      if (mevcut.thumbnailUrl && yuklenen.thumbnailUrl) {
+        kucukGuncellenen = await this.adresiHerYerdeDegistir(
+          tx,
+          tenantId,
+          mevcut.thumbnailUrl,
+          yuklenen.thumbnailUrl,
+        );
+      }
+
+      return { ...guncel, guncellenenReferans: guncellenen + kucukGuncellenen };
     });
   }
 
