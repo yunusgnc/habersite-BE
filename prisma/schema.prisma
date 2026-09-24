@@ -257,6 +257,19 @@ model Article {
   spotTitleWidth      Float?        @map("spot_title_width")
   headlineFontSize    Int?          @map("headline_font_size")
   headlineFontFamily  String?       @map("headline_font_family")
+  /// Manşet başlığının görsel üzerindeki yüzde tabanlı yerleşimi — spot
+  /// başlıkla aynı mantık. Null olan kayıtlarda site eski davranışı sürdürür:
+  /// başlık sol altta sabit durur.
+  headlineX           Float?        @map("headline_x")
+  headlineY           Float?        @map("headline_y")
+  headlineWidth       Float?        @map("headline_width")
+  /// Manşet görselinin yakınlaştırması ve odak noktası. Kadrajı görselin
+  /// tamamını değiştirmeden düzeltmeye yarıyor: 16:9 olmayan ya da konusu
+  /// kenarda kalan fotoğraflarda editör manşette ne görüneceğini seçiyor.
+  /// Ölçek 1 = değişiklik yok. Odak yüzde; 50/50 merkez.
+  headlineImageScale  Float?        @map("headline_image_scale")
+  headlineImageX      Float?        @map("headline_image_x")
+  headlineImageY      Float?        @map("headline_image_y")
   /// Manşet slider'ı ve öne çıkan haber alanında görselin üzerine başlık +
   /// özet bindirilmesini kapatır. Görselin kendisi yazı taşıyorsa (afiş,
   /// infografik, pankart) bindirme okunaklılığı bozuyor.

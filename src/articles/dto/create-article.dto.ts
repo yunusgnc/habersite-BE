@@ -179,6 +179,48 @@ export class CreateArticleDto {
   @IsOptional()
   headlineFontSize?: number;
 
+  /** Manşet başlığının görsel içindeki yüzde tabanlı merkezi ve kutu genişliği. */
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  headlineX?: number;
+
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  headlineY?: number;
+
+  @IsNumber()
+  @Min(20)
+  @Max(96)
+  @IsOptional()
+  headlineWidth?: number;
+
+  /**
+   * Manşet görselinin yakınlaştırması ve odak noktası. 1 = dokunulmamış.
+   * Üst sınır 3: daha fazlası devralınan arşivdeki görsellerde bozulma
+   * yapıyor, ölçüldü.
+   */
+  @IsNumber()
+  @Min(1)
+  @Max(3)
+  @IsOptional()
+  headlineImageScale?: number;
+
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  headlineImageX?: number;
+
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  headlineImageY?: number;
+
   /**
    * Manşet yazı tipi anahtarı. Site anahtarı kendi font listesine çeviriyor;
    * serbest metin kabul edilmiyor. `serif` / `sans` / `condensed` eski
