@@ -83,6 +83,32 @@ export function kudusMedyaCozumleyici(secenekler: {
    */
   const sayisalAd = (ad: string) => /^\d+\.[a-z0-9]+$/i.test(ad.split('/').pop() ?? '');
 
+  /**
+   * Bir klasörün altındaki sayısal (boyut) alt klasörleri — `750`, `1200` gibi.
+   * Arşiv listesinden bir kez çıkarılıp önbelleğe alınıyor; her dosya için
+   * yeniden taramak 40 bin kayıtta ölçülebilir yavaşlık yaratıyordu.
+   */
+  const boyutOnbellek = new Map<string, string[]>();
+  const boyutAltKlasorleri = (dizin: string): string[] => {
+    if (!arsiv) return [];
+    const hazir = boyutOnbellek.get(dizin);
+    if (hazir) return hazir;
+    const bulunan = new Set<string>();
+    const onekUzunluk = dizin.length + 1;
+    for (const yol of arsiv) {
+      if (!yol.startsWith(`${dizin}/`)) continue;
+      const kalan = yol.slice(onekUzunluk);
+      const egik = kalan.indexOf('/');
+      if (egik <= 0) continue;
+      const parca = kalan.slice(0, egik);
+      if (/^\d+$/.test(parca)) bulunan.add(parca);
+    }
+    // Büyük boyut önce: 1200 varsa 750'ye düşmeden onu kullan.
+    const liste = [...bulunan].sort((a, b) => Number(b) - Number(a));
+    boyutOnbellek.set(dizin, liste);
+    return liste;
+  };
+
   /** Manifesto varsa gerçek yolu bulur; yoksa tablo klasörünü olduğu gibi kullanır. */
   const yoluCoz = (klasor: string, ad: string): string | null => {
     const dizin = klasor.replace(/^\/+|\/+$/g, '');
@@ -91,6 +117,21 @@ export function kudusMedyaCozumleyici(secenekler: {
     if (arsiv.has(dogrudan)) return dogrudan;
     // Dosya adı zaten klasör içeriyorsa (gövde adresleri) doğrudan dene.
     if (ad.includes('/') && arsiv.has(ad)) return ad;
+    // Kendi klasörünün BOYUT ALT KLASÖRÜ — ör. `galeriresim/750/852.jpg`.
+    // Eski site küçültülmüş sürümleri genişliğe göre adlandırılmış bir alt
+    // klasörde tutuyor. Burası sayısal ad kuralının güvenli istisnası:
+    // farklı bir tablonun klasörü değil, AYNI görselin başka boyutu.
+    // Ölçüldü — Kayseri Ana Haber arşivinde 738 galeri görselinin 470'i
+    // yalnızca `750/` altında; bu kontrol olmadan 22 galeri boş kalıyordu.
+    for (const boyut of boyutAltKlasorleri(dizin)) {
+      const aday = `${dizin}/${boyut}/${ad}`;
+      if (arsiv.has(aday)) {
+        eksikler[`${dizin} → ${dizin}/${boyut}`] =
+          (eksikler[`${dizin} → ${dizin}/${boyut}`] ?? 0) + 1;
+        return aday;
+      }
+    }
+
     if (sayisalAd(ad)) {
       eksikler[`${dizin} (arşivde yok — sayısal ad, başka klasörde aranmadı)`] =
         (eksikler[`${dizin} (arşivde yok — sayısal ad, başka klasörde aranmadı)`] ?? 0) + 1;
