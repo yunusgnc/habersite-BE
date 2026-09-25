@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { PrismaModule } from './prisma/prisma.module';
@@ -44,6 +44,7 @@ import { SeoModule } from './seo/seo.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { RssImportModule } from './rss-import/rss-import.module';
 import { ReadersModule } from './readers/readers.module';
+import { WriteThrottlerGuard } from './common/guards/write-throttler.guard';
 
 @Module({
   imports: [
@@ -96,9 +97,10 @@ import { ReadersModule } from './readers/readers.module';
     ReadersModule,
   ],
   providers: [
-    // Global rate limit: 100 istek/dakika default, endpoint bazlı @Throttle ile
-    // sıkılaştırılır (örn. /auth/login = 5/dakika).
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // SSR okuma istekleri ortak sunucu IP'sini paylaşır; bu yüzden genel kota
+    // yalnızca yazma isteklerine uygulanır. Endpoint bazlı @Throttle sınırları
+    // (örn. /auth/login = 5/dakika) korunur.
+    { provide: APP_GUARD, useClass: WriteThrottlerGuard },
   ],
 })
 export class AppModule {}

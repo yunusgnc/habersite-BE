@@ -53,6 +53,7 @@ const seo_module_1 = require("./seo/seo.module");
 const notifications_module_1 = require("./notifications/notifications.module");
 const rss_import_module_1 = require("./rss-import/rss-import.module");
 const readers_module_1 = require("./readers/readers.module");
+const write_throttler_guard_1 = require("./common/guards/write-throttler.guard");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -108,7 +109,7 @@ exports.AppModule = AppModule = __decorate([
             readers_module_1.ReadersModule,
         ],
         providers: [
-            { provide: core_1.APP_GUARD, useClass: throttler_1.ThrottlerGuard },
+            { provide: core_1.APP_GUARD, useClass: write_throttler_guard_1.WriteThrottlerGuard },
         ],
     })
 ], AppModule);
