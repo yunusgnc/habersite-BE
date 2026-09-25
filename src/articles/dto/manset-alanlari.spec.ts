@@ -26,6 +26,17 @@ describe('Manşet alanları doğrulaması', () => {
     ).toEqual([]);
   });
 
+  it('spot başlığındaki HTML kayda girmeden düz metne çevrilir', () => {
+    const dto = plainToInstance(UpdateArticleDto, {
+      spotTitle:
+        '<span style="font-size: 28px">ACI DEV PANKARTA SIĞMADI</span>',
+      headlineTitle: '&lt;b&gt;Manşet&lt;/b&gt;',
+    });
+
+    expect(dto.spotTitle).toBe('ACI DEV PANKARTA SIĞMADI');
+    expect(dto.headlineTitle).toBe('Manşet');
+  });
+
   it('eski paneldeki yazı tipi değerleri geçerli kalır', async () => {
     for (const eski of ['serif', 'sans', 'condensed']) {
       expect(await hatalar({ headlineFontFamily: eski })).toEqual([]);

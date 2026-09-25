@@ -16,7 +16,9 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { ArticleType, ArticleStatus } from '@prisma/client';
+import { duzMetneCevir } from '../../common/plain-text';
 
 export const MANSET_FONTLARI = [
   'merriweather',
@@ -38,6 +40,7 @@ export const PAYLASIM_AGLARI = [
 ] as const;
 
 export class CreateArticleDto {
+  @Transform(({ value }) => duzMetneCevir(value))
   @IsString()
   @MinLength(3)
   title: string;
@@ -61,6 +64,7 @@ export class CreateArticleDto {
   @IsOptional()
   type?: ArticleType = ArticleType.NEWS;
 
+  @Transform(({ value }) => duzMetneCevir(value))
   @IsString()
   @IsOptional()
   spot?: string;
@@ -103,10 +107,12 @@ export class CreateArticleDto {
   @IsOptional()
   authorId?: string;
 
+  @Transform(({ value }) => duzMetneCevir(value))
   @IsString()
   @IsOptional()
   seoTitle?: string;
 
+  @Transform(({ value }) => duzMetneCevir(value))
   @IsString()
   @IsOptional()
   seoDesc?: string;
@@ -129,6 +135,7 @@ export class CreateArticleDto {
   nationalFeatured?: boolean;
 
   /** Manşette gösterilecek özel başlık — boş ise `title` kullanılır. */
+  @Transform(({ value }) => duzMetneCevir(value))
   @IsString()
   @IsOptional()
   headlineTitle?: string;
@@ -139,6 +146,7 @@ export class CreateArticleDto {
   headlineImage?: string;
 
   /** Manşette görselin ortasındaki kısa satır — boşsa gösterilmez. */
+  @Transform(({ value }) => duzMetneCevir(value))
   @IsString()
   @MaxLength(160)
   @IsOptional()
@@ -248,6 +256,7 @@ export class CreateArticleDto {
   scheduledAt?: string;
 
   /** Son dakika şeridi başlığı — null ile temizlenebilir. */
+  @Transform(({ value }) => duzMetneCevir(value))
   @ValidateIf((_o, v) => v !== null)
   @IsString()
   @IsOptional()
