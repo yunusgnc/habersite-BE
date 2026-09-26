@@ -14,6 +14,7 @@ import {
   Min,
   MinLength,
   ValidateIf,
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Transform } from 'class-transformer';
@@ -38,6 +39,40 @@ export const PAYLASIM_AGLARI = [
   'instagram',
   'x',
 ] as const;
+
+/**
+ * Haberin fotoğraf şeridindeki tek kare.
+ *
+ * Adres temelli, kimlik temelli değil: panelin görsel seçicisi adres
+ * döndürüyor ve devralınan arşivdeki adreslerin medya kütüphanesinde
+ * karşılığı yok.
+ */
+export class ArticleImageDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(1000)
+  url: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(500)
+  caption?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(200)
+  credit?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(300)
+  alt?: string;
+
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  sortOrder?: number;
+}
 
 export class CreateArticleDto {
   @Transform(({ value }) => duzMetneCevir(value))
@@ -102,6 +137,17 @@ export class CreateArticleDto {
   @IsString({ each: true })
   @IsOptional()
   tagNames?: string[];
+
+  /**
+   * Haberin fotoğraf şeridi. Verilirse MEVCUT ŞERİDİN TAMAMINI değiştirir —
+   * panel listeyi bütün olarak gönderiyor, tek tek ekleme/çıkarma ucu yok.
+   * Boş dizi şeridi temizler; gönderilmemesi (undefined) dokunmamak demek.
+   */
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ArticleImageDto)
+  @IsOptional()
+  images?: ArticleImageDto[];
 
   @IsString()
   @IsOptional()

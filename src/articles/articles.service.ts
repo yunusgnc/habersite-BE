@@ -9,7 +9,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import slugify from 'slugify';
 import { PrismaService } from '../prisma/prisma.service';
 import { ArticleStatus, Prisma, ReactionType } from '@prisma/client';
-import { CreateArticleDto } from './dto/create-article.dto';
+import { ArticleImageDto, CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { QueryArticlesDto } from './dto/query-articles.dto';
 import { AuditService } from '../common/audit/audit.service';
@@ -385,6 +385,9 @@ export class ArticlesService {
         createdBy: { select: { id: true, name: true, email: true } },
         approvedBy: { select: { id: true, name: true } },
         reactions: { select: { type: true, count: true } },
+        // Fotoğraf şeridi yalnızca DETAYDA gerekiyor; liste uçları bunu
+        // çekmiyor, 40 haberlik anasayfa sorgusunu şişirmesin.
+        images: { orderBy: { sortOrder: 'asc' } },
       },
     });
 
@@ -424,6 +427,8 @@ export class ArticlesService {
         createdBy: { select: { id: true, name: true, email: true } },
         approvedBy: { select: { id: true, name: true } },
         assignedTo: { select: { id: true, name: true, email: true } },
+        // Panel düzenleme formu şeridi geri yükleyebilsin.
+        images: { orderBy: { sortOrder: 'asc' } },
       },
     });
 
@@ -434,13 +439,38 @@ export class ArticlesService {
     return article;
   }
 
+  /**
+   * Fotoğraf şeridini veritabanı satırlarına çevirir.
+   *
+   * Sıra DİZİNDEN alınıyor, panelden gelen `sortOrder` alanından değil: panel
+   * sürükle-bırak sonrası listeyi doğru dizilimde gönderiyor ama alanı her
+   * satırda güncellemeyi atlarsa iki kayıt aynı sıraya düşüyor ve sitedeki
+   * dizilim belirsizleşiyor. Boş adresler atılıyor.
+   */
+  private gorselSatirlari(images: ArticleImageDto[]) {
+    return images
+      .filter((g) => g.url?.trim())
+      .map((g, i) => ({
+        url: g.url.trim(),
+        caption: g.caption?.trim() || null,
+        credit: g.credit?.trim() || null,
+        alt: g.alt?.trim() || null,
+        sortOrder: i,
+      }));
+  }
+
   async create(
     tenantId: string,
     userId: string,
     dto: CreateArticleDto,
     userRole?: string,
   ) {
-    const { categoryIds: istenenKategoriler, tagNames, ...data } = dto;
+    const {
+      categoryIds: istenenKategoriler,
+      tagNames,
+      images: istenenGorseller,
+      ...data
+    } = dto;
     const categoryIds = await this.kategorileriDogrula(
       tenantId,
       istenenKategoriler,
@@ -508,11 +538,15 @@ export class ArticlesService {
               ),
             }
           : undefined,
+        images: istenenGorseller?.length
+          ? { create: this.gorselSatirlari(istenenGorseller) }
+          : undefined,
       },
       include: {
         categories: { include: { category: true } },
         tags: { include: { tag: true } },
         author: true,
+        images: { orderBy: { sortOrder: 'asc' } },
       },
     });
 
@@ -553,6 +587,7 @@ export class ArticlesService {
     const {
       categoryIds: istenenKategoriler,
       tagNames,
+      images: istenenGorseller,
       publishedAt: publishedAtStr,
       scheduledAt: scheduledAtStr,
       ...rest
@@ -653,11 +688,17 @@ export class ArticlesService {
               ),
             }
           : undefined,
+        // Şerit BÜTÜN olarak değişiyor: panel listeyi tamamıyla gönderiyor.
+        // Boş dizi şeridi temizler; gönderilmemesi dokunmamak demek.
+        images: istenenGorseller
+          ? { deleteMany: {}, create: this.gorselSatirlari(istenenGorseller) }
+          : undefined,
       },
       include: {
         categories: { include: { category: true } },
         tags: { include: { tag: true } },
         author: true,
+        images: { orderBy: { sortOrder: 'asc' } },
       },
     });
 

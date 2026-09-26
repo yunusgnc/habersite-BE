@@ -317,6 +317,15 @@ export declare class ArticlesService {
             id: string;
             name: string;
         } | null;
+        images: {
+            url: string;
+            id: string;
+            sortOrder: number;
+            articleId: string;
+            alt: string | null;
+            credit: string | null;
+            caption: string | null;
+        }[];
         reactions: {
             type: import("@prisma/client").$Enums.ReactionType;
             count: number;
@@ -437,6 +446,15 @@ export declare class ArticlesService {
             name: string;
             email: string;
         } | null;
+        images: {
+            url: string;
+            id: string;
+            sortOrder: number;
+            articleId: string;
+            alt: string | null;
+            credit: string | null;
+            caption: string | null;
+        }[];
     } & {
         id: string;
         slug: string;
@@ -491,6 +509,7 @@ export declare class ArticlesService {
         hideHeadlineOverlay: boolean;
         nationalFeatured: boolean;
     }>;
+    private gorselSatirlari;
     create(tenantId: string, userId: string, dto: CreateArticleDto, userRole?: string): Promise<{
         categories: ({
             category: {
@@ -540,6 +559,15 @@ export declare class ArticlesService {
             social: Prisma.JsonValue;
             group: import("@prisma/client").$Enums.AuthorGroup;
         } | null;
+        images: {
+            url: string;
+            id: string;
+            sortOrder: number;
+            articleId: string;
+            alt: string | null;
+            credit: string | null;
+            caption: string | null;
+        }[];
     } & {
         id: string;
         slug: string;
@@ -643,6 +671,15 @@ export declare class ArticlesService {
             social: Prisma.JsonValue;
             group: import("@prisma/client").$Enums.AuthorGroup;
         } | null;
+        images: {
+            url: string;
+            id: string;
+            sortOrder: number;
+            articleId: string;
+            alt: string | null;
+            credit: string | null;
+            caption: string | null;
+        }[];
     } & {
         id: string;
         slug: string;
@@ -1197,6 +1234,15 @@ export declare class ArticlesService {
             social: Prisma.JsonValue;
             group: import("@prisma/client").$Enums.AuthorGroup;
         } | null;
+        images: {
+            url: string;
+            id: string;
+            sortOrder: number;
+            articleId: string;
+            alt: string | null;
+            credit: string | null;
+            caption: string | null;
+        }[];
     } & {
         id: string;
         slug: string;

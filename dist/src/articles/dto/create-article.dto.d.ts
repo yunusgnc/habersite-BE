@@ -1,6 +1,13 @@
 import { ArticleType, ArticleStatus } from '@prisma/client';
 export declare const MANSET_FONTLARI: readonly ["merriweather", "playfair", "roboto-slab", "oswald", "montserrat", "serif", "sans", "condensed"];
 export declare const PAYLASIM_AGLARI: readonly ["telegram", "facebook", "instagram", "x"];
+export declare class ArticleImageDto {
+    url: string;
+    caption?: string;
+    credit?: string;
+    alt?: string;
+    sortOrder?: number;
+}
 export declare class CreateArticleDto {
     title: string;
     slug?: string;
@@ -13,6 +20,7 @@ export declare class CreateArticleDto {
     status?: ArticleStatus;
     categoryIds?: string[];
     tagNames?: string[];
+    images?: ArticleImageDto[];
     authorId?: string;
     seoTitle?: string;
     seoDesc?: string;

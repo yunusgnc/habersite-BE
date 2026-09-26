@@ -195,6 +195,15 @@ export declare class ArticlesController {
             name: string;
             email: string;
         } | null;
+        images: {
+            url: string;
+            id: string;
+            sortOrder: number;
+            articleId: string;
+            alt: string | null;
+            credit: string | null;
+            caption: string | null;
+        }[];
     } & {
         id: string;
         slug: string;
@@ -699,6 +708,15 @@ export declare class ArticlesController {
             id: string;
             name: string;
         } | null;
+        images: {
+            url: string;
+            id: string;
+            sortOrder: number;
+            articleId: string;
+            alt: string | null;
+            credit: string | null;
+            caption: string | null;
+        }[];
         reactions: {
             type: import("@prisma/client").$Enums.ReactionType;
             count: number;
@@ -805,6 +823,15 @@ export declare class ArticlesController {
             social: import("@prisma/client/runtime/client").JsonValue;
             group: import("@prisma/client").$Enums.AuthorGroup;
         } | null;
+        images: {
+            url: string;
+            id: string;
+            sortOrder: number;
+            articleId: string;
+            alt: string | null;
+            credit: string | null;
+            caption: string | null;
+        }[];
     } & {
         id: string;
         slug: string;
@@ -908,6 +935,15 @@ export declare class ArticlesController {
             social: import("@prisma/client/runtime/client").JsonValue;
             group: import("@prisma/client").$Enums.AuthorGroup;
         } | null;
+        images: {
+            url: string;
+            id: string;
+            sortOrder: number;
+            articleId: string;
+            alt: string | null;
+            credit: string | null;
+            caption: string | null;
+        }[];
     } & {
         id: string;
         slug: string;
@@ -1031,6 +1067,15 @@ export declare class ArticlesController {
             social: import("@prisma/client/runtime/client").JsonValue;
             group: import("@prisma/client").$Enums.AuthorGroup;
         } | null;
+        images: {
+            url: string;
+            id: string;
+            sortOrder: number;
+            articleId: string;
+            alt: string | null;
+            credit: string | null;
+            caption: string | null;
+        }[];
     } & {
         id: string;
         slug: string;

@@ -286,6 +286,7 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
                 createdBy: { select: { id: true, name: true, email: true } },
                 approvedBy: { select: { id: true, name: true } },
                 reactions: { select: { type: true, count: true } },
+                images: { orderBy: { sortOrder: 'asc' } },
             },
         });
         if (!article) {
@@ -320,6 +321,7 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
                 createdBy: { select: { id: true, name: true, email: true } },
                 approvedBy: { select: { id: true, name: true } },
                 assignedTo: { select: { id: true, name: true, email: true } },
+                images: { orderBy: { sortOrder: 'asc' } },
             },
         });
         if (!article) {
@@ -327,8 +329,19 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
         }
         return article;
     }
+    gorselSatirlari(images) {
+        return images
+            .filter((g) => g.url?.trim())
+            .map((g, i) => ({
+            url: g.url.trim(),
+            caption: g.caption?.trim() || null,
+            credit: g.credit?.trim() || null,
+            alt: g.alt?.trim() || null,
+            sortOrder: i,
+        }));
+    }
     async create(tenantId, userId, dto, userRole) {
-        const { categoryIds: istenenKategoriler, tagNames, ...data } = dto;
+        const { categoryIds: istenenKategoriler, tagNames, images: istenenGorseller, ...data } = dto;
         const categoryIds = await this.kategorileriDogrula(tenantId, istenenKategoriler);
         if (userRole && !canPublishArticle(userRole)) {
             data.status = client_1.ArticleStatus.DRAFT;
@@ -378,11 +391,15 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
                         })),
                     }
                     : undefined,
+                images: istenenGorseller?.length
+                    ? { create: this.gorselSatirlari(istenenGorseller) }
+                    : undefined,
             },
             include: {
                 categories: { include: { category: true } },
                 tags: { include: { tag: true } },
                 author: true,
+                images: { orderBy: { sortOrder: 'asc' } },
             },
         });
         void this.audit.log({
@@ -406,7 +423,7 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
                 throw new common_1.ForbiddenException('Bu haberi düzenleme yetkiniz yok.');
             }
         }
-        const { categoryIds: istenenKategoriler, tagNames, publishedAt: publishedAtStr, scheduledAt: scheduledAtStr, ...rest } = dto;
+        const { categoryIds: istenenKategoriler, tagNames, images: istenenGorseller, publishedAt: publishedAtStr, scheduledAt: scheduledAtStr, ...rest } = dto;
         const categoryIds = await this.kategorileriDogrula(tenantId, istenenKategoriler);
         if (userRole && !canPublishArticle(userRole) && rest.status) {
             rest.status = client_1.ArticleStatus.DRAFT;
@@ -484,11 +501,15 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
                         })),
                     }
                     : undefined,
+                images: istenenGorseller
+                    ? { deleteMany: {}, create: this.gorselSatirlari(istenenGorseller) }
+                    : undefined,
             },
             include: {
                 categories: { include: { category: true } },
                 tags: { include: { tag: true } },
                 author: true,
+                images: { orderBy: { sortOrder: 'asc' } },
             },
         });
         void this.audit.log({

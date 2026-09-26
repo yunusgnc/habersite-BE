@@ -57,6 +57,7 @@ const storage_module_1 = require("./storage/storage.module");
 const file_type_1 = require("file-type");
 const sharp_1 = __importDefault(require("sharp"));
 const path = __importStar(require("path"));
+const fs = __importStar(require("fs/promises"));
 const ALLOWED_MIMES = new Set([
     'image/jpeg',
     'image/png',
@@ -257,6 +258,19 @@ let MediaService = class MediaService {
     }
     async hamIcerik(tenantId, id) {
         const medya = await this.findById(tenantId, id);
+        const mutlak = /^https?:\/\//i.test(medya.url);
+        if (!mutlak) {
+            const yol = path.join(process.cwd(), medya.filename);
+            try {
+                return {
+                    govde: await fs.readFile(yol),
+                    mimeType: medya.mimeType,
+                };
+            }
+            catch {
+                throw new common_1.NotFoundException('Görsel kaynağa ulaşılamadı');
+            }
+        }
         const yanit = await fetch(medya.url);
         if (!yanit.ok) {
             throw new common_1.NotFoundException('Görsel kaynağa ulaşılamadı');

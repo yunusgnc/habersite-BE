@@ -67,7 +67,7 @@ export declare class MediaService {
         credit: string | null;
     }>;
     hamIcerik(tenantId: string, id: string): Promise<{
-        govde: Buffer<ArrayBuffer>;
+        govde: NonSharedBuffer;
         mimeType: string;
     }>;
     private adresiHerYerdeDegistir;

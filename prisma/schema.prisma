@@ -288,6 +288,7 @@ model Article {
   tags       ArticleTag[]
   comments   Comment[]
   gallery    ArticleMedia[]
+  images     ArticleImage[]
   persons    ArticlePerson[]
   revisions  ArticleRevision[]
   bookmarks  Bookmark[]
@@ -377,6 +378,27 @@ model Media {
 
   @@index([tenantId, createdAt(sort: Desc)])
   @@map("media")
+}
+
+/// Haberin fotoğraf şeridi — detay sayfasının üstünde slider olarak dönüyor.
+///
+/// `ArticleMedia` DEĞİL: o tablo `Media` kimliği istiyor, panelin görsel
+/// seçicisi ise adres döndürüyor ve devralınan arşivdeki adreslerin
+/// kütüphanede karşılığı yok. Alanlar `GalleryImage` ile aynı — foto galeri
+/// tarafında kanıtlanmış şema.
+model ArticleImage {
+  id        String  @id @default(cuid())
+  articleId String  @map("article_id")
+  url       String
+  caption   String?
+  credit    String?
+  alt       String?
+  sortOrder Int     @default(0) @map("sort_order")
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId, sortOrder])
+  @@map("article_images")
 }
 
 model ArticleMedia {
