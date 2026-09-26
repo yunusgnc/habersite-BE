@@ -61,6 +61,147 @@ const SCRAPE_HEADERS = {
 } as const;
 
 
+/** Şeritte ve okuma modalında kullanılan tek bir gazete kapağı. */
+export type KapakOgesi = {
+  name: string;
+  slug: string;
+  /** Kaynaktaki kapak adresi; aynalamadan sonra kendi adresimizle değişir. */
+  image: string;
+  /** Kaynaktaki en büyük sürüm — okuma modalı bunu istiyor. */
+  imageFull: string;
+  /** Gazetenin kaynaktaki sayfası ("Kaynak" düğmesi). */
+  url: string;
+  date: string;
+  /** Hangi kaynaktan geldi — tanılama için önbelleğe yazılıyor. */
+  source: string;
+};
+
+type GazeteKaynagi = {
+  ad: string;
+  url: string;
+  /** Hata kaydında yazılacak işaretçi — kaynak yapısını değiştirince belli olsun. */
+  secici: string;
+  ayikla: ($: cheerio.CheerioAPI) => KapakOgesi[];
+};
+
+/**
+ * GAZETE KAPAĞI KAYNAKLARI — sırayla denenir, ilk dolu liste kazanır.
+ *
+ * Neden birden fazla: kaynaklar sunucu IP'lerini engelliyor. gazeteoku.com
+ * bizim VPS'e 403 döndürdü (ev bağlantısından 200) ve şerit boş kaldı. Tek
+ * kaynağa bağlı kalmak o günü tamamen kaybettiriyor.
+ *
+ * Yeni kaynak eklemek: diziye bir öğe daha yaz. Çekme, yeniden deneme,
+ * tekilleştirme, aynalama ve hata kaydı ortak — ayıklayıcıdan başka bir şey
+ * yazmak gerekmiyor.
+ *
+ * Sıra kasıtlı: gazeteoku en yüksek çözünürlüğü (1280x~2150, kırpılmamış)
+ * ve en çok gazeteyi veriyor.
+ */
+export const GAZETE_KAYNAKLARI: GazeteKaynagi[] = [
+  {
+    ad: 'gazeteoku.com',
+    url: 'https://www.gazeteoku.com/gazeteler',
+    secici: '.newspapers a[href*="-manseti"]',
+    /**
+     * Sayfa yapısı (2026-09 itibarıyla doğrulandı):
+     *   .newspapers a[href*="-manseti"]
+     *     ├─ <strong>HÜRRİYET</strong>          → ad
+     *     ├─ <small>26 Eylül 2026</small>       → tarih
+     *     └─ <img src="blank.png" data-src="…"> → kapak (LAZY: adres data-src'de)
+     *
+     * Görsel adresi `/3/{w}/{h}/storage/…` biçiminde boyut taşıyor. Boyut
+     * segmenti tamamen atılınca kaynağın ORİJİNALİ geliyor: 1280x~2150.
+     * `/3/1240/1754/` varyantı A4 oranına zorlayıp gazetenin altını kesiyor.
+     */
+    ayikla: ($) => {
+      const kapaklar: KapakOgesi[] = [];
+      $('.newspapers a[href*="-manseti"]').each((_, el) => {
+        const $el = $(el);
+        const $img = $el.find('img').first();
+
+        const thumb = $img.attr('data-src') || $img.attr('src') || '';
+        if (!thumb || thumb.includes('blank.png')) return;
+
+        const name =
+          $el.attr('title')?.trim() ||
+          $img.attr('alt')?.trim() ||
+          $el.find('strong').first().text().trim();
+        if (!name) return;
+
+        const href = $el.attr('href') || '';
+        kapaklar.push({
+          name,
+          slug:
+            href.split('/').pop()?.replace(/-gazetesi-manseti$/, '') ||
+            slugify(name, { lower: true, strict: true, locale: 'tr' }),
+          image: thumb,
+          imageFull: thumb.replace(/^(https?:\/\/[^/]+)\/\d+\/\d+\/\d+\//, '$1/'),
+          url: href.startsWith('http') ? href : `https://www.gazeteoku.com${href}`,
+          date: $el.find('small').first().text().trim(),
+          source: 'gazeteoku.com',
+        });
+      });
+      return kapaklar;
+    },
+  },
+  {
+    ad: 'gazetemanset.gzt.com',
+    url: 'https://gazetemanset.gzt.com/',
+    secici: 'a[href*="-gazetesi/"] img[src*="img.piri.net"]',
+    /**
+     * Sayfa yapısı (2026-09 itibarıyla doğrulandı):
+     *   a[href="/yenisafak-gazetesi/26-09-2026"]
+     *     └─ img[src="https://img.piri.net/…jpg"]
+     *        alt="Yeni Şafak Gazetesi 26 Eylül 2026, Cumartesi Günü Manşeti"
+     *
+     * Ad ve tarih yalnızca `alt` içinde; ayrı bir etiket yok. Tek boy
+     * sunuluyor (1080x1591) — `image` ile `imageFull` aynı adres, küçük kart
+     * görselini biz `sharp` ile üretiyoruz.
+     */
+    ayikla: ($) => {
+      const kapaklar: KapakOgesi[] = [];
+      $('a[href*="-gazetesi/"]').each((_, el) => {
+        const $el = $(el);
+        const $img = $el.find('img[src*="img.piri.net"]').first();
+        const adres = $img.attr('src') || '';
+        if (!adres) return;
+
+        const alt = ($img.attr('alt') || '').trim();
+        // "Yeni Şafak Gazetesi 26 Eylül 2026, Cumartesi Günü Manşeti"
+        const parcali = alt.match(/^(.+?)\s+Gazetesi\s+(.+?)(?:,|$)/);
+        const href = $el.attr('href') || '';
+        const name = parcali?.[1]?.trim() || alt;
+        if (!name) return;
+
+        kapaklar.push({
+          name,
+          slug:
+            href.split('/').filter(Boolean)[0]?.replace(/-gazetesi$/, '') ||
+            slugify(name, { lower: true, strict: true, locale: 'tr' }),
+          image: adres,
+          imageFull: adres,
+          url: href.startsWith('http') ? href : `https://gazetemanset.gzt.com${href}`,
+          date: parcali?.[2]?.trim() ?? '',
+          source: 'gazetemanset.gzt.com',
+        });
+      });
+      return kapaklar;
+    },
+  },
+];
+
+/** Aynı gazeteyi bir kez bırakır — sayfalar kapağı birden çok yerde basıyor. */
+export function tekilKapaklar(kapaklar: KapakOgesi[]): KapakOgesi[] {
+  const gorulen = new Set<string>();
+  return kapaklar.filter((it) => {
+    const anahtar = it.slug || it.name;
+    if (gorulen.has(anahtar)) return false;
+    gorulen.add(anahtar);
+    return true;
+  });
+}
+
 /**
  * Puan durumu / fikstür bileşeninin desteklediği ligler.
  *
@@ -806,18 +947,18 @@ export class WidgetFeederService implements OnModuleInit {
    * ise kiracıya göre değişmiyor. Kısa ömürlü bu önbellek olmadan bir tur
    * kaynağa kiracı sayısı kadar istek atıyor ve kısıtlamaya takılıyor.
    */
-  private gazeteOnbellek: { zaman: number; items: any[] } | null = null;
+  private gazeteOnbellek: { zaman: number; items: KapakOgesi[] } | null = null;
 
   /** 15 dakika: bir yenileme turu için bol, gün içinde taze kalması için kısa. */
   private static readonly GAZETE_ONBELLEK_MS = 15 * 60 * 1000;
 
-  private async gazeteKapaklariniTara(url: string): Promise<any[]> {
+  private async gazeteKapaklariniTara(): Promise<KapakOgesi[]> {
     const hazir = this.gazeteOnbellek;
     if (hazir && Date.now() - hazir.zaman < WidgetFeederService.GAZETE_ONBELLEK_MS) {
       return hazir.items;
     }
 
-    const items = await this.gazeteKapaklariniIndir(url);
+    const items = await this.gazeteKapaklariniIndir();
     this.gazeteOnbellek = { zaman: Date.now(), items };
     // Kapak gövdeleri yalnızca bu tur boyunca gerekli; bellekte tutmanın
     // anlamı yok (30 kapak ≈ 30 MB).
@@ -826,83 +967,51 @@ export class WidgetFeederService implements OnModuleInit {
   }
 
   /**
-   * Kaynak sayfayı tarar ve kapak listesini döndürür. Aynalama YAPMAZ —
-   * o adım kiracıya özel (her kiracının kendi bucket'ı var).
+   * Kapakları SIRAYLA kaynaklardan dener; ilk dolu liste kazanır.
+   * Aynalama YAPMAZ — o adım kiracıya özel (her kiracının kendi bucket'ı var).
+   *
+   * Neden sıra: kaynaklar bizi engelleyebiliyor. gazeteoku.com sunucumuzun
+   * IP'sine 403 verdi (ev bağlantısından 200) ve şerit günlerce boş kaldı.
+   * Tek kaynağa bağlı olmak o günü tamamen kaybettiriyor.
    */
-  private async gazeteKapaklariniIndir(url: string) {
-    const html = await this.sayfayiIndir(url);
-    const $ = cheerio.load(html);
+  private async gazeteKapaklariniIndir(): Promise<KapakOgesi[]> {
+    const hatalar: string[] = [];
 
-    const items: Array<{
-      name: string;
-      slug: string;
-      image: string;
-      imageFull: string;
-      url: string;
-      date: string;
-    }> = [];
+    for (const kaynak of GAZETE_KAYNAKLARI) {
+      try {
+        const html = await this.sayfayiIndir(kaynak.url);
+        const bulunan = kaynak.ayikla(cheerio.load(html));
+        const tekil = tekilKapaklar(bulunan);
 
-    $('.newspapers a[href*="-manseti"]').each((_, el) => {
-      const $el = $(el);
-      const $img = $el.find('img').first();
+        if (tekil.length === 0) {
+          // Sayfa geldi ama hiçbir kapak çıkmadı: kaynağın işaretçileri
+          // değişmiş. Sonraki kaynağa geç, sessizce boş liste yazma.
+          hatalar.push(`${kaynak.ad}: 0 kapak (işaretçiler değişmiş olabilir)`);
+          this.logger.warn(
+            `[newspapers] ${kaynak.ad} 0 kapak döndürdü — işaretçiler eskimiş olabilir (${kaynak.secici})`,
+          );
+          continue;
+        }
 
-      // src bir 1x1 placeholder — gerçek adres data-src'de.
-      const thumb = $img.attr('data-src') || $img.attr('src') || '';
-      if (!thumb || thumb.includes('blank.png')) return;
-
-      const name =
-        $el.attr('title')?.trim() ||
-        $img.attr('alt')?.trim() ||
-        $el.find('strong').first().text().trim();
-      if (!name) return;
-
-      const href = $el.attr('href') || '';
-      const absUrl = href.startsWith('http') ? href : `https://www.gazeteoku.com${href}`;
-      const slug =
-        href.split('/').pop()?.replace(/-gazetesi-manseti$/, '') ||
-        slugify(name, { lower: true, strict: true, locale: 'tr' });
-
-      items.push({
-        name,
-        slug,
-        image: thumb,
-        // Boyut segmentini tamamen at → kırpılmamış orijinal (1280x~2150).
-        imageFull: thumb.replace(/^(https?:\/\/[^/]+)\/\d+\/\d+\/\d+\//, '$1/'),
-        url: absUrl,
-        date: $el.find('small').first().text().trim(),
-      });
-    });
-
-    const seen = new Set<string>();
-    const unique = items.filter((it) => {
-      const key = it.slug || it.name;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-
-    // Sıfır kapak = kaynağın işaretçileri değişmiş demek. Boş listeyi
-    // önbelleğe YAZMIYORUZ: hata fırlatılınca `refreshForTypes` eldeki son
-    // sağlam listeyi koruyor, panelin "Yenile" düğmesi de sebebi gösteriyor.
-    if (unique.length === 0) {
-      throw new Error(
-        `${url} 0 kapak döndürdü — kaynağın sayfa yapısı değişmiş olabilir (.newspapers a[href*="-manseti"])`,
-      );
+        this.logger.log(`[newspapers] ${tekil.length} kapak alındı — kaynak: ${kaynak.ad}`);
+        return tekil.slice(0, 40);
+      } catch (err: any) {
+        hatalar.push(`${kaynak.ad}: ${err?.message ?? err}`);
+        this.logger.warn(`[newspapers] ${kaynak.ad} kaynağı düştü: ${err?.message ?? err}`);
+      }
     }
-    this.logger.log(`[newspapers] ${unique.length} gazete kapağı alındı`);
-    return unique.slice(0, 40);
+
+    throw new Error(`Hiçbir kaynaktan kapak alınamadı — ${hatalar.join(' | ')}`);
   }
 
   private async fetchNewspapers(_config: any, prev?: any, tenantId?: string) {
-    const url = 'https://www.gazeteoku.com/gazeteler';
-
     try {
-      const kapaklar = await this.gazeteKapaklariniTara(url);
+      const kapaklar = await this.gazeteKapaklariniTara();
       const mirrored = await this.mirrorNewspaperCovers(kapaklar, tenantId);
 
       return {
         items: mirrored,
-        source: url,
+        source: kapaklar[0]?.source ?? GAZETE_KAYNAKLARI[0].url,
         date: new Date().toISOString().split('T')[0],
       };
     } catch (err: any) {
@@ -960,8 +1069,10 @@ export class WidgetFeederService implements OnModuleInit {
           `[scrape] ${url} denemesi ${i}/${deneme} başarısız` +
             `${durum ? ` (HTTP ${durum})` : ''}: ${err?.code ?? err?.message ?? err}`,
         );
-        // 404 kalıcı; tekrar denemek boşa istek.
-        if (durum === 404) break;
+        // Bu durumlar kararlı: sayfa yok (404) ya da kaynak bizi istemiyor
+        // (401/403/451). Tekrar denemek yalnızca yedek kaynağa geçişi
+        // geciktiriyor — prodda 403 alan kaynak her denemede 403 veriyor.
+        if (durum && [401, 403, 404, 451].includes(durum)) break;
         if (i < deneme) await new Promise((r) => setTimeout(r, i * 2000));
       }
     }

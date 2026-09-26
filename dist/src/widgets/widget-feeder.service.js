@@ -49,7 +49,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 var WidgetFeederService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WidgetFeederService = void 0;
+exports.WidgetFeederService = exports.GAZETE_KAYNAKLARI = void 0;
+exports.tekilKapaklar = tekilKapaklar;
 const common_1 = require("@nestjs/common");
 const schedule_1 = require("@nestjs/schedule");
 const axios_1 = __importDefault(require("axios"));
@@ -68,6 +69,82 @@ const SCRAPE_HEADERS = {
     'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8',
     'Upgrade-Insecure-Requests': '1',
 };
+exports.GAZETE_KAYNAKLARI = [
+    {
+        ad: 'gazeteoku.com',
+        url: 'https://www.gazeteoku.com/gazeteler',
+        secici: '.newspapers a[href*="-manseti"]',
+        ayikla: ($) => {
+            const kapaklar = [];
+            $('.newspapers a[href*="-manseti"]').each((_, el) => {
+                const $el = $(el);
+                const $img = $el.find('img').first();
+                const thumb = $img.attr('data-src') || $img.attr('src') || '';
+                if (!thumb || thumb.includes('blank.png'))
+                    return;
+                const name = $el.attr('title')?.trim() ||
+                    $img.attr('alt')?.trim() ||
+                    $el.find('strong').first().text().trim();
+                if (!name)
+                    return;
+                const href = $el.attr('href') || '';
+                kapaklar.push({
+                    name,
+                    slug: href.split('/').pop()?.replace(/-gazetesi-manseti$/, '') ||
+                        (0, slugify_1.default)(name, { lower: true, strict: true, locale: 'tr' }),
+                    image: thumb,
+                    imageFull: thumb.replace(/^(https?:\/\/[^/]+)\/\d+\/\d+\/\d+\//, '$1/'),
+                    url: href.startsWith('http') ? href : `https://www.gazeteoku.com${href}`,
+                    date: $el.find('small').first().text().trim(),
+                    source: 'gazeteoku.com',
+                });
+            });
+            return kapaklar;
+        },
+    },
+    {
+        ad: 'gazetemanset.gzt.com',
+        url: 'https://gazetemanset.gzt.com/',
+        secici: 'a[href*="-gazetesi/"] img[src*="img.piri.net"]',
+        ayikla: ($) => {
+            const kapaklar = [];
+            $('a[href*="-gazetesi/"]').each((_, el) => {
+                const $el = $(el);
+                const $img = $el.find('img[src*="img.piri.net"]').first();
+                const adres = $img.attr('src') || '';
+                if (!adres)
+                    return;
+                const alt = ($img.attr('alt') || '').trim();
+                const parcali = alt.match(/^(.+?)\s+Gazetesi\s+(.+?)(?:,|$)/);
+                const href = $el.attr('href') || '';
+                const name = parcali?.[1]?.trim() || alt;
+                if (!name)
+                    return;
+                kapaklar.push({
+                    name,
+                    slug: href.split('/').filter(Boolean)[0]?.replace(/-gazetesi$/, '') ||
+                        (0, slugify_1.default)(name, { lower: true, strict: true, locale: 'tr' }),
+                    image: adres,
+                    imageFull: adres,
+                    url: href.startsWith('http') ? href : `https://gazetemanset.gzt.com${href}`,
+                    date: parcali?.[2]?.trim() ?? '',
+                    source: 'gazetemanset.gzt.com',
+                });
+            });
+            return kapaklar;
+        },
+    },
+];
+function tekilKapaklar(kapaklar) {
+    const gorulen = new Set();
+    return kapaklar.filter((it) => {
+        const anahtar = it.slug || it.name;
+        if (gorulen.has(anahtar))
+            return false;
+        gorulen.add(anahtar);
+        return true;
+    });
+}
 const VARSAYILAN_LIGLER = [
     { anahtar: 'super-lig', ad: 'Trendyol Süper Lig', wiki: '{SEZON}_Süper_Lig', wikiDil: 'tr', tffSayfa: 198 },
     { anahtar: 'birinci-lig', ad: 'Trendyol 1. Lig', wiki: '{SEZON}_1._Lig', wikiDil: 'tr' },
@@ -609,66 +686,45 @@ let WidgetFeederService = class WidgetFeederService {
     }
     gazeteOnbellek = null;
     static GAZETE_ONBELLEK_MS = 15 * 60 * 1000;
-    async gazeteKapaklariniTara(url) {
+    async gazeteKapaklariniTara() {
         const hazir = this.gazeteOnbellek;
         if (hazir && Date.now() - hazir.zaman < WidgetFeederService_1.GAZETE_ONBELLEK_MS) {
             return hazir.items;
         }
-        const items = await this.gazeteKapaklariniIndir(url);
+        const items = await this.gazeteKapaklariniIndir();
         this.gazeteOnbellek = { zaman: Date.now(), items };
         this.kapakOnbellek.clear();
         return items;
     }
-    async gazeteKapaklariniIndir(url) {
-        const html = await this.sayfayiIndir(url);
-        const $ = cheerio.load(html);
-        const items = [];
-        $('.newspapers a[href*="-manseti"]').each((_, el) => {
-            const $el = $(el);
-            const $img = $el.find('img').first();
-            const thumb = $img.attr('data-src') || $img.attr('src') || '';
-            if (!thumb || thumb.includes('blank.png'))
-                return;
-            const name = $el.attr('title')?.trim() ||
-                $img.attr('alt')?.trim() ||
-                $el.find('strong').first().text().trim();
-            if (!name)
-                return;
-            const href = $el.attr('href') || '';
-            const absUrl = href.startsWith('http') ? href : `https://www.gazeteoku.com${href}`;
-            const slug = href.split('/').pop()?.replace(/-gazetesi-manseti$/, '') ||
-                (0, slugify_1.default)(name, { lower: true, strict: true, locale: 'tr' });
-            items.push({
-                name,
-                slug,
-                image: thumb,
-                imageFull: thumb.replace(/^(https?:\/\/[^/]+)\/\d+\/\d+\/\d+\//, '$1/'),
-                url: absUrl,
-                date: $el.find('small').first().text().trim(),
-            });
-        });
-        const seen = new Set();
-        const unique = items.filter((it) => {
-            const key = it.slug || it.name;
-            if (seen.has(key))
-                return false;
-            seen.add(key);
-            return true;
-        });
-        if (unique.length === 0) {
-            throw new Error(`${url} 0 kapak döndürdü — kaynağın sayfa yapısı değişmiş olabilir (.newspapers a[href*="-manseti"])`);
+    async gazeteKapaklariniIndir() {
+        const hatalar = [];
+        for (const kaynak of exports.GAZETE_KAYNAKLARI) {
+            try {
+                const html = await this.sayfayiIndir(kaynak.url);
+                const bulunan = kaynak.ayikla(cheerio.load(html));
+                const tekil = tekilKapaklar(bulunan);
+                if (tekil.length === 0) {
+                    hatalar.push(`${kaynak.ad}: 0 kapak (işaretçiler değişmiş olabilir)`);
+                    this.logger.warn(`[newspapers] ${kaynak.ad} 0 kapak döndürdü — işaretçiler eskimiş olabilir (${kaynak.secici})`);
+                    continue;
+                }
+                this.logger.log(`[newspapers] ${tekil.length} kapak alındı — kaynak: ${kaynak.ad}`);
+                return tekil.slice(0, 40);
+            }
+            catch (err) {
+                hatalar.push(`${kaynak.ad}: ${err?.message ?? err}`);
+                this.logger.warn(`[newspapers] ${kaynak.ad} kaynağı düştü: ${err?.message ?? err}`);
+            }
         }
-        this.logger.log(`[newspapers] ${unique.length} gazete kapağı alındı`);
-        return unique.slice(0, 40);
+        throw new Error(`Hiçbir kaynaktan kapak alınamadı — ${hatalar.join(' | ')}`);
     }
     async fetchNewspapers(_config, prev, tenantId) {
-        const url = 'https://www.gazeteoku.com/gazeteler';
         try {
-            const kapaklar = await this.gazeteKapaklariniTara(url);
+            const kapaklar = await this.gazeteKapaklariniTara();
             const mirrored = await this.mirrorNewspaperCovers(kapaklar, tenantId);
             return {
                 items: mirrored,
-                source: url,
+                source: kapaklar[0]?.source ?? exports.GAZETE_KAYNAKLARI[0].url,
                 date: new Date().toISOString().split('T')[0],
             };
         }
@@ -706,7 +762,7 @@ let WidgetFeederService = class WidgetFeederService {
                 const durum = err?.response?.status;
                 this.logger.warn(`[scrape] ${url} denemesi ${i}/${deneme} başarısız` +
                     `${durum ? ` (HTTP ${durum})` : ''}: ${err?.code ?? err?.message ?? err}`);
-                if (durum === 404)
+                if (durum && [401, 403, 404, 451].includes(durum))
                     break;
                 if (i < deneme)
                     await new Promise((r) => setTimeout(r, i * 2000));

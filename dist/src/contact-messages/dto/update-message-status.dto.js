@@ -17,7 +17,7 @@ class UpdateMessageStatusDto {
     status;
     adminNote;
     static _OPENAPI_METADATA_FACTORY() {
-        return { status: { required: true, enum: ["IN_REVIEW", "REJECTED", "NEW", "RESOLVED"] }, adminNote: { required: false, type: () => String, maxLength: 2000 } };
+        return { status: { required: true, enum: ["REJECTED", "IN_REVIEW", "NEW", "RESOLVED"] }, adminNote: { required: false, type: () => String, maxLength: 2000 } };
     }
 }
 exports.UpdateMessageStatusDto = UpdateMessageStatusDto;

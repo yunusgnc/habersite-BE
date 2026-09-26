@@ -8,8 +8,8 @@ export declare class AuthorsController {
         newsCount: number;
         columnCount: number;
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -33,16 +33,16 @@ export declare class AuthorsController {
         newsCount: number;
         columnCount: number;
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         avatar: string | null;
         bio: string | null;
         group: import("@prisma/client").$Enums.AuthorGroup;
     }[]>;
     findBySlug(tenantId: string, slug: string): Promise<{
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -56,8 +56,8 @@ export declare class AuthorsController {
     }>;
     create(tenantId: string, dto: CreateAuthorDto): Promise<{
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -71,8 +71,8 @@ export declare class AuthorsController {
     }>;
     update(tenantId: string, id: string, dto: UpdateAuthorDto): Promise<{
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -86,8 +86,8 @@ export declare class AuthorsController {
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;

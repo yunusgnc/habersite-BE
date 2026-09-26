@@ -14,10 +14,10 @@ export declare class AuthService {
         updatedAt: Date;
         tenantId: string;
         email: string;
-        username: string | null;
         avatar: string | null;
         role: import("@prisma/client").$Enums.UserRole;
         lastLoginAt: Date | null;
+        username: string | null;
         passwordResetTokenHash: string | null;
         passwordResetExpiresAt: Date | null;
     }>;
@@ -29,10 +29,10 @@ export declare class AuthService {
         updatedAt: Date;
         tenantId: string;
         email: string;
-        username: string | null;
         avatar: string | null;
         role: import("@prisma/client").$Enums.UserRole;
         lastLoginAt: Date | null;
+        username: string | null;
         passwordResetTokenHash: string | null;
         passwordResetExpiresAt: Date | null;
     }>;

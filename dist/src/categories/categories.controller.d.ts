@@ -8,8 +8,8 @@ export declare class CategoriesController {
         children: ({
             children: {
                 id: string;
-                slug: string;
                 name: string;
+                slug: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -24,8 +24,8 @@ export declare class CategoriesController {
             }[];
         } & {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -39,8 +39,8 @@ export declare class CategoriesController {
             seoDesc: string | null;
         })[];
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -56,8 +56,8 @@ export declare class CategoriesController {
     findBySlug(tenantId: string, slug: string): Promise<{
         parent: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -72,8 +72,8 @@ export declare class CategoriesController {
         } | null;
         children: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -88,8 +88,8 @@ export declare class CategoriesController {
         }[];
     } & {
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -105,8 +105,8 @@ export declare class CategoriesController {
     create(tenantId: string, dto: CreateCategoryDto): Promise<{
         children: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -121,8 +121,8 @@ export declare class CategoriesController {
         }[];
     } & {
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -144,8 +144,8 @@ export declare class CategoriesController {
     update(tenantId: string, id: string, dto: UpdateCategoryDto): Promise<{
         children: {
             id: string;
-            slug: string;
             name: string;
+            slug: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -160,8 +160,8 @@ export declare class CategoriesController {
         }[];
     } & {
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;
@@ -176,8 +176,8 @@ export declare class CategoriesController {
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
-        slug: string;
         name: string;
+        slug: string;
         active: boolean;
         createdAt: Date;
         updatedAt: Date;

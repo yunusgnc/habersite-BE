@@ -1,7 +1,25 @@
 import { OnModuleInit } from '@nestjs/common';
+import * as cheerio from 'cheerio';
 import { PrismaService } from '../prisma/prisma.service';
 import type { StorageAdapter } from '../media/storage/storage.types';
 import { WidgetsService } from './widgets.service';
+export type KapakOgesi = {
+    name: string;
+    slug: string;
+    image: string;
+    imageFull: string;
+    url: string;
+    date: string;
+    source: string;
+};
+type GazeteKaynagi = {
+    ad: string;
+    url: string;
+    secici: string;
+    ayikla: ($: cheerio.CheerioAPI) => KapakOgesi[];
+};
+export declare const GAZETE_KAYNAKLARI: GazeteKaynagi[];
+export declare function tekilKapaklar(kapaklar: KapakOgesi[]): KapakOgesi[];
 export declare class WidgetFeederService implements OnModuleInit {
     private readonly prisma;
     private readonly widgets;
@@ -42,3 +60,4 @@ export declare class WidgetFeederService implements OnModuleInit {
     private tffFikstur;
     private fetchPharmacy;
 }
+export {};
