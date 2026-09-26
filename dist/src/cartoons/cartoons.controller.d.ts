@@ -47,6 +47,7 @@ export declare class CartoonsController {
         caption: string | null;
         imageAlt: string | null;
         artist: string | null;
+        captionSize: string;
     }>;
     neighbours(tenantId: string, slug: string): Promise<{
         previous: {
@@ -77,6 +78,7 @@ export declare class CartoonsController {
             caption: string | null;
             imageAlt: string | null;
             artist: string | null;
+            captionSize: string;
         }[];
         nextCursor: string | null;
     }>;
@@ -101,6 +103,7 @@ export declare class CartoonsController {
         caption: string | null;
         imageAlt: string | null;
         artist: string | null;
+        captionSize: string;
     }>;
     create(tenantId: string, dto: CreateCartoonDto): Promise<{
         id: string;
@@ -118,6 +121,7 @@ export declare class CartoonsController {
         caption: string | null;
         imageAlt: string | null;
         artist: string | null;
+        captionSize: string;
     }>;
     update(tenantId: string, id: string, dto: UpdateCartoonDto): Promise<{
         id: string;
@@ -135,6 +139,7 @@ export declare class CartoonsController {
         caption: string | null;
         imageAlt: string | null;
         artist: string | null;
+        captionSize: string;
     }>;
     remove(tenantId: string, id: string): Promise<{
         deleted: boolean;

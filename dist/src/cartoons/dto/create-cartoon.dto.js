@@ -19,12 +19,13 @@ class CreateCartoonDto {
     imageAlt;
     artist;
     caption;
+    captionSize;
     publishedAt;
     active;
     seoTitle;
     seoDesc;
     static _OPENAPI_METADATA_FACTORY() {
-        return { title: { required: true, type: () => String, minLength: 2, maxLength: 300 }, slug: { required: false, type: () => String, maxLength: 300 }, image: { required: true, type: () => String, minLength: 1, maxLength: 1000 }, imageAlt: { required: false, type: () => String, maxLength: 300 }, artist: { required: false, type: () => String, maxLength: 150 }, caption: { required: false, type: () => String, maxLength: 4000 }, publishedAt: { required: false, type: () => String }, active: { required: false, type: () => Boolean }, seoTitle: { required: false, type: () => String, maxLength: 300 }, seoDesc: { required: false, type: () => String, maxLength: 500 } };
+        return { title: { required: true, type: () => String, minLength: 2, maxLength: 300 }, slug: { required: false, type: () => String, maxLength: 300 }, image: { required: true, type: () => String, minLength: 1, maxLength: 1000 }, imageAlt: { required: false, type: () => String, maxLength: 300 }, artist: { required: false, type: () => String, maxLength: 150 }, caption: { required: false, type: () => String, maxLength: 4000 }, captionSize: { required: false, enum: ["normal", "large", "xlarge"], enum: ['normal', 'large', 'xlarge'] }, publishedAt: { required: false, type: () => String }, active: { required: false, type: () => Boolean }, seoTitle: { required: false, type: () => String, maxLength: 300 }, seoDesc: { required: false, type: () => String, maxLength: 500 } };
     }
 }
 exports.CreateCartoonDto = CreateCartoonDto;
@@ -64,6 +65,12 @@ __decorate([
     (0, class_validator_1.MaxLength)(4000),
     __metadata("design:type", String)
 ], CreateCartoonDto.prototype, "caption", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsIn)(['normal', 'large', 'xlarge']),
+    __metadata("design:type", String)
+], CreateCartoonDto.prototype, "captionSize", void 0);
 __decorate([
     (0, class_validator_1.IsDateString)(),
     (0, class_validator_1.IsOptional)(),

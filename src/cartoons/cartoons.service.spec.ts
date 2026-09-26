@@ -108,6 +108,7 @@ describe('CartoonsService', () => {
       imageAlt: null,
       seoTitle: null,
       seoDesc: null,
+      captionSize: 'large',
     });
   });
 
@@ -136,7 +137,21 @@ describe('CartoonsService', () => {
     const data = prisma.cartoon.update.mock.calls[0][0].data;
     expect(data.artist).toBeUndefined();
     expect(data.caption).toBeUndefined();
+    expect(data.captionSize).toBeUndefined();
     expect(data.active).toBe(false);
+  });
+
+  it('açıklama boyutunu kaydeder ve günceller', async () => {
+    const olusan = await servis.create('t1', {
+      title: 'Karikatür',
+      image: '/a.png',
+      captionSize: 'xlarge',
+    });
+    expect(olusan.captionSize).toBe('xlarge');
+
+    prisma.cartoon.findFirst.mockResolvedValue({ id: 'k1', slug: 'adres' });
+    await servis.update('t1', 'k1', { captionSize: 'normal' });
+    expect(prisma.cartoon.update.mock.calls[0][0].data.captionSize).toBe('normal');
   });
 
   it('yazma işlemleri site önbelleğini tazeler', async () => {

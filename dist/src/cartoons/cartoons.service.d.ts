@@ -47,6 +47,7 @@ export declare class CartoonsService {
         caption: string | null;
         imageAlt: string | null;
         artist: string | null;
+        captionSize: string;
     }>;
     neighbours(tenantId: string, slug: string): Promise<{
         previous: {
@@ -90,6 +91,7 @@ export declare class CartoonsService {
             caption: string | null;
             imageAlt: string | null;
             artist: string | null;
+            captionSize: string;
         }[];
         nextCursor: string | null;
     }>;
@@ -109,6 +111,7 @@ export declare class CartoonsService {
         caption: string | null;
         imageAlt: string | null;
         artist: string | null;
+        captionSize: string;
     }>;
     stats(tenantId: string): Promise<{
         total: number;
@@ -131,6 +134,7 @@ export declare class CartoonsService {
         caption: string | null;
         imageAlt: string | null;
         artist: string | null;
+        captionSize: string;
     }>;
     update(tenantId: string, id: string, dto: UpdateCartoonDto): Promise<{
         id: string;
@@ -148,6 +152,7 @@ export declare class CartoonsService {
         caption: string | null;
         imageAlt: string | null;
         artist: string | null;
+        captionSize: string;
     }>;
     remove(tenantId: string, id: string): Promise<{
         deleted: boolean;

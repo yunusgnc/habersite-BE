@@ -1,6 +1,7 @@
 import {
   IsBoolean,
   IsDateString,
+  IsIn,
   IsOptional,
   IsString,
   MaxLength,
@@ -42,6 +43,11 @@ export class CreateCartoonDto {
   @IsOptional()
   @MaxLength(4000)
   caption?: string;
+
+  @IsString()
+  @IsOptional()
+  @IsIn(['normal', 'large', 'xlarge'])
+  captionSize?: 'normal' | 'large' | 'xlarge';
 
   @IsDateString()
   @IsOptional()

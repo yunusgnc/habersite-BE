@@ -5,6 +5,7 @@ export declare class CreateCartoonDto {
     imageAlt?: string;
     artist?: string;
     caption?: string;
+    captionSize?: 'normal' | 'large' | 'xlarge';
     publishedAt?: string;
     active?: boolean;
     seoTitle?: string;

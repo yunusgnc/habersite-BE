@@ -1080,6 +1080,8 @@ model Cartoon {
   artist   String?
   /// Karikatürün altındaki açıklama. ZORUNLU DEĞİL.
   caption  String?
+  /// Açıklamanın detay sayfasındaki sunum boyutu: normal | large | xlarge.
+  captionSize String @default("large") @map("caption_size")
 
   publishedAt DateTime @default(now()) @map("published_at")
   active      Boolean  @default(true)
