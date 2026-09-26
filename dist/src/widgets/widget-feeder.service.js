@@ -219,7 +219,7 @@ let WidgetFeederService = class WidgetFeederService {
                     pairs: [
                         { from: 'USD', to: 'TRY', label: 'Dolar' },
                         { from: 'EUR', to: 'TRY', label: 'Euro' },
-                        { from: 'GBP', to: 'TRY', label: 'Sterlin' },
+                        { from: 'XAU', to: 'TRY', label: 'Altın', unit: 'gram' },
                     ],
                 },
                 sortOrder: 3,
@@ -353,11 +353,14 @@ let WidgetFeederService = class WidgetFeederService {
         };
     }
     async fetchMarketTicker(config, prev) {
-        const pairs = config?.pairs ?? [
+        const configuredPairs = config?.pairs ?? [
             { from: 'USD', to: 'TRY', label: 'Dolar' },
             { from: 'EUR', to: 'TRY', label: 'Euro' },
-            { from: 'GBP', to: 'TRY', label: 'Sterlin' },
+            { from: 'XAU', to: 'TRY', label: 'Altın', unit: 'gram' },
         ];
+        const pairs = configuredPairs.map((p) => p.from.toUpperCase() === 'GBP'
+            ? { from: 'XAU', to: 'TRY', label: 'Altın', unit: 'gram' }
+            : p);
         const prevItems = Array.isArray(prev?.items) ? prev.items : [];
         const lastGood = (code) => {
             const hit = prevItems.find((i) => i?.code === code);
@@ -371,6 +374,28 @@ let WidgetFeederService = class WidgetFeederService {
         const settled = await Promise.all(pairs.map(async (p) => {
             const code = `${p.from}/${p.to}`;
             try {
+                if (p.from.toUpperCase() === 'XAU') {
+                    const gold = await axios_1.default.get('https://xaus.com/api/v1/spot', {
+                        params: { currency: p.to, unit: p.unit ?? 'gram', compact: 1 },
+                        timeout: 8000,
+                    });
+                    const nowValue = Number(gold.data?.xau?.price);
+                    if (!Number.isFinite(nowValue))
+                        throw new Error(`rate missing for ${code}`);
+                    const previous = lastGood(code);
+                    const prevValue = previous ? Number(previous.value) : Number.NaN;
+                    const diff = Number.isFinite(prevValue) ? nowValue - prevValue : 0;
+                    const pct = Number.isFinite(prevValue) && prevValue !== 0
+                        ? (diff / prevValue) * 100
+                        : 0;
+                    return {
+                        name: p.label,
+                        code,
+                        value: nowValue.toFixed(2),
+                        change: pct ? `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%` : '',
+                        up: diff >= 0,
+                    };
+                }
                 const [now, before] = await Promise.all([
                     axios_1.default.get(`${base}/latest?base=${p.from}&symbols=${p.to}`, { timeout: 8000 }),
                     axios_1.default.get(`${base}/${sinceDay}?base=${p.from}&symbols=${p.to}`, { timeout: 8000 }),

@@ -322,7 +322,7 @@ export class WidgetFeederService implements OnModuleInit {
           pairs: [
             { from: 'USD', to: 'TRY', label: 'Dolar' },
             { from: 'EUR', to: 'TRY', label: 'Euro' },
-            { from: 'GBP', to: 'TRY', label: 'Sterlin' },
+            { from: 'XAU', to: 'TRY', label: 'Altın', unit: 'gram' },
           ],
         },
         sortOrder: 3,
@@ -502,8 +502,8 @@ export class WidgetFeederService implements OnModuleInit {
   }
 
   /**
-   * Frankfurter (döviz) — anahtar gerektirmez.
-   * Config: { pairs?: [{ from, to, label }] }
+   * Frankfurter (döviz) ve XAUS (gram altın) — anahtar gerektirmez.
+   * Config: { pairs?: [{ from, to, label, unit? }] }
    *
    * Adres notu: servis `api.frankfurter.app` → `api.frankfurter.dev/v1`
    * adresine taşındı. Eski adres 301 döndürüyor; yönlendirmeye güvenmek
@@ -516,12 +516,19 @@ export class WidgetFeederService implements OnModuleInit {
    * bir önceki sağlam değer korunuyor; hiç değer yoksa çift tamamen atlanıyor.
    */
   private async fetchMarketTicker(config: any, prev?: any) {
-    const pairs: Array<{ from: string; to: string; label: string }> =
-      config?.pairs ?? [
-        { from: 'USD', to: 'TRY', label: 'Dolar' },
-        { from: 'EUR', to: 'TRY', label: 'Euro' },
-        { from: 'GBP', to: 'TRY', label: 'Sterlin' },
-      ];
+    type MarketPair = { from: string; to: string; label: string; unit?: string };
+    const configuredPairs: MarketPair[] = config?.pairs ?? [
+      { from: 'USD', to: 'TRY', label: 'Dolar' },
+      { from: 'EUR', to: 'TRY', label: 'Euro' },
+      { from: 'XAU', to: 'TRY', label: 'Altın', unit: 'gram' },
+    ];
+
+    // Eski tenant ayarındaki Sterlin'i de yeni varsayılanı beklemeden değiştir.
+    const pairs = configuredPairs.map<MarketPair>((p) =>
+      p.from.toUpperCase() === 'GBP'
+        ? { from: 'XAU', to: 'TRY', label: 'Altın', unit: 'gram' }
+        : p,
+    );
 
     const prevItems: any[] = Array.isArray(prev?.items) ? prev.items : [];
     const lastGood = (code: string) => {
@@ -539,6 +546,29 @@ export class WidgetFeederService implements OnModuleInit {
       pairs.map(async (p) => {
         const code = `${p.from}/${p.to}`;
         try {
+          if (p.from.toUpperCase() === 'XAU') {
+            const gold = await axios.get('https://xaus.com/api/v1/spot', {
+              params: { currency: p.to, unit: p.unit ?? 'gram', compact: 1 },
+              timeout: 8000,
+            });
+            const nowValue = Number(gold.data?.xau?.price);
+            if (!Number.isFinite(nowValue)) throw new Error(`rate missing for ${code}`);
+
+            const previous = lastGood(code);
+            const prevValue = previous ? Number(previous.value) : Number.NaN;
+            const diff = Number.isFinite(prevValue) ? nowValue - prevValue : 0;
+            const pct = Number.isFinite(prevValue) && prevValue !== 0
+              ? (diff / prevValue) * 100
+              : 0;
+            return {
+              name: p.label,
+              code,
+              value: nowValue.toFixed(2),
+              change: pct ? `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%` : '',
+              up: diff >= 0,
+            };
+          }
+
           const [now, before] = await Promise.all([
             axios.get(`${base}/latest?base=${p.from}&symbols=${p.to}`, { timeout: 8000 }),
             axios.get(`${base}/${sinceDay}?base=${p.from}&symbols=${p.to}`, { timeout: 8000 }),

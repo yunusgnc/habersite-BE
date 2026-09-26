@@ -210,7 +210,7 @@ let SuperAdminService = SuperAdminService_1 = class SuperAdminService {
                             pairs: [
                                 { from: 'USD', to: 'TRY', label: 'Dolar' },
                                 { from: 'EUR', to: 'TRY', label: 'Euro' },
-                                { from: 'GBP', to: 'TRY', label: 'Sterlin' },
+                                { from: 'XAU', to: 'TRY', label: 'Altın', unit: 'gram' },
                             ],
                         },
                         sortOrder: 3,
