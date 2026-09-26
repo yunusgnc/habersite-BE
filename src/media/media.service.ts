@@ -9,6 +9,7 @@ import type { StorageAdapter } from './storage/storage.types';
 import { fileTypeFromBuffer } from 'file-type';
 import sharp from 'sharp';
 import * as path from 'path';
+import * as fs from 'fs/promises';
 
 // İzin verilen MIME tipleri — magic byte ile eşleştirilecek.
 const ALLOWED_MIMES = new Set<string>([
@@ -304,8 +305,31 @@ export class MediaService {
    * kendi API'mizden geçirince panel bunu blob'a alıp aynı origin gibi
    * kullanıyor; kırpma sorunsuz çalışıyor.
    */
+  /**
+   * Kırpma editörünün okuduğu ham dosya.
+   *
+   * Adres GÖRELİ olabiliyor: yerel disk depolamasında kayıt
+   * `/uploads/<kiracı>/...` biçiminde duruyor ve `fetch` bunu
+   * `ERR_INVALID_URL` ile reddediyor. Uç bu yüzden yerel diskte hiç
+   * çalışmıyordu — kırpma yalnızca R2/Cloudinary kullanan kurulumlarda
+   * açılıyor, yerelde "Görsel açılamadı" diyordu. Göreli adreste dosya
+   * depolama anahtarından (`filename`) diskten okunuyor.
+   */
   async hamIcerik(tenantId: string, id: string) {
     const medya = await this.findById(tenantId, id);
+    const mutlak = /^https?:\/\//i.test(medya.url);
+
+    if (!mutlak) {
+      const yol = path.join(process.cwd(), medya.filename);
+      try {
+        return {
+          govde: await fs.readFile(yol),
+          mimeType: medya.mimeType,
+        };
+      } catch {
+        throw new NotFoundException('Görsel kaynağa ulaşılamadı');
+      }
+    }
 
     const yanit = await fetch(medya.url);
     if (!yanit.ok) {
