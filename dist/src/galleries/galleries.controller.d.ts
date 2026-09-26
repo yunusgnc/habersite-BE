@@ -23,9 +23,9 @@ export declare class GalleriesController {
         status: import("@prisma/client").$Enums.ArticleStatus;
         publishedAt: Date | null;
         viewCount: number;
-        categoryId: string | null;
         headline: string | null;
         coverImage: string | null;
+        categoryId: string | null;
         seoKeywords: string | null;
     }>>;
     findOne(tenantId: string, id: string): Promise<{
@@ -52,9 +52,9 @@ export declare class GalleriesController {
         status: import("@prisma/client").$Enums.ArticleStatus;
         publishedAt: Date | null;
         viewCount: number;
-        categoryId: string | null;
         headline: string | null;
         coverImage: string | null;
+        categoryId: string | null;
         seoKeywords: string | null;
     }>;
     findBySlug(tenantId: string, slug: string): Promise<{
@@ -81,9 +81,9 @@ export declare class GalleriesController {
         status: import("@prisma/client").$Enums.ArticleStatus;
         publishedAt: Date | null;
         viewCount: number;
-        categoryId: string | null;
         headline: string | null;
         coverImage: string | null;
+        categoryId: string | null;
         seoKeywords: string | null;
     }>;
     create(tenantId: string, dto: CreateGalleryDto): Promise<{
@@ -110,9 +110,9 @@ export declare class GalleriesController {
         status: import("@prisma/client").$Enums.ArticleStatus;
         publishedAt: Date | null;
         viewCount: number;
-        categoryId: string | null;
         headline: string | null;
         coverImage: string | null;
+        categoryId: string | null;
         seoKeywords: string | null;
     }>;
     update(tenantId: string, id: string, dto: UpdateGalleryDto): Promise<{
@@ -139,9 +139,9 @@ export declare class GalleriesController {
         status: import("@prisma/client").$Enums.ArticleStatus;
         publishedAt: Date | null;
         viewCount: number;
-        categoryId: string | null;
         headline: string | null;
         coverImage: string | null;
+        categoryId: string | null;
         seoKeywords: string | null;
     }>;
     remove(tenantId: string, id: string): Promise<{
@@ -158,9 +158,9 @@ export declare class GalleriesController {
         status: import("@prisma/client").$Enums.ArticleStatus;
         publishedAt: Date | null;
         viewCount: number;
-        categoryId: string | null;
         headline: string | null;
         coverImage: string | null;
+        categoryId: string | null;
         seoKeywords: string | null;
     }>;
     addImages(tenantId: string, galleryId: string, images: CreateGalleryImageDto[]): Promise<import("@prisma/client").Prisma.BatchPayload>;

@@ -1,8 +1,16 @@
-import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnModuleInit,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import * as iconv from 'iconv-lite';
+import sharp from 'sharp';
 import { Agent as HttpsAgent } from 'https';
 
 /**
@@ -254,9 +262,17 @@ export class WidgetFeederService implements OnModuleInit {
   /** Manual trigger used by admin's "refresh now" button. */
   async refreshOne(tenantId: string, type: string) {
     const feeder = this.feeders[type];
-    if (!feeder) throw new Error(`No feeder registered for widget type: ${type}`);
+    if (!feeder) throw new NotFoundException(`"${type}" için besleyici tanımlı değil`);
     const widget = await this.widgets.findByType(tenantId, type);
-    const cache = await feeder(widget?.config ?? {}, widget?.cache ?? null, tenantId);
+    let cache: any;
+    try {
+      cache = await feeder(widget?.config ?? {}, widget?.cache ?? null, tenantId);
+    } catch (err: any) {
+      // Sebebi panele TAŞI. Çıplak `Error` Nest'te "Internal server error"a
+      // dönüşüyor ve veri gelmeyen widget'ın nedeni panelden görünmüyordu.
+      this.logger.warn(`refreshOne ${type} (${tenantId}) başarısız: ${err?.message ?? err}`);
+      throw new ServiceUnavailableException(err?.message ?? 'Kaynak veriye ulaşılamadı');
+    }
     await this.widgets.updateCache(tenantId, type, cache);
     return { ok: true, cachedAt: new Date() };
   }
@@ -682,6 +698,34 @@ export class WidgetFeederService implements OnModuleInit {
    * Aynalama başarısız olursa o gazete kaynak adresiyle bırakılır: şerit
    * eksik görünmektense dış adresten yüklensin.
    */
+  /**
+   * BİR TUR İÇİNDE aynı kapağı bir kez indirir.
+   *
+   * Aynalama kiracı başına yapılıyor (her kiracının kendi bucket'ı var), ama
+   * kaynaktan indirme kiracıya bağlı değil. 10 kiracı × 30 kapak = kaynağa
+   * 300 istek demekti; kaynak site bir noktada kısıtlamaya başlıyor ve sıranın
+   * sonundaki kiracılar boş şeritle kalıyordu.
+   */
+  private kapakOnbellek = new Map<string, { buffer: Buffer; mimeType: string }>();
+
+  private async kapakIndir(adres: string) {
+    const hazir = this.kapakOnbellek.get(adres);
+    if (hazir) return hazir;
+
+    const res = await axios.get<ArrayBuffer>(adres, {
+      responseType: 'arraybuffer',
+      timeout: 15000,
+      headers: SCRAPE_HEADERS,
+      maxContentLength: 8 * 1024 * 1024,
+    });
+    const kayit = {
+      buffer: Buffer.from(res.data),
+      mimeType: (res.headers['content-type'] as string) || 'image/jpeg',
+    };
+    this.kapakOnbellek.set(adres, kayit);
+    return kayit;
+  }
+
   private async mirrorNewspaperCovers(items: any[], tenantId?: string) {
     if (!tenantId || items.length === 0) return items;
 
@@ -693,31 +737,55 @@ export class WidgetFeederService implements OnModuleInit {
     let ok = 0;
     const out = await Promise.all(
       items.map(async (it) => {
-        const source = (it.image ?? '').trim();
+        // Kaynağın TAM BOY kapağını indir: manşet okunabilir olsun.
+        // Eskiden `it.image` (230x336 vesikalık) indirilip `imageFull` de ona
+        // işaret ediyordu; okuma modalı o minik görseli büyütmeye çalışıyor ve
+        // gazete okunamıyordu. Küçük kart görselini aşağıda bu tek indirmeden
+        // üretiyoruz — kaynağa ikinci istek yok.
+        const source = (it.imageFull ?? it.image ?? '').trim();
         if (!source) return it;
         try {
-          const res = await axios.get<ArrayBuffer>(source, {
-            responseType: 'arraybuffer',
-            timeout: 15000,
-            headers: SCRAPE_HEADERS,
-            maxContentLength: 8 * 1024 * 1024,
-          });
-          const buffer = Buffer.from(res.data);
-          const mimeType = (res.headers['content-type'] as string) || 'image/jpeg';
-          const ext = mimeType.includes('png') ? '.png' : mimeType.includes('webp') ? '.webp' : '.jpg';
+          const { buffer } = await this.kapakIndir(source);
 
-          const stored = await this.storage.put({
-            tenantId,
-            filename: `gazete-${it.slug || 'kapak'}${ext}`,
-            mimeType,
-            size: buffer.length,
-            buffer,
-            publicBaseUrl: tenant?.mediaBaseUrl ?? null,
-          });
+          const tamBoy = await sharp(buffer)
+            // 1240 kaynağın sunduğu en büyük kullanışlı genişlik; üstü
+            // yalnızca dosyayı büyütür, yeni detay getirmez.
+            .resize({ width: 1240, withoutEnlargement: true })
+            .webp({ quality: 82 })
+            .toBuffer();
+
+          // Şeritteki kart en fazla ~190 CSS px; 460 retina için yeterli.
+          const kucuk = await sharp(buffer)
+            .resize({ width: 460, withoutEnlargement: true })
+            .webp({ quality: 72 })
+            .toBuffer();
+
+          const ad = it.slug || 'kapak';
+          const [buyukKayit, kucukKayit] = await Promise.all([
+            this.storage.put({
+              tenantId,
+              filename: `gazete-${ad}-tam.webp`,
+              mimeType: 'image/webp',
+              size: tamBoy.length,
+              buffer: tamBoy,
+              publicBaseUrl: tenant?.mediaBaseUrl ?? null,
+            }),
+            this.storage.put({
+              tenantId,
+              filename: `gazete-${ad}.webp`,
+              mimeType: 'image/webp',
+              size: kucuk.length,
+              buffer: kucuk,
+              publicBaseUrl: tenant?.mediaBaseUrl ?? null,
+            }),
+          ]);
           ok++;
-          // `imageFull` kaynakta kırpılmamış sürümü gösteriyordu; aynaladığımız
-          // tek dosya olduğu için ikisini de ona yönlendiriyoruz.
-          return { ...it, image: stored.url, imageFull: stored.url, sourceImage: source };
+          return {
+            ...it,
+            image: kucukKayit.url,
+            imageFull: buyukKayit.url,
+            sourceImage: source,
+          };
         } catch (err: any) {
           this.logger.warn(
             `[newspapers] "${it.name}" kapağı aynalanamadı (${err?.message ?? err}) — kaynak adres korundu`,
@@ -731,74 +799,106 @@ export class WidgetFeederService implements OnModuleInit {
     return out;
   }
 
-  private async fetchNewspapers(_config: any, _prev?: any, tenantId?: string) {
+  /**
+   * Taranan kapak listesi — kiracılar arasında paylaşılıyor.
+   *
+   * `refreshForTypes` her kiracı için besleyiciyi ayrı çağırıyor; kaynak sayfa
+   * ise kiracıya göre değişmiyor. Kısa ömürlü bu önbellek olmadan bir tur
+   * kaynağa kiracı sayısı kadar istek atıyor ve kısıtlamaya takılıyor.
+   */
+  private gazeteOnbellek: { zaman: number; items: any[] } | null = null;
+
+  /** 15 dakika: bir yenileme turu için bol, gün içinde taze kalması için kısa. */
+  private static readonly GAZETE_ONBELLEK_MS = 15 * 60 * 1000;
+
+  private async gazeteKapaklariniTara(url: string): Promise<any[]> {
+    const hazir = this.gazeteOnbellek;
+    if (hazir && Date.now() - hazir.zaman < WidgetFeederService.GAZETE_ONBELLEK_MS) {
+      return hazir.items;
+    }
+
+    const items = await this.gazeteKapaklariniIndir(url);
+    this.gazeteOnbellek = { zaman: Date.now(), items };
+    // Kapak gövdeleri yalnızca bu tur boyunca gerekli; bellekte tutmanın
+    // anlamı yok (30 kapak ≈ 30 MB).
+    this.kapakOnbellek.clear();
+    return items;
+  }
+
+  /**
+   * Kaynak sayfayı tarar ve kapak listesini döndürür. Aynalama YAPMAZ —
+   * o adım kiracıya özel (her kiracının kendi bucket'ı var).
+   */
+  private async gazeteKapaklariniIndir(url: string) {
+    const html = await this.sayfayiIndir(url);
+    const $ = cheerio.load(html);
+
+    const items: Array<{
+      name: string;
+      slug: string;
+      image: string;
+      imageFull: string;
+      url: string;
+      date: string;
+    }> = [];
+
+    $('.newspapers a[href*="-manseti"]').each((_, el) => {
+      const $el = $(el);
+      const $img = $el.find('img').first();
+
+      // src bir 1x1 placeholder — gerçek adres data-src'de.
+      const thumb = $img.attr('data-src') || $img.attr('src') || '';
+      if (!thumb || thumb.includes('blank.png')) return;
+
+      const name =
+        $el.attr('title')?.trim() ||
+        $img.attr('alt')?.trim() ||
+        $el.find('strong').first().text().trim();
+      if (!name) return;
+
+      const href = $el.attr('href') || '';
+      const absUrl = href.startsWith('http') ? href : `https://www.gazeteoku.com${href}`;
+      const slug =
+        href.split('/').pop()?.replace(/-gazetesi-manseti$/, '') ||
+        slugify(name, { lower: true, strict: true, locale: 'tr' });
+
+      items.push({
+        name,
+        slug,
+        image: thumb,
+        // Boyut segmentini tamamen at → kırpılmamış orijinal (1280x~2150).
+        imageFull: thumb.replace(/^(https?:\/\/[^/]+)\/\d+\/\d+\/\d+\//, '$1/'),
+        url: absUrl,
+        date: $el.find('small').first().text().trim(),
+      });
+    });
+
+    const seen = new Set<string>();
+    const unique = items.filter((it) => {
+      const key = it.slug || it.name;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    // Sıfır kapak = kaynağın işaretçileri değişmiş demek. Boş listeyi
+    // önbelleğe YAZMIYORUZ: hata fırlatılınca `refreshForTypes` eldeki son
+    // sağlam listeyi koruyor, panelin "Yenile" düğmesi de sebebi gösteriyor.
+    if (unique.length === 0) {
+      throw new Error(
+        `${url} 0 kapak döndürdü — kaynağın sayfa yapısı değişmiş olabilir (.newspapers a[href*="-manseti"])`,
+      );
+    }
+    this.logger.log(`[newspapers] ${unique.length} gazete kapağı alındı`);
+    return unique.slice(0, 40);
+  }
+
+  private async fetchNewspapers(_config: any, prev?: any, tenantId?: string) {
     const url = 'https://www.gazeteoku.com/gazeteler';
 
     try {
-      const { data: html } = await axios.get(url, {
-        timeout: 20000,
-        headers: SCRAPE_HEADERS,
-        responseType: 'text',
-      });
-      const $ = cheerio.load(html);
-
-      const items: Array<{
-        name: string;
-        slug: string;
-        image: string;
-        imageFull: string;
-        url: string;
-        date: string;
-      }> = [];
-
-      $('.newspapers a[href*="-manseti"]').each((_, el) => {
-        const $el = $(el);
-        const $img = $el.find('img').first();
-
-        // src bir 1x1 placeholder — gerçek adres data-src'de.
-        const thumb = $img.attr('data-src') || $img.attr('src') || '';
-        if (!thumb || thumb.includes('blank.png')) return;
-
-        const name =
-          $el.attr('title')?.trim() ||
-          $img.attr('alt')?.trim() ||
-          $el.find('strong').first().text().trim();
-        if (!name) return;
-
-        const href = $el.attr('href') || '';
-        const absUrl = href.startsWith('http') ? href : `https://www.gazeteoku.com${href}`;
-        const slug =
-          href.split('/').pop()?.replace(/-gazetesi-manseti$/, '') ||
-          slugify(name, { lower: true, strict: true, locale: 'tr' });
-
-        items.push({
-          name,
-          slug,
-          image: thumb,
-          // Boyut segmentini tamamen at → kırpılmamış orijinal (1280x~2150).
-          imageFull: thumb.replace(/^(https?:\/\/[^/]+)\/\d+\/\d+\/\d+\//, '$1/'),
-          url: absUrl,
-          date: $el.find('small').first().text().trim(),
-        });
-      });
-
-      const seen = new Set<string>();
-      const unique = items.filter((it) => {
-        const key = it.slug || it.name;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-
-      if (unique.length === 0) {
-        this.logger.warn(
-          `[newspapers] ${url} scrape returned 0 items — selectors may be outdated`,
-        );
-      } else {
-        this.logger.log(`[newspapers] ${unique.length} gazete kapağı alındı`);
-      }
-
-      const mirrored = await this.mirrorNewspaperCovers(unique.slice(0, 40), tenantId);
+      const kapaklar = await this.gazeteKapaklariniTara(url);
+      const mirrored = await this.mirrorNewspaperCovers(kapaklar, tenantId);
 
       return {
         items: mirrored,
@@ -806,9 +906,71 @@ export class WidgetFeederService implements OnModuleInit {
         date: new Date().toISOString().split('T')[0],
       };
     } catch (err: any) {
-      this.logger.warn(`[newspapers] fetch failed: ${err?.message ?? err}`);
-      return { items: [], date: new Date().toISOString().split('T')[0] };
+      const sebep = err?.message ?? String(err);
+      this.logger.warn(`[newspapers] fetch failed: ${sebep}`);
+
+      /**
+       * ÖNBELLEĞİ BOŞALTMA. Eskiden burada `{ items: [] }` dönülüyordu ve o
+       * boş liste önbelleğe yazılıyordu; tek bir başarısız çekim şeridi
+       * anasayfadan tamamen siliyordu (bölüm 0 kapakta `null` basıyor).
+       * Hata fırlatınca `refreshForTypes` önbelleğe dokunmuyor: dünün
+       * kapakları, bugünün çekimi düzelene kadar ekranda kalıyor.
+       */
+      if (prev?.items?.length) {
+        throw new Error(`${sebep} — önceki ${prev.items.length} kapak korundu`);
+      }
+      throw new Error(sebep);
     }
+  }
+
+  /**
+   * Bot filtresine takılan sayfaları indirir: gerçek bir tarayıcının başlık
+   * setiyle, üç denemeye kadar, artan beklemeyle.
+   *
+   * Neden gerekli: kapak kaynağı tek bir isteği geçici olarak 403/503 ile
+   * çevirdiğinde ya da bağlantı zaman aşımına düştüğünde günün tamamı
+   * kaybediliyordu — sonraki deneme ancak yarın sabahki cron'da.
+   */
+  private async sayfayiIndir(url: string, deneme = 3): Promise<string> {
+    const kaynak = new URL(url);
+    let sonHata: any;
+
+    for (let i = 1; i <= deneme; i++) {
+      try {
+        const { data } = await axios.get<string>(url, {
+          timeout: 20000,
+          responseType: 'text',
+          // Referer ve sec-fetch-* başlıkları: kaynak siteler doğrudan
+          // (refererı olmayan) istekleri bot sayıp 403 döndürebiliyor.
+          headers: {
+            ...SCRAPE_HEADERS,
+            Referer: `${kaynak.protocol}//${kaynak.host}/`,
+            'sec-fetch-dest': 'document',
+            'sec-fetch-mode': 'navigate',
+            'sec-fetch-site': 'same-origin',
+            'sec-fetch-user': '?1',
+            'Cache-Control': 'no-cache',
+          },
+        });
+        return data;
+      } catch (err: any) {
+        sonHata = err;
+        const durum = err?.response?.status;
+        this.logger.warn(
+          `[scrape] ${url} denemesi ${i}/${deneme} başarısız` +
+            `${durum ? ` (HTTP ${durum})` : ''}: ${err?.code ?? err?.message ?? err}`,
+        );
+        // 404 kalıcı; tekrar denemek boşa istek.
+        if (durum === 404) break;
+        if (i < deneme) await new Promise((r) => setTimeout(r, i * 2000));
+      }
+    }
+
+    const durum = sonHata?.response?.status;
+    throw new Error(
+      `${url} indirilemedi${durum ? ` (HTTP ${durum})` : ''}: ` +
+        `${sonHata?.code ?? sonHata?.message ?? sonHata}`,
+    );
   }
 
   /**

@@ -6,8 +6,8 @@ export declare class AuthorCategoriesController {
     constructor(authorCategoriesService: AuthorCategoriesService);
     findAll(tenantId: string): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         tenantId: string;
@@ -15,8 +15,8 @@ export declare class AuthorCategoriesController {
     }[]>;
     findOne(tenantId: string, id: string): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         tenantId: string;
@@ -24,8 +24,8 @@ export declare class AuthorCategoriesController {
     }>;
     create(tenantId: string, dto: CreateAuthorCategoryDto): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         tenantId: string;
@@ -38,8 +38,8 @@ export declare class AuthorCategoriesController {
         }[];
     }): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         tenantId: string;
@@ -47,8 +47,8 @@ export declare class AuthorCategoriesController {
     }[]>;
     update(tenantId: string, id: string, dto: UpdateAuthorCategoryDto): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         tenantId: string;
@@ -56,8 +56,8 @@ export declare class AuthorCategoriesController {
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         tenantId: string;

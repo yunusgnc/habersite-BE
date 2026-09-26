@@ -19,7 +19,7 @@ class AssistDto {
     content;
     spot;
     static _OPENAPI_METADATA_FACTORY() {
-        return { task: { required: true, enum: ["spot", "tags", "seo", "titles"], enum: ai_tasks_1.AI_TASK_NAMES }, title: { required: true, type: () => String, maxLength: 500 }, content: { required: false, type: () => String, description: "Edit\u00F6rden gelen HTML. Servis d\u00FCz metne \u00E7evirip k\u0131rp\u0131yor; \u00FCst s\u0131n\u0131r burada\nyaln\u0131zca a\u015F\u0131r\u0131 b\u00FCy\u00FCk g\u00F6vdelerin iste\u011Fi \u015Fi\u015Firmesini engellemek i\u00E7in.", maxLength: 200000 }, spot: { required: false, type: () => String, maxLength: 2000 } };
+        return { task: { required: true, enum: ["tags", "spot", "seo", "titles"], enum: ai_tasks_1.AI_TASK_NAMES }, title: { required: true, type: () => String, maxLength: 500 }, content: { required: false, type: () => String, description: "Edit\u00F6rden gelen HTML. Servis d\u00FCz metne \u00E7evirip k\u0131rp\u0131yor; \u00FCst s\u0131n\u0131r burada\nyaln\u0131zca a\u015F\u0131r\u0131 b\u00FCy\u00FCk g\u00F6vdelerin iste\u011Fi \u015Fi\u015Firmesini engellemek i\u00E7in.", maxLength: 200000 }, spot: { required: false, type: () => String, maxLength: 2000 } };
     }
 }
 exports.AssistDto = AssistDto;

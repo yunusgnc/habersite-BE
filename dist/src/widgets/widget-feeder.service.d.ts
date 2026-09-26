@@ -28,8 +28,15 @@ export declare class WidgetFeederService implements OnModuleInit {
     private fetchMarketTicker;
     private fetchHoroscope;
     private pickHoroscopeFallback;
+    private kapakOnbellek;
+    private kapakIndir;
     private mirrorNewspaperCovers;
+    private gazeteOnbellek;
+    private static readonly GAZETE_ONBELLEK_MS;
+    private gazeteKapaklariniTara;
+    private gazeteKapaklariniIndir;
     private fetchNewspapers;
+    private sayfayiIndir;
     private fetchStandings;
     private wikipediaPuanDurumu;
     private tffFikstur;

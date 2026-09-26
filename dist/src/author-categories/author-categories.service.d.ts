@@ -6,8 +6,8 @@ export declare class AuthorCategoriesService {
     constructor(prisma: PrismaService);
     findAll(tenantId: string): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         tenantId: string;
@@ -15,8 +15,8 @@ export declare class AuthorCategoriesService {
     }[]>;
     findOne(tenantId: string, id: string): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         tenantId: string;
@@ -24,8 +24,8 @@ export declare class AuthorCategoriesService {
     }>;
     create(tenantId: string, dto: CreateAuthorCategoryDto): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         tenantId: string;
@@ -33,8 +33,8 @@ export declare class AuthorCategoriesService {
     }>;
     update(tenantId: string, id: string, dto: UpdateAuthorCategoryDto): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         tenantId: string;
@@ -42,8 +42,8 @@ export declare class AuthorCategoriesService {
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         tenantId: string;
@@ -54,8 +54,8 @@ export declare class AuthorCategoriesService {
         sortOrder: number;
     }[]): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         active: boolean;
         createdAt: Date;
         tenantId: string;

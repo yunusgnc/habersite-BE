@@ -17,7 +17,7 @@ class BulkArticleDto {
     ids;
     status;
     static _OPENAPI_METADATA_FACTORY() {
-        return { ids: { required: true, type: () => [String] }, status: { required: true, enum: ["DRAFT", "SCHEDULED", "PUBLISHED", "ARCHIVED", "IN_REVIEW"] } };
+        return { ids: { required: true, type: () => [String] }, status: { required: true, enum: ["DRAFT", "IN_REVIEW", "SCHEDULED", "PUBLISHED", "ARCHIVED"] } };
     }
 }
 exports.BulkArticleDto = BulkArticleDto;

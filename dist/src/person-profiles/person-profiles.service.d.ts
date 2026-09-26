@@ -11,15 +11,15 @@ export declare class PersonProfilesService {
     }): Promise<{
         items: {
             id: string;
-            name: string;
             slug: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
             tenantId: string;
             image: string | null;
+            title: string | null;
             bio: string | null;
             social: import("@prisma/client/runtime/client").JsonValue;
-            title: string | null;
             birthDate: string | null;
         }[];
         nextCursor: string | null;
@@ -27,67 +27,67 @@ export declare class PersonProfilesService {
     }>;
     findOne(tenantId: string, id: string): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
         tenantId: string;
         image: string | null;
+        title: string | null;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
-        title: string | null;
         birthDate: string | null;
     }>;
     findBySlug(tenantId: string, slug: string): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
         tenantId: string;
         image: string | null;
+        title: string | null;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
-        title: string | null;
         birthDate: string | null;
     }>;
     create(tenantId: string, dto: CreatePersonProfileDto): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
         tenantId: string;
         image: string | null;
+        title: string | null;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
-        title: string | null;
         birthDate: string | null;
     }>;
     update(tenantId: string, id: string, dto: UpdatePersonProfileDto): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
         tenantId: string;
         image: string | null;
+        title: string | null;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
-        title: string | null;
         birthDate: string | null;
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
         tenantId: string;
         image: string | null;
+        title: string | null;
         bio: string | null;
         social: import("@prisma/client/runtime/client").JsonValue;
-        title: string | null;
         birthDate: string | null;
     }>;
     private ensureExists;

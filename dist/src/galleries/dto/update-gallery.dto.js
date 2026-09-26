@@ -24,7 +24,7 @@ class UpdateGalleryDto {
     publishedAt;
     sortOrder;
     static _OPENAPI_METADATA_FACTORY() {
-        return { title: { required: false, type: () => String }, slug: { required: false, type: () => String }, description: { required: false, type: () => String }, coverImage: { required: false, type: () => String }, categoryId: { required: false, type: () => String }, status: { required: false, enum: ["DRAFT", "SCHEDULED", "PUBLISHED", "ARCHIVED", "IN_REVIEW"] }, publishedAt: { required: false, type: () => String }, sortOrder: { required: false, type: () => Number } };
+        return { title: { required: false, type: () => String }, slug: { required: false, type: () => String }, description: { required: false, type: () => String }, coverImage: { required: false, type: () => String }, categoryId: { required: false, type: () => String }, status: { required: false, enum: ["DRAFT", "IN_REVIEW", "SCHEDULED", "PUBLISHED", "ARCHIVED"] }, publishedAt: { required: false, type: () => String }, sortOrder: { required: false, type: () => Number } };
     }
 }
 exports.UpdateGalleryDto = UpdateGalleryDto;

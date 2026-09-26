@@ -10,8 +10,8 @@ export declare class TagsController {
         };
     } & {
         id: string;
-        name: string;
         slug: string;
+        name: string;
         tenantId: string;
     })[]>;
     findOne(tenantId: string, id: string): Promise<{
@@ -20,26 +20,26 @@ export declare class TagsController {
         };
     } & {
         id: string;
-        name: string;
         slug: string;
+        name: string;
         tenantId: string;
     }>;
     create(tenantId: string, dto: CreateTagDto): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         tenantId: string;
     }>;
     update(tenantId: string, id: string, dto: UpdateTagDto): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         tenantId: string;
     }>;
     remove(tenantId: string, id: string): Promise<{
         id: string;
-        name: string;
         slug: string;
+        name: string;
         tenantId: string;
     }>;
 }

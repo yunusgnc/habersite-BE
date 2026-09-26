@@ -19,8 +19,8 @@ export declare class ArticlesService {
             categories: ({
                 category: {
                     id: string;
-                    name: string;
                     slug: string;
+                    name: string;
                     active: boolean;
                     createdAt: Date;
                     updatedAt: Date;
@@ -34,15 +34,15 @@ export declare class ArticlesService {
                     seoDesc: string | null;
                 };
             } & {
-                articleId: string;
                 categoryId: string;
                 primary: boolean;
+                articleId: string;
             })[];
             tags: ({
                 tag: {
                     id: string;
-                    name: string;
                     slug: string;
+                    name: string;
                     tenantId: string;
                 };
             } & {
@@ -51,8 +51,8 @@ export declare class ArticlesService {
             })[];
             author: {
                 id: string;
-                name: string;
                 slug: string;
+                name: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -96,6 +96,11 @@ export declare class ArticlesService {
             authorId: string | null;
             createdById: string;
             approvedById: string | null;
+            assignedToId: string | null;
+            deadline: Date | null;
+            submittedAt: Date | null;
+            reviewedAt: Date | null;
+            reviewNote: string | null;
             viewCount: number;
             commentCount: number;
             readingTime: number | null;
@@ -105,11 +110,6 @@ export declare class ArticlesService {
             ogImage: string | null;
             source: string | null;
             sourceUrl: string | null;
-            assignedToId: string | null;
-            deadline: Date | null;
-            submittedAt: Date | null;
-            reviewedAt: Date | null;
-            reviewNote: string | null;
             videoUrl: string | null;
             shareTargets: Prisma.JsonValue | null;
             headlineTitle: string | null;
@@ -172,8 +172,8 @@ export declare class ArticlesService {
             categories: ({
                 category: {
                     id: string;
-                    name: string;
                     slug: string;
+                    name: string;
                     active: boolean;
                     createdAt: Date;
                     updatedAt: Date;
@@ -187,14 +187,14 @@ export declare class ArticlesService {
                     seoDesc: string | null;
                 };
             } & {
-                articleId: string;
                 categoryId: string;
                 primary: boolean;
+                articleId: string;
             })[];
             author: {
                 id: string;
-                name: string;
                 slug: string;
+                name: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -225,6 +225,11 @@ export declare class ArticlesService {
             authorId: string | null;
             createdById: string;
             approvedById: string | null;
+            assignedToId: string | null;
+            deadline: Date | null;
+            submittedAt: Date | null;
+            reviewedAt: Date | null;
+            reviewNote: string | null;
             viewCount: number;
             commentCount: number;
             readingTime: number | null;
@@ -234,11 +239,6 @@ export declare class ArticlesService {
             ogImage: string | null;
             source: string | null;
             sourceUrl: string | null;
-            assignedToId: string | null;
-            deadline: Date | null;
-            submittedAt: Date | null;
-            reviewedAt: Date | null;
-            reviewNote: string | null;
             videoUrl: string | null;
             shareTargets: Prisma.JsonValue | null;
             headlineTitle: string | null;
@@ -263,8 +263,8 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                name: string;
                 slug: string;
+                name: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -278,15 +278,15 @@ export declare class ArticlesService {
                 seoDesc: string | null;
             };
         } & {
-            articleId: string;
             categoryId: string;
             primary: boolean;
+            articleId: string;
         })[];
         tags: ({
             tag: {
                 id: string;
-                name: string;
                 slug: string;
+                name: string;
                 tenantId: string;
             };
         } & {
@@ -295,8 +295,8 @@ export declare class ArticlesService {
         })[];
         author: {
             id: string;
-            name: string;
             slug: string;
+            name: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -321,9 +321,9 @@ export declare class ArticlesService {
             url: string;
             id: string;
             sortOrder: number;
-            articleId: string;
             alt: string | null;
             credit: string | null;
+            articleId: string;
             caption: string | null;
         }[];
         reactions: {
@@ -348,6 +348,11 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -357,11 +362,6 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         videoUrl: string | null;
         shareTargets: Prisma.JsonValue | null;
         headlineTitle: string | null;
@@ -387,8 +387,8 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                name: string;
                 slug: string;
+                name: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -402,15 +402,15 @@ export declare class ArticlesService {
                 seoDesc: string | null;
             };
         } & {
-            articleId: string;
             categoryId: string;
             primary: boolean;
+            articleId: string;
         })[];
         tags: ({
             tag: {
                 id: string;
-                name: string;
                 slug: string;
+                name: string;
                 tenantId: string;
             };
         } & {
@@ -419,8 +419,8 @@ export declare class ArticlesService {
         })[];
         author: {
             id: string;
-            name: string;
             slug: string;
+            name: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -450,9 +450,9 @@ export declare class ArticlesService {
             url: string;
             id: string;
             sortOrder: number;
-            articleId: string;
             alt: string | null;
             credit: string | null;
+            articleId: string;
             caption: string | null;
         }[];
     } & {
@@ -474,6 +474,11 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -483,11 +488,6 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         videoUrl: string | null;
         shareTargets: Prisma.JsonValue | null;
         headlineTitle: string | null;
@@ -514,8 +514,8 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                name: string;
                 slug: string;
+                name: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -529,15 +529,15 @@ export declare class ArticlesService {
                 seoDesc: string | null;
             };
         } & {
-            articleId: string;
             categoryId: string;
             primary: boolean;
+            articleId: string;
         })[];
         tags: ({
             tag: {
                 id: string;
-                name: string;
                 slug: string;
+                name: string;
                 tenantId: string;
             };
         } & {
@@ -546,8 +546,8 @@ export declare class ArticlesService {
         })[];
         author: {
             id: string;
-            name: string;
             slug: string;
+            name: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -563,9 +563,9 @@ export declare class ArticlesService {
             url: string;
             id: string;
             sortOrder: number;
-            articleId: string;
             alt: string | null;
             credit: string | null;
+            articleId: string;
             caption: string | null;
         }[];
     } & {
@@ -587,6 +587,11 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -596,11 +601,6 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         videoUrl: string | null;
         shareTargets: Prisma.JsonValue | null;
         headlineTitle: string | null;
@@ -626,8 +626,8 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                name: string;
                 slug: string;
+                name: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -641,15 +641,15 @@ export declare class ArticlesService {
                 seoDesc: string | null;
             };
         } & {
-            articleId: string;
             categoryId: string;
             primary: boolean;
+            articleId: string;
         })[];
         tags: ({
             tag: {
                 id: string;
-                name: string;
                 slug: string;
+                name: string;
                 tenantId: string;
             };
         } & {
@@ -658,8 +658,8 @@ export declare class ArticlesService {
         })[];
         author: {
             id: string;
-            name: string;
             slug: string;
+            name: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -675,9 +675,9 @@ export declare class ArticlesService {
             url: string;
             id: string;
             sortOrder: number;
-            articleId: string;
             alt: string | null;
             credit: string | null;
+            articleId: string;
             caption: string | null;
         }[];
     } & {
@@ -699,6 +699,11 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -708,11 +713,6 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         videoUrl: string | null;
         shareTargets: Prisma.JsonValue | null;
         headlineTitle: string | null;
@@ -753,6 +753,11 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -762,11 +767,6 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         videoUrl: string | null;
         shareTargets: Prisma.JsonValue | null;
         headlineTitle: string | null;
@@ -791,8 +791,8 @@ export declare class ArticlesService {
     submitForReview(tenantId: string, id: string, userId: string): Promise<{
         author: {
             id: string;
-            name: string;
             slug: string;
+            name: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -828,6 +828,11 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -837,11 +842,6 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         videoUrl: string | null;
         shareTargets: Prisma.JsonValue | null;
         headlineTitle: string | null;
@@ -882,6 +882,11 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -891,11 +896,6 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         videoUrl: string | null;
         shareTargets: Prisma.JsonValue | null;
         headlineTitle: string | null;
@@ -936,6 +936,11 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -945,11 +950,6 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         videoUrl: string | null;
         shareTargets: Prisma.JsonValue | null;
         headlineTitle: string | null;
@@ -999,6 +999,11 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -1008,11 +1013,6 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         videoUrl: string | null;
         shareTargets: Prisma.JsonValue | null;
         headlineTitle: string | null;
@@ -1062,6 +1062,11 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -1071,11 +1076,6 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         videoUrl: string | null;
         shareTargets: Prisma.JsonValue | null;
         headlineTitle: string | null;
@@ -1130,6 +1130,11 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -1139,11 +1144,6 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         videoUrl: string | null;
         shareTargets: Prisma.JsonValue | null;
         headlineTitle: string | null;
@@ -1189,8 +1189,8 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                name: string;
                 slug: string;
+                name: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -1204,15 +1204,15 @@ export declare class ArticlesService {
                 seoDesc: string | null;
             };
         } & {
-            articleId: string;
             categoryId: string;
             primary: boolean;
+            articleId: string;
         })[];
         tags: ({
             tag: {
                 id: string;
-                name: string;
                 slug: string;
+                name: string;
                 tenantId: string;
             };
         } & {
@@ -1221,8 +1221,8 @@ export declare class ArticlesService {
         })[];
         author: {
             id: string;
-            name: string;
             slug: string;
+            name: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -1238,9 +1238,9 @@ export declare class ArticlesService {
             url: string;
             id: string;
             sortOrder: number;
-            articleId: string;
             alt: string | null;
             credit: string | null;
+            articleId: string;
             caption: string | null;
         }[];
     } & {
@@ -1262,6 +1262,11 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -1271,11 +1276,6 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         videoUrl: string | null;
         shareTargets: Prisma.JsonValue | null;
         headlineTitle: string | null;
@@ -1316,6 +1316,11 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -1325,11 +1330,6 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         videoUrl: string | null;
         shareTargets: Prisma.JsonValue | null;
         headlineTitle: string | null;
@@ -1355,8 +1355,8 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                name: string;
                 slug: string;
+                name: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -1370,14 +1370,14 @@ export declare class ArticlesService {
                 seoDesc: string | null;
             };
         } & {
-            articleId: string;
             categoryId: string;
             primary: boolean;
+            articleId: string;
         })[];
         author: {
             id: string;
-            name: string;
             slug: string;
+            name: string;
             avatar: string | null;
         } | null;
     } & {
@@ -1399,6 +1399,11 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -1408,11 +1413,6 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         videoUrl: string | null;
         shareTargets: Prisma.JsonValue | null;
         headlineTitle: string | null;
@@ -1441,8 +1441,8 @@ export declare class ArticlesService {
         categories: ({
             category: {
                 id: string;
-                name: string;
                 slug: string;
+                name: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -1456,14 +1456,14 @@ export declare class ArticlesService {
                 seoDesc: string | null;
             };
         } & {
-            articleId: string;
             categoryId: string;
             primary: boolean;
+            articleId: string;
         })[];
         author: {
             id: string;
-            name: string;
             slug: string;
+            name: string;
             active: boolean;
             createdAt: Date;
             updatedAt: Date;
@@ -1494,6 +1494,11 @@ export declare class ArticlesService {
         authorId: string | null;
         createdById: string;
         approvedById: string | null;
+        assignedToId: string | null;
+        deadline: Date | null;
+        submittedAt: Date | null;
+        reviewedAt: Date | null;
+        reviewNote: string | null;
         viewCount: number;
         commentCount: number;
         readingTime: number | null;
@@ -1503,11 +1508,6 @@ export declare class ArticlesService {
         ogImage: string | null;
         source: string | null;
         sourceUrl: string | null;
-        assignedToId: string | null;
-        deadline: Date | null;
-        submittedAt: Date | null;
-        reviewedAt: Date | null;
-        reviewNote: string | null;
         videoUrl: string | null;
         shareTargets: Prisma.JsonValue | null;
         headlineTitle: string | null;
@@ -1534,8 +1534,8 @@ export declare class ArticlesService {
             categories: ({
                 category: {
                     id: string;
-                    name: string;
                     slug: string;
+                    name: string;
                     active: boolean;
                     createdAt: Date;
                     updatedAt: Date;
@@ -1549,15 +1549,15 @@ export declare class ArticlesService {
                     seoDesc: string | null;
                 };
             } & {
-                articleId: string;
                 categoryId: string;
                 primary: boolean;
+                articleId: string;
             })[];
             tags: ({
                 tag: {
                     id: string;
-                    name: string;
                     slug: string;
+                    name: string;
                     tenantId: string;
                 };
             } & {
@@ -1566,8 +1566,8 @@ export declare class ArticlesService {
             })[];
             author: {
                 id: string;
-                name: string;
                 slug: string;
+                name: string;
                 active: boolean;
                 createdAt: Date;
                 updatedAt: Date;
@@ -1598,6 +1598,11 @@ export declare class ArticlesService {
             authorId: string | null;
             createdById: string;
             approvedById: string | null;
+            assignedToId: string | null;
+            deadline: Date | null;
+            submittedAt: Date | null;
+            reviewedAt: Date | null;
+            reviewNote: string | null;
             viewCount: number;
             commentCount: number;
             readingTime: number | null;
@@ -1607,11 +1612,6 @@ export declare class ArticlesService {
             ogImage: string | null;
             source: string | null;
             sourceUrl: string | null;
-            assignedToId: string | null;
-            deadline: Date | null;
-            submittedAt: Date | null;
-            reviewedAt: Date | null;
-            reviewNote: string | null;
             videoUrl: string | null;
             shareTargets: Prisma.JsonValue | null;
             headlineTitle: string | null;

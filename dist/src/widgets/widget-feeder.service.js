@@ -55,6 +55,7 @@ const schedule_1 = require("@nestjs/schedule");
 const axios_1 = __importDefault(require("axios"));
 const cheerio = __importStar(require("cheerio"));
 const iconv = __importStar(require("iconv-lite"));
+const sharp_1 = __importDefault(require("sharp"));
 const https_1 = require("https");
 const TFF_AGENT = new https_1.Agent({ rejectUnauthorized: false });
 const slugify_1 = __importDefault(require("slugify"));
@@ -100,7 +101,8 @@ function futbolSezonu(tarih = new Date()) {
         en: `${baslangic}–${String(baslangic + 1).slice(2)}`,
     };
 }
-let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
+let WidgetFeederService = class WidgetFeederService {
+    static { WidgetFeederService_1 = this; }
     prisma;
     widgets;
     storage;
@@ -196,9 +198,16 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
     async refreshOne(tenantId, type) {
         const feeder = this.feeders[type];
         if (!feeder)
-            throw new Error(`No feeder registered for widget type: ${type}`);
+            throw new common_1.NotFoundException(`"${type}" için besleyici tanımlı değil`);
         const widget = await this.widgets.findByType(tenantId, type);
-        const cache = await feeder(widget?.config ?? {}, widget?.cache ?? null, tenantId);
+        let cache;
+        try {
+            cache = await feeder(widget?.config ?? {}, widget?.cache ?? null, tenantId);
+        }
+        catch (err) {
+            this.logger.warn(`refreshOne ${type} (${tenantId}) başarısız: ${err?.message ?? err}`);
+            throw new common_1.ServiceUnavailableException(err?.message ?? 'Kaynak veriye ulaşılamadı');
+        }
         await this.widgets.updateCache(tenantId, type, cache);
         return { ok: true, cachedAt: new Date() };
     }
@@ -523,6 +532,24 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
         const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
         return arr[dayOfYear % arr.length];
     }
+    kapakOnbellek = new Map();
+    async kapakIndir(adres) {
+        const hazir = this.kapakOnbellek.get(adres);
+        if (hazir)
+            return hazir;
+        const res = await axios_1.default.get(adres, {
+            responseType: 'arraybuffer',
+            timeout: 15000,
+            headers: SCRAPE_HEADERS,
+            maxContentLength: 8 * 1024 * 1024,
+        });
+        const kayit = {
+            buffer: Buffer.from(res.data),
+            mimeType: res.headers['content-type'] || 'image/jpeg',
+        };
+        this.kapakOnbellek.set(adres, kayit);
+        return kayit;
+    }
     async mirrorNewspaperCovers(items, tenantId) {
         if (!tenantId || items.length === 0)
             return items;
@@ -532,29 +559,45 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
         });
         let ok = 0;
         const out = await Promise.all(items.map(async (it) => {
-            const source = (it.image ?? '').trim();
+            const source = (it.imageFull ?? it.image ?? '').trim();
             if (!source)
                 return it;
             try {
-                const res = await axios_1.default.get(source, {
-                    responseType: 'arraybuffer',
-                    timeout: 15000,
-                    headers: SCRAPE_HEADERS,
-                    maxContentLength: 8 * 1024 * 1024,
-                });
-                const buffer = Buffer.from(res.data);
-                const mimeType = res.headers['content-type'] || 'image/jpeg';
-                const ext = mimeType.includes('png') ? '.png' : mimeType.includes('webp') ? '.webp' : '.jpg';
-                const stored = await this.storage.put({
-                    tenantId,
-                    filename: `gazete-${it.slug || 'kapak'}${ext}`,
-                    mimeType,
-                    size: buffer.length,
-                    buffer,
-                    publicBaseUrl: tenant?.mediaBaseUrl ?? null,
-                });
+                const { buffer } = await this.kapakIndir(source);
+                const tamBoy = await (0, sharp_1.default)(buffer)
+                    .resize({ width: 1240, withoutEnlargement: true })
+                    .webp({ quality: 82 })
+                    .toBuffer();
+                const kucuk = await (0, sharp_1.default)(buffer)
+                    .resize({ width: 460, withoutEnlargement: true })
+                    .webp({ quality: 72 })
+                    .toBuffer();
+                const ad = it.slug || 'kapak';
+                const [buyukKayit, kucukKayit] = await Promise.all([
+                    this.storage.put({
+                        tenantId,
+                        filename: `gazete-${ad}-tam.webp`,
+                        mimeType: 'image/webp',
+                        size: tamBoy.length,
+                        buffer: tamBoy,
+                        publicBaseUrl: tenant?.mediaBaseUrl ?? null,
+                    }),
+                    this.storage.put({
+                        tenantId,
+                        filename: `gazete-${ad}.webp`,
+                        mimeType: 'image/webp',
+                        size: kucuk.length,
+                        buffer: kucuk,
+                        publicBaseUrl: tenant?.mediaBaseUrl ?? null,
+                    }),
+                ]);
                 ok++;
-                return { ...it, image: stored.url, imageFull: stored.url, sourceImage: source };
+                return {
+                    ...it,
+                    image: kucukKayit.url,
+                    imageFull: buyukKayit.url,
+                    sourceImage: source,
+                };
             }
             catch (err) {
                 this.logger.warn(`[newspapers] "${it.name}" kapağı aynalanamadı (${err?.message ?? err}) — kaynak adres korundu`);
@@ -564,55 +607,65 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
         this.logger.log(`[newspapers] ${ok}/${items.length} kapak kendi CDN'imize aynalandı`);
         return out;
     }
-    async fetchNewspapers(_config, _prev, tenantId) {
+    gazeteOnbellek = null;
+    static GAZETE_ONBELLEK_MS = 15 * 60 * 1000;
+    async gazeteKapaklariniTara(url) {
+        const hazir = this.gazeteOnbellek;
+        if (hazir && Date.now() - hazir.zaman < WidgetFeederService_1.GAZETE_ONBELLEK_MS) {
+            return hazir.items;
+        }
+        const items = await this.gazeteKapaklariniIndir(url);
+        this.gazeteOnbellek = { zaman: Date.now(), items };
+        this.kapakOnbellek.clear();
+        return items;
+    }
+    async gazeteKapaklariniIndir(url) {
+        const html = await this.sayfayiIndir(url);
+        const $ = cheerio.load(html);
+        const items = [];
+        $('.newspapers a[href*="-manseti"]').each((_, el) => {
+            const $el = $(el);
+            const $img = $el.find('img').first();
+            const thumb = $img.attr('data-src') || $img.attr('src') || '';
+            if (!thumb || thumb.includes('blank.png'))
+                return;
+            const name = $el.attr('title')?.trim() ||
+                $img.attr('alt')?.trim() ||
+                $el.find('strong').first().text().trim();
+            if (!name)
+                return;
+            const href = $el.attr('href') || '';
+            const absUrl = href.startsWith('http') ? href : `https://www.gazeteoku.com${href}`;
+            const slug = href.split('/').pop()?.replace(/-gazetesi-manseti$/, '') ||
+                (0, slugify_1.default)(name, { lower: true, strict: true, locale: 'tr' });
+            items.push({
+                name,
+                slug,
+                image: thumb,
+                imageFull: thumb.replace(/^(https?:\/\/[^/]+)\/\d+\/\d+\/\d+\//, '$1/'),
+                url: absUrl,
+                date: $el.find('small').first().text().trim(),
+            });
+        });
+        const seen = new Set();
+        const unique = items.filter((it) => {
+            const key = it.slug || it.name;
+            if (seen.has(key))
+                return false;
+            seen.add(key);
+            return true;
+        });
+        if (unique.length === 0) {
+            throw new Error(`${url} 0 kapak döndürdü — kaynağın sayfa yapısı değişmiş olabilir (.newspapers a[href*="-manseti"])`);
+        }
+        this.logger.log(`[newspapers] ${unique.length} gazete kapağı alındı`);
+        return unique.slice(0, 40);
+    }
+    async fetchNewspapers(_config, prev, tenantId) {
         const url = 'https://www.gazeteoku.com/gazeteler';
         try {
-            const { data: html } = await axios_1.default.get(url, {
-                timeout: 20000,
-                headers: SCRAPE_HEADERS,
-                responseType: 'text',
-            });
-            const $ = cheerio.load(html);
-            const items = [];
-            $('.newspapers a[href*="-manseti"]').each((_, el) => {
-                const $el = $(el);
-                const $img = $el.find('img').first();
-                const thumb = $img.attr('data-src') || $img.attr('src') || '';
-                if (!thumb || thumb.includes('blank.png'))
-                    return;
-                const name = $el.attr('title')?.trim() ||
-                    $img.attr('alt')?.trim() ||
-                    $el.find('strong').first().text().trim();
-                if (!name)
-                    return;
-                const href = $el.attr('href') || '';
-                const absUrl = href.startsWith('http') ? href : `https://www.gazeteoku.com${href}`;
-                const slug = href.split('/').pop()?.replace(/-gazetesi-manseti$/, '') ||
-                    (0, slugify_1.default)(name, { lower: true, strict: true, locale: 'tr' });
-                items.push({
-                    name,
-                    slug,
-                    image: thumb,
-                    imageFull: thumb.replace(/^(https?:\/\/[^/]+)\/\d+\/\d+\/\d+\//, '$1/'),
-                    url: absUrl,
-                    date: $el.find('small').first().text().trim(),
-                });
-            });
-            const seen = new Set();
-            const unique = items.filter((it) => {
-                const key = it.slug || it.name;
-                if (seen.has(key))
-                    return false;
-                seen.add(key);
-                return true;
-            });
-            if (unique.length === 0) {
-                this.logger.warn(`[newspapers] ${url} scrape returned 0 items — selectors may be outdated`);
-            }
-            else {
-                this.logger.log(`[newspapers] ${unique.length} gazete kapağı alındı`);
-            }
-            const mirrored = await this.mirrorNewspaperCovers(unique.slice(0, 40), tenantId);
+            const kapaklar = await this.gazeteKapaklariniTara(url);
+            const mirrored = await this.mirrorNewspaperCovers(kapaklar, tenantId);
             return {
                 items: mirrored,
                 source: url,
@@ -620,9 +673,48 @@ let WidgetFeederService = WidgetFeederService_1 = class WidgetFeederService {
             };
         }
         catch (err) {
-            this.logger.warn(`[newspapers] fetch failed: ${err?.message ?? err}`);
-            return { items: [], date: new Date().toISOString().split('T')[0] };
+            const sebep = err?.message ?? String(err);
+            this.logger.warn(`[newspapers] fetch failed: ${sebep}`);
+            if (prev?.items?.length) {
+                throw new Error(`${sebep} — önceki ${prev.items.length} kapak korundu`);
+            }
+            throw new Error(sebep);
         }
+    }
+    async sayfayiIndir(url, deneme = 3) {
+        const kaynak = new URL(url);
+        let sonHata;
+        for (let i = 1; i <= deneme; i++) {
+            try {
+                const { data } = await axios_1.default.get(url, {
+                    timeout: 20000,
+                    responseType: 'text',
+                    headers: {
+                        ...SCRAPE_HEADERS,
+                        Referer: `${kaynak.protocol}//${kaynak.host}/`,
+                        'sec-fetch-dest': 'document',
+                        'sec-fetch-mode': 'navigate',
+                        'sec-fetch-site': 'same-origin',
+                        'sec-fetch-user': '?1',
+                        'Cache-Control': 'no-cache',
+                    },
+                });
+                return data;
+            }
+            catch (err) {
+                sonHata = err;
+                const durum = err?.response?.status;
+                this.logger.warn(`[scrape] ${url} denemesi ${i}/${deneme} başarısız` +
+                    `${durum ? ` (HTTP ${durum})` : ''}: ${err?.code ?? err?.message ?? err}`);
+                if (durum === 404)
+                    break;
+                if (i < deneme)
+                    await new Promise((r) => setTimeout(r, i * 2000));
+            }
+        }
+        const durum = sonHata?.response?.status;
+        throw new Error(`${url} indirilemedi${durum ? ` (HTTP ${durum})` : ''}: ` +
+            `${sonHata?.code ?? sonHata?.message ?? sonHata}`);
     }
     async fetchStandings(config, prev) {
         const istenen = Array.isArray(config?.ligler) && config.ligler.length

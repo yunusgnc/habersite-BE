@@ -29,8 +29,8 @@ export declare class ContactMessagesService {
             email: string;
             type: import("@prisma/client").$Enums.MessageType;
             status: import("@prisma/client").$Enums.MessageStatus;
-            ipAddress: string | null;
             targetUrl: string | null;
+            ipAddress: string | null;
             message: string;
             subject: string | null;
             read: boolean;
@@ -57,8 +57,8 @@ export declare class ContactMessagesService {
         email: string;
         type: import("@prisma/client").$Enums.MessageType;
         status: import("@prisma/client").$Enums.MessageStatus;
-        ipAddress: string | null;
         targetUrl: string | null;
+        ipAddress: string | null;
         message: string;
         subject: string | null;
         read: boolean;
@@ -77,8 +77,8 @@ export declare class ContactMessagesService {
         email: string;
         type: import("@prisma/client").$Enums.MessageType;
         status: import("@prisma/client").$Enums.MessageStatus;
-        ipAddress: string | null;
         targetUrl: string | null;
+        ipAddress: string | null;
         message: string;
         subject: string | null;
         read: boolean;
