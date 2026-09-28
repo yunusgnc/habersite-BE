@@ -44,6 +44,7 @@ export declare class WidgetFeederService implements OnModuleInit {
     private fetchWeather;
     private fetchPrayerTimes;
     private fetchMarketTicker;
+    private bistEndeksi;
     private fetchHoroscope;
     private pickHoroscopeFallback;
     private kapakOnbellek;
@@ -59,5 +60,14 @@ export declare class WidgetFeederService implements OnModuleInit {
     private wikipediaPuanDurumu;
     private tffFikstur;
     private fetchPharmacy;
+    static eczanelerGenTrAyikla($: cheerio.CheerioAPI): {
+        pharmacies: {
+            name: string;
+            address: string;
+            district: string;
+            phone: string;
+        }[];
+        scope: "today" | "tomorrow";
+    };
 }
 export {};

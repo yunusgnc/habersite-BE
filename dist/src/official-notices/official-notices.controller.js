@@ -19,6 +19,7 @@ const client_1 = require("@prisma/client");
 const official_notices_service_1 = require("./official-notices.service");
 const create_official_notice_dto_1 = require("./dto/create-official-notice.dto");
 const update_official_notice_dto_1 = require("./dto/update-official-notice.dto");
+const import_notices_dto_1 = require("./dto/import-notices.dto");
 const tenant_guard_1 = require("../common/guards/tenant.guard");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const roles_guard_1 = require("../auth/guards/roles.guard");
@@ -66,6 +67,13 @@ let OfficialNoticesController = class OfficialNoticesController {
     }
     remove(tenantId, id) {
         return this.service.remove(tenantId, id);
+    }
+    importFromCategory(tenantId, dto) {
+        return this.service.importFromCategory(tenantId, {
+            categorySlug: dto.categorySlug,
+            dryRun: dto.dryRun,
+            expireAfterDays: dto.expireAfterDays,
+        });
     }
 };
 exports.OfficialNoticesController = OfficialNoticesController;
@@ -179,6 +187,18 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], OfficialNoticesController.prototype, "remove", null);
+__decorate([
+    openapi.ApiOperation({ summary: "Eski \"Resmi Reklamlar\" kategorisindeki haberleri resmi ilanlara aktar\u0131r.\nHaberlere dokunmaz; `dryRun` ile yazmadan \u00F6nizleme verir." }),
+    (0, common_1.Post)('import-from-category'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_guard_1.Roles)('ADMIN', 'SUPER_ADMIN'),
+    openapi.ApiResponse({ status: 201 }),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, import_notices_dto_1.ImportNoticesDto]),
+    __metadata("design:returntype", void 0)
+], OfficialNoticesController.prototype, "importFromCategory", null);
 exports.OfficialNoticesController = OfficialNoticesController = __decorate([
     (0, common_1.Controller)('api/official-notices'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),

@@ -141,5 +141,25 @@ export declare class OfficialNoticesService {
     remove(tenantId: string, id: string): Promise<{
         deleted: boolean;
     }>;
+    importFromCategory(tenantId: string, opts: {
+        categorySlug: string;
+        dryRun?: boolean;
+        expireAfterDays?: number;
+    }): Promise<{
+        aktarilan: number;
+        kategori: string;
+        bulunan: number;
+        aktarilacak: number;
+        atlanan: number;
+        dryRun: boolean;
+        ornekler: {
+            title: string;
+            slug: string;
+            institution: string;
+            noticeType: import("@prisma/client").$Enums.NoticeType;
+            publishedAt: Date;
+            expiresAt: Date | null;
+        }[];
+    }>;
     private uniqueSlug;
 }

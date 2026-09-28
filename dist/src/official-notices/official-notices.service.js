@@ -18,6 +18,7 @@ const client_1 = require("@prisma/client");
 const slugify_1 = __importDefault(require("slugify"));
 const prisma_service_1 = require("../prisma/prisma.service");
 const revalidation_service_1 = require("../common/revalidation/revalidation.service");
+const haber_ilan_donusturucu_1 = require("./haber-ilan-donusturucu");
 const REVALIDATE_TAGS = ['official-notices'];
 let OfficialNoticesService = class OfficialNoticesService {
     prisma;
@@ -205,6 +206,86 @@ let OfficialNoticesService = class OfficialNoticesService {
         await this.prisma.officialNotice.delete({ where: { id } });
         this.revalidation.revalidateTenant(tenantId, REVALIDATE_TAGS);
         return { deleted: true };
+    }
+    async importFromCategory(tenantId, opts) {
+        const kategoriSlug = opts.categorySlug.trim();
+        const gecerlilikGun = opts.expireAfterDays ?? 30;
+        const kategori = await this.prisma.category.findFirst({
+            where: { tenantId, slug: kategoriSlug },
+            select: { id: true, name: true },
+        });
+        if (!kategori) {
+            throw new common_1.NotFoundException(`"${kategoriSlug}" kategorisi bulunamadı`);
+        }
+        const haberler = await this.prisma.article.findMany({
+            where: {
+                tenantId,
+                status: 'PUBLISHED',
+                categories: { some: { categoryId: kategori.id } },
+            },
+            select: {
+                id: true,
+                title: true,
+                slug: true,
+                spot: true,
+                seoDesc: true,
+                content: true,
+                featuredImage: true,
+                publishedAt: true,
+                createdAt: true,
+            },
+            orderBy: { publishedAt: 'desc' },
+        });
+        const mevcutSluglar = new Set((await this.prisma.officialNotice.findMany({
+            where: { tenantId },
+            select: { slug: true },
+        })).map((n) => n.slug));
+        const olusturulacak = [];
+        let atlanan = 0;
+        for (const haber of haberler) {
+            const ilan = (0, haber_ilan_donusturucu_1.habereGoreIlan)(haber, gecerlilikGun);
+            if (mevcutSluglar.has(ilan.slug)) {
+                atlanan++;
+                continue;
+            }
+            mevcutSluglar.add(ilan.slug);
+            olusturulacak.push({ ...ilan, haberId: haber.id });
+        }
+        const ozet = {
+            kategori: kategori.name,
+            bulunan: haberler.length,
+            aktarilacak: olusturulacak.length,
+            atlanan,
+            dryRun: opts.dryRun === true,
+            ornekler: olusturulacak.slice(0, 5).map((i) => ({
+                title: i.title,
+                slug: i.slug,
+                institution: i.institution,
+                noticeType: i.noticeType,
+                publishedAt: i.publishedAt,
+                expiresAt: i.expiresAt,
+            })),
+        };
+        if (opts.dryRun || olusturulacak.length === 0)
+            return { ...ozet, aktarilan: 0 };
+        const { count } = await this.prisma.officialNotice.createMany({
+            data: olusturulacak.map((i) => ({
+                tenantId,
+                title: i.title,
+                slug: i.slug,
+                noticeType: i.noticeType,
+                institution: i.institution,
+                summary: i.summary,
+                content: i.content,
+                attachments: i.attachments,
+                publishedAt: i.publishedAt,
+                expiresAt: i.expiresAt,
+                active: true,
+            })),
+            skipDuplicates: true,
+        });
+        this.revalidation.revalidateTenant(tenantId, REVALIDATE_TAGS);
+        return { ...ozet, aktarilan: count };
     }
     async uniqueSlug(tenantId, source, ignoreId) {
         const base = (0, slugify_1.default)(source, { lower: true, strict: true, locale: 'tr' }) || 'resmi-ilan';

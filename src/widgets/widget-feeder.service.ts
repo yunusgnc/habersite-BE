@@ -191,6 +191,123 @@ export const GAZETE_KAYNAKLARI: GazeteKaynagi[] = [
   },
 ];
 
+/**
+ * Piyasa şeridinin varsayılan içeriği: dolar, euro, BIST 100, gram altın.
+ * Sıra sitede birebir bu düzende çiziliyor.
+ */
+const BIST_KODU = 'BIST100';
+
+const VARSAYILAN_PIYASA_CIFTLERI = [
+  { from: 'USD', to: 'TRY', label: 'Dolar' },
+  { from: 'EUR', to: 'TRY', label: 'Euro' },
+  { from: BIST_KODU, to: 'TRY', label: 'BIST 100' },
+  { from: 'XAU', to: 'TRY', label: 'Altın', unit: 'gram' },
+];
+
+/** Nöbetçi eczane kaydı — bileşenin beklediği alanlar. */
+type NobetciEczane = {
+  name: string;
+  address: string;
+  district: string;
+  phone: string;
+};
+
+type EczaneKaynagi = {
+  ad: string;
+  /** Şehre göre adres — kaynakların bir kısmı tek şehre hizmet ediyor. */
+  adres: (sehir: string) => string;
+  /** Kaynak bu şehri karşılıyor mu? */
+  sehirUygun: (sehir: string) => boolean;
+  secici: string;
+  ayikla: ($: cheerio.CheerioAPI) => {
+    pharmacies: NobetciEczane[];
+    scope: 'today' | 'tomorrow';
+  };
+};
+
+function sehirEsit(a: string, b: string): boolean {
+  const sadelestir = (x: string) =>
+    slugify(x, { lower: true, strict: true, locale: 'tr' });
+  return sadelestir(a) === sadelestir(b);
+}
+
+/**
+ * NÖBETÇİ ECZANE KAYNAKLARI — sırayla denenir, ilk dolu liste kazanır.
+ *
+ * Sıra kasıtlı: eczaneler.gen.tr her şehri karşılıyor, o yüzden önce o
+ * deneniyor. Bugün 403 döndürüyor (ev bağlantısından da), ama engel
+ * kalkarsa bütün kiracılar yine tek kaynaktan beslenir. Kayseri Eczacı
+ * Odası resmi kaynak ve daha zengin veri veriyor; yalnızca Kayseri için.
+ */
+const ECZANE_KAYNAKLARI: EczaneKaynagi[] = [
+  {
+    ad: 'eczaneler.gen.tr',
+    adres: (sehir) =>
+      `https://www.eczaneler.gen.tr/nobetci-${slugify(sehir, { lower: true, strict: true, locale: 'tr' })}`,
+    sehirUygun: () => true,
+    secici: '#nav-bugun table tr .isim',
+    ayikla: ($) => WidgetFeederService.eczanelerGenTrAyikla($),
+  },
+  {
+    ad: 'kayserieo.org.tr',
+    adres: () => 'https://kayserieo.org.tr/nobetci-eczaneler',
+    // Kayseri Eczacı Odası yalnızca kendi ilinin nöbet listesini yayımlıyor.
+    sehirUygun: (sehir) => sehirEsit(sehir, 'Kayseri'),
+    secici: 'h4.red strong',
+    /**
+     * Sayfa yapısı (2026-09-28 itibarıyla doğrulandı):
+     *   div.col-md-10
+     *     ├─ h4.red.border > strong            → eczane adı
+     *     └─ p
+     *        ├─ i.fa-arrow-right + metin       → ilçe
+     *        ├─ i.fa-home + metin              → adres
+     *        └─ a[href^="tel:"]                → telefon
+     *
+     * İlçe ve adres ayrı etiketlerde DEĞİL; aynı `<p>` içinde ikonlarla
+     * ayrılmış. Bu yüzden `<br>` sınırlarından bölünüyor.
+     */
+    ayikla: ($) => {
+      const pharmacies: NobetciEczane[] = [];
+
+      $('div.col-md-10').each((_, el) => {
+        const $kart = $(el);
+        const name = $kart.find('h4 strong').first().text().trim();
+        if (!name || !/ECZANE/i.test(name)) return;
+
+        const $p = $kart.find('p').first();
+        // `<br>` etiketleri satır sınırı; metni bölmek için işaretleniyor.
+        const satirlar = $p
+          .html()
+          ?.split(/<br\s*\/?>/i)
+          .map((parca) =>
+            cheerio
+              .load(`<div>${parca}</div>`)('div')
+              .text()
+              .replace(/\s+/g, ' ')
+              .trim(),
+          )
+          .filter(Boolean) ?? [];
+
+        const telefon = $p.find('a[href^="tel:"]').first().text().trim();
+        // Telefon ve harita satırları adres değil; ayıklanıyor.
+        const bilgi = satirlar.filter(
+          (satir) => satir !== telefon && !/haritada|nöbetçidir/i.test(satir),
+        );
+
+        pharmacies.push({
+          name,
+          district: bilgi[0] ?? '',
+          address: bilgi.slice(1).join(' ').trim(),
+          phone: telefon,
+        });
+      });
+
+      // Bu sayfa yalnızca günün nöbetini yayımlıyor.
+      return { pharmacies, scope: 'today' as const };
+    },
+  },
+];
+
 /** Aynı gazeteyi bir kez bırakır — sayfalar kapağı birden çok yerde basıyor. */
 export function tekilKapaklar(kapaklar: KapakOgesi[]): KapakOgesi[] {
   const gorulen = new Set<string>();
@@ -318,13 +435,7 @@ export class WidgetFeederService implements OnModuleInit {
       { type: 'prayer-times', config: { city: 'Kayseri', country: 'Turkey', method: 13 }, sortOrder: 2 },
       {
         type: 'market-ticker',
-        config: {
-          pairs: [
-            { from: 'USD', to: 'TRY', label: 'Dolar' },
-            { from: 'EUR', to: 'TRY', label: 'Euro' },
-            { from: 'XAU', to: 'TRY', label: 'Altın', unit: 'gram' },
-          ],
-        },
+        config: { pairs: VARSAYILAN_PIYASA_CIFTLERI },
         sortOrder: 3,
       },
       { type: 'horoscope', config: {}, sortOrder: 4 },
@@ -517,18 +628,35 @@ export class WidgetFeederService implements OnModuleInit {
    */
   private async fetchMarketTicker(config: any, prev?: any) {
     type MarketPair = { from: string; to: string; label: string; unit?: string };
-    const configuredPairs: MarketPair[] = config?.pairs ?? [
-      { from: 'USD', to: 'TRY', label: 'Dolar' },
-      { from: 'EUR', to: 'TRY', label: 'Euro' },
-      { from: 'XAU', to: 'TRY', label: 'Altın', unit: 'gram' },
-    ];
+    const configuredPairs: MarketPair[] = config?.pairs ?? VARSAYILAN_PIYASA_CIFTLERI;
 
     // Eski tenant ayarındaki Sterlin'i de yeni varsayılanı beklemeden değiştir.
-    const pairs = configuredPairs.map<MarketPair>((p) =>
+    const duzeltilmis = configuredPairs.map<MarketPair>((p) =>
       p.from.toUpperCase() === 'GBP'
         ? { from: 'XAU', to: 'TRY', label: 'Altın', unit: 'gram' }
         : p,
     );
+
+    /**
+     * BIST'i eski kiracı ayarlarına da ekle.
+     *
+     * Şeridin istenen sırası dolar – euro – BIST – altın. Kiracıların
+     * ayarında BIST hiç yok; ayarı elle düzeltmelerini beklemek yerine
+     * altından önce araya giriyor. Ayarda zaten varsa dokunulmuyor.
+     */
+    const bistVar = duzeltilmis.some((p) => p.from.toUpperCase() === BIST_KODU);
+    const pairs = bistVar
+      ? duzeltilmis
+      : (() => {
+          const altinSirasi = duzeltilmis.findIndex((p) => p.from.toUpperCase() === 'XAU');
+          const bist: MarketPair = { from: BIST_KODU, to: 'TRY', label: 'BIST 100' };
+          if (altinSirasi === -1) return [...duzeltilmis, bist];
+          return [
+            ...duzeltilmis.slice(0, altinSirasi),
+            bist,
+            ...duzeltilmis.slice(altinSirasi),
+          ];
+        })();
 
     const prevItems: any[] = Array.isArray(prev?.items) ? prev.items : [];
     const lastGood = (code: string) => {
@@ -546,6 +674,20 @@ export class WidgetFeederService implements OnModuleInit {
       pairs.map(async (p) => {
         const code = `${p.from}/${p.to}`;
         try {
+          if (p.from.toUpperCase() === BIST_KODU) {
+            const endeks = await this.bistEndeksi();
+            return {
+              name: p.label,
+              code,
+              // Endeks binlik ayraçla okunur: "12.593". Kuruş anlamsız.
+              value: endeks.deger.toLocaleString('tr-TR', { maximumFractionDigits: 0 }),
+              change: endeks.yuzde
+                ? `${endeks.yuzde >= 0 ? '+' : ''}${endeks.yuzde.toFixed(2)}%`
+                : '',
+              up: endeks.yuzde >= 0,
+            };
+          }
+
           if (p.from.toUpperCase() === 'XAU') {
             const gold = await axios.get('https://xaus.com/api/v1/spot', {
               params: { currency: p.to, unit: p.unit ?? 'gram', compact: 1 },
@@ -604,6 +746,64 @@ export class WidgetFeederService implements OnModuleInit {
       throw new Error('market-ticker: hiçbir kur alınamadı, cache korunuyor');
     }
     return { items };
+  }
+
+  /**
+   * BIST 100 endeksi — sırayla iki kaynak denenir, ilk geçerli değer kazanır.
+   *
+   * Yahoo hem değeri hem önceki kapanışı veriyor, o yüzden önce o deneniyor;
+   * ama istek sınırına takılıp gövde olarak düz metin "Too Many Requests"
+   * döndürebiliyor (JSON bile değil). Yedek kaynak sayfanın başlık şeridini
+   * okuyor: "BIST100 12.593 -2,38%".
+   */
+  private async bistEndeksi(): Promise<{ deger: number; yuzde: number }> {
+    const hatalar: string[] = [];
+
+    // 1) Yahoo Finance grafik ucu — anahtar istemiyor.
+    try {
+      const { data } = await axios.get('https://query1.finance.yahoo.com/v8/finance/chart/XU100.IS', {
+        params: { range: '5d', interval: '1d' },
+        timeout: 10000,
+        headers: SCRAPE_HEADERS,
+        // Sınıra takılınca gövde düz metin geliyor; JSON bekleyip patlamayalım.
+        responseType: 'json',
+      });
+      const meta = data?.chart?.result?.[0]?.meta;
+      const deger = Number(meta?.regularMarketPrice);
+      const onceki = Number(meta?.chartPreviousClose ?? meta?.previousClose);
+      if (Number.isFinite(deger) && deger > 0) {
+        const yuzde =
+          Number.isFinite(onceki) && onceki > 0 ? ((deger - onceki) / onceki) * 100 : 0;
+        return { deger, yuzde };
+      }
+      hatalar.push('yahoo: değer okunamadı');
+    } catch (err: any) {
+      hatalar.push(`yahoo: ${err?.response?.status ?? err?.code ?? err?.message}`);
+    }
+
+    // 2) uzmanpara başlık şeridi.
+    try {
+      const html = await this.sayfayiIndir(
+        'https://uzmanpara.milliyet.com.tr/canli-borsa/bist-100-endeksi-xu100/',
+        1,
+      );
+      // "BIST100 12.593 -2,38%" — binlik ayraç nokta, ondalık virgül.
+      const eslesme = html
+        .replace(/<[^>]+>/g, ' ')
+        .match(/BIST\s?100\s+([\d.]+(?:,\d+)?)\s+(-?[\d,]+)\s?%/i);
+      if (eslesme) {
+        const deger = Number(eslesme[1].replace(/\./g, '').replace(',', '.'));
+        const yuzde = Number(eslesme[2].replace(',', '.'));
+        if (Number.isFinite(deger) && deger > 0) {
+          return { deger, yuzde: Number.isFinite(yuzde) ? yuzde : 0 };
+        }
+      }
+      hatalar.push('uzmanpara: değer bulunamadı');
+    } catch (err: any) {
+      hatalar.push(`uzmanpara: ${err?.message ?? err}`);
+    }
+
+    throw new Error(`BIST 100 alınamadı — ${hatalar.join(' | ')}`);
   }
 
   /**
@@ -1330,19 +1530,56 @@ export class WidgetFeederService implements OnModuleInit {
     return maclar.slice(0, 12);
   }
 
-  private async fetchPharmacy(config: any) {
+  /**
+   * NÖBETÇİ ECZANELER — sırayla kaynak dener, ilk dolu liste kazanır.
+   *
+   * eczaneler.gen.tr artık 403 döndürüyor (ev bağlantısından da) ve sayfa
+   * günlerce boş kaldı. Tek kaynağa bağlı kalmamak için gazete kapaklarıyla
+   * aynı desen: kaynak listesi, ilk dolu yanıt kazanır.
+   */
+  private async fetchPharmacy(config: any, prev?: any) {
     const city = (config?.city as string) ?? 'Kayseri';
-    const citySlug = slugify(city, { lower: true, strict: true, locale: 'tr' });
-    const url = `https://www.eczaneler.gen.tr/nobetci-${citySlug}`;
+    const bugun = new Date().toISOString().split('T')[0];
+    const hatalar: string[] = [];
 
-    try {
-      const { data: html } = await axios.get(url, {
-        timeout: 15000,
-        headers: SCRAPE_HEADERS,
-        responseType: 'text',
-      });
-      const $ = cheerio.load(html);
+    for (const kaynak of ECZANE_KAYNAKLARI) {
+      if (!kaynak.sehirUygun(city)) continue;
+      const adres = kaynak.adres(city);
+      try {
+        const html = await this.sayfayiIndir(adres);
+        const { pharmacies, scope } = kaynak.ayikla(cheerio.load(html));
+        if (pharmacies.length === 0) {
+          hatalar.push(`${kaynak.ad}: 0 eczane`);
+          this.logger.warn(
+            `[pharmacy] ${kaynak.ad} 0 eczane döndürdü — işaretçiler eskimiş olabilir (${kaynak.secici})`,
+          );
+          continue;
+        }
+        this.logger.log(
+          `[pharmacy] ${pharmacies.length} nöbetçi eczane alındı — kaynak: ${kaynak.ad}`,
+        );
+        return { city, scope, source: adres, date: bugun, pharmacies };
+      } catch (err: any) {
+        hatalar.push(`${kaynak.ad}: ${err?.message ?? err}`);
+        this.logger.warn(`[pharmacy] ${kaynak.ad} kaynağı düştü: ${err?.message ?? err}`);
+      }
+    }
 
+    // Boş listeyi ÖNBELLEĞE YAZMIYORUZ: hata fırlatılınca `refreshForTypes`
+    // eldeki son sağlam listeyi koruyor ve panel sebebi gösteriyor.
+    const sebep = `Nöbetçi eczane alınamadı — ${hatalar.join(' | ')}`;
+    if (prev?.pharmacies?.length) {
+      throw new Error(`${sebep} — önceki ${prev.pharmacies.length} kayıt korundu`);
+    }
+    throw new Error(sebep);
+  }
+
+  /** Eski tek kaynaklı ayıklayıcı — kaynak listesinde kullanılıyor. */
+  /**
+   * eczaneler.gen.tr ayıklayıcısı. Kaynak listesinden çağrıldığı için
+   * `static` ve dışa açık — sınıf içinde durması yalnızca konum tercihi.
+   */
+  static eczanelerGenTrAyikla($: cheerio.CheerioAPI) {
       const parseTab = (tabId: string) => {
         const rows: Array<{
           name: string;
@@ -1389,28 +1626,6 @@ export class WidgetFeederService implements OnModuleInit {
         scope = 'tomorrow';
       }
 
-      if (pharmacies.length === 0) {
-        this.logger.warn(
-          `[pharmacy] ${url} scrape returned 0 items — selectors may be outdated`,
-        );
-      }
-
-      return {
-        city,
-        scope,
-        source: url,
-        date: new Date().toISOString().split('T')[0],
-        pharmacies,
-      };
-    } catch (err: any) {
-      this.logger.warn(`[pharmacy] fetch failed (${url}): ${err?.message ?? err}`);
-      return {
-        city,
-        scope: 'today' as const,
-        source: url,
-        date: new Date().toISOString().split('T')[0],
-        pharmacies: [],
-      };
-    }
+      return { pharmacies, scope };
   }
 }

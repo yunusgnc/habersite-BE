@@ -13,6 +13,7 @@ import { NoticeType } from '@prisma/client';
 import { OfficialNoticesService } from './official-notices.service';
 import { CreateOfficialNoticeDto } from './dto/create-official-notice.dto';
 import { UpdateOfficialNoticeDto } from './dto/update-official-notice.dto';
+import { ImportNoticesDto } from './dto/import-notices.dto';
 import { TenantGuard } from '../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard, Roles } from '../auth/guards/roles.guard';
@@ -112,6 +113,24 @@ export class OfficialNoticesController {
   @Roles('ADMIN', 'SUPER_ADMIN')
   remove(@CurrentTenant() tenantId: string, @Param('id') id: string) {
     return this.service.remove(tenantId, id);
+  }
+
+  /**
+   * Eski "Resmi Reklamlar" kategorisindeki haberleri resmi ilanlara aktarır.
+   * Haberlere dokunmaz; `dryRun` ile yazmadan önizleme verir.
+   */
+  @Post('import-from-category')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  importFromCategory(
+    @CurrentTenant() tenantId: string,
+    @Body() dto: ImportNoticesDto,
+  ) {
+    return this.service.importFromCategory(tenantId, {
+      categorySlug: dto.categorySlug,
+      dryRun: dto.dryRun,
+      expireAfterDays: dto.expireAfterDays,
+    });
   }
 }
 

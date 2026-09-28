@@ -1,6 +1,7 @@
 import { OfficialNoticesService } from './official-notices.service';
 import { CreateOfficialNoticeDto } from './dto/create-official-notice.dto';
 import { UpdateOfficialNoticeDto } from './dto/update-official-notice.dto';
+import { ImportNoticesDto } from './dto/import-notices.dto';
 export declare class OfficialNoticesController {
     private readonly service;
     constructor(service: OfficialNoticesService);
@@ -124,5 +125,21 @@ export declare class OfficialNoticesController {
     }>;
     remove(tenantId: string, id: string): Promise<{
         deleted: boolean;
+    }>;
+    importFromCategory(tenantId: string, dto: ImportNoticesDto): Promise<{
+        aktarilan: number;
+        kategori: string;
+        bulunan: number;
+        aktarilacak: number;
+        atlanan: number;
+        dryRun: boolean;
+        ornekler: {
+            title: string;
+            slug: string;
+            institution: string;
+            noticeType: import("@prisma/client").$Enums.NoticeType;
+            publishedAt: Date;
+            expiresAt: Date | null;
+        }[];
     }>;
 }

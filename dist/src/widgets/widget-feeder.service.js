@@ -135,6 +135,60 @@ exports.GAZETE_KAYNAKLARI = [
         },
     },
 ];
+const BIST_KODU = 'BIST100';
+const VARSAYILAN_PIYASA_CIFTLERI = [
+    { from: 'USD', to: 'TRY', label: 'Dolar' },
+    { from: 'EUR', to: 'TRY', label: 'Euro' },
+    { from: BIST_KODU, to: 'TRY', label: 'BIST 100' },
+    { from: 'XAU', to: 'TRY', label: 'Altın', unit: 'gram' },
+];
+function sehirEsit(a, b) {
+    const sadelestir = (x) => (0, slugify_1.default)(x, { lower: true, strict: true, locale: 'tr' });
+    return sadelestir(a) === sadelestir(b);
+}
+const ECZANE_KAYNAKLARI = [
+    {
+        ad: 'eczaneler.gen.tr',
+        adres: (sehir) => `https://www.eczaneler.gen.tr/nobetci-${(0, slugify_1.default)(sehir, { lower: true, strict: true, locale: 'tr' })}`,
+        sehirUygun: () => true,
+        secici: '#nav-bugun table tr .isim',
+        ayikla: ($) => WidgetFeederService.eczanelerGenTrAyikla($),
+    },
+    {
+        ad: 'kayserieo.org.tr',
+        adres: () => 'https://kayserieo.org.tr/nobetci-eczaneler',
+        sehirUygun: (sehir) => sehirEsit(sehir, 'Kayseri'),
+        secici: 'h4.red strong',
+        ayikla: ($) => {
+            const pharmacies = [];
+            $('div.col-md-10').each((_, el) => {
+                const $kart = $(el);
+                const name = $kart.find('h4 strong').first().text().trim();
+                if (!name || !/ECZANE/i.test(name))
+                    return;
+                const $p = $kart.find('p').first();
+                const satirlar = $p
+                    .html()
+                    ?.split(/<br\s*\/?>/i)
+                    .map((parca) => cheerio
+                    .load(`<div>${parca}</div>`)('div')
+                    .text()
+                    .replace(/\s+/g, ' ')
+                    .trim())
+                    .filter(Boolean) ?? [];
+                const telefon = $p.find('a[href^="tel:"]').first().text().trim();
+                const bilgi = satirlar.filter((satir) => satir !== telefon && !/haritada|nöbetçidir/i.test(satir));
+                pharmacies.push({
+                    name,
+                    district: bilgi[0] ?? '',
+                    address: bilgi.slice(1).join(' ').trim(),
+                    phone: telefon,
+                });
+            });
+            return { pharmacies, scope: 'today' };
+        },
+    },
+];
 function tekilKapaklar(kapaklar) {
     const gorulen = new Set();
     return kapaklar.filter((it) => {
@@ -215,13 +269,7 @@ let WidgetFeederService = class WidgetFeederService {
             { type: 'prayer-times', config: { city: 'Kayseri', country: 'Turkey', method: 13 }, sortOrder: 2 },
             {
                 type: 'market-ticker',
-                config: {
-                    pairs: [
-                        { from: 'USD', to: 'TRY', label: 'Dolar' },
-                        { from: 'EUR', to: 'TRY', label: 'Euro' },
-                        { from: 'XAU', to: 'TRY', label: 'Altın', unit: 'gram' },
-                    ],
-                },
+                config: { pairs: VARSAYILAN_PIYASA_CIFTLERI },
                 sortOrder: 3,
             },
             { type: 'horoscope', config: {}, sortOrder: 4 },
@@ -353,14 +401,24 @@ let WidgetFeederService = class WidgetFeederService {
         };
     }
     async fetchMarketTicker(config, prev) {
-        const configuredPairs = config?.pairs ?? [
-            { from: 'USD', to: 'TRY', label: 'Dolar' },
-            { from: 'EUR', to: 'TRY', label: 'Euro' },
-            { from: 'XAU', to: 'TRY', label: 'Altın', unit: 'gram' },
-        ];
-        const pairs = configuredPairs.map((p) => p.from.toUpperCase() === 'GBP'
+        const configuredPairs = config?.pairs ?? VARSAYILAN_PIYASA_CIFTLERI;
+        const duzeltilmis = configuredPairs.map((p) => p.from.toUpperCase() === 'GBP'
             ? { from: 'XAU', to: 'TRY', label: 'Altın', unit: 'gram' }
             : p);
+        const bistVar = duzeltilmis.some((p) => p.from.toUpperCase() === BIST_KODU);
+        const pairs = bistVar
+            ? duzeltilmis
+            : (() => {
+                const altinSirasi = duzeltilmis.findIndex((p) => p.from.toUpperCase() === 'XAU');
+                const bist = { from: BIST_KODU, to: 'TRY', label: 'BIST 100' };
+                if (altinSirasi === -1)
+                    return [...duzeltilmis, bist];
+                return [
+                    ...duzeltilmis.slice(0, altinSirasi),
+                    bist,
+                    ...duzeltilmis.slice(altinSirasi),
+                ];
+            })();
         const prevItems = Array.isArray(prev?.items) ? prev.items : [];
         const lastGood = (code) => {
             const hit = prevItems.find((i) => i?.code === code);
@@ -374,6 +432,18 @@ let WidgetFeederService = class WidgetFeederService {
         const settled = await Promise.all(pairs.map(async (p) => {
             const code = `${p.from}/${p.to}`;
             try {
+                if (p.from.toUpperCase() === BIST_KODU) {
+                    const endeks = await this.bistEndeksi();
+                    return {
+                        name: p.label,
+                        code,
+                        value: endeks.deger.toLocaleString('tr-TR', { maximumFractionDigits: 0 }),
+                        change: endeks.yuzde
+                            ? `${endeks.yuzde >= 0 ? '+' : ''}${endeks.yuzde.toFixed(2)}%`
+                            : '',
+                        up: endeks.yuzde >= 0,
+                    };
+                }
                 if (p.from.toUpperCase() === 'XAU') {
                     const gold = await axios_1.default.get('https://xaus.com/api/v1/spot', {
                         params: { currency: p.to, unit: p.unit ?? 'gram', compact: 1 },
@@ -426,6 +496,46 @@ let WidgetFeederService = class WidgetFeederService {
             throw new Error('market-ticker: hiçbir kur alınamadı, cache korunuyor');
         }
         return { items };
+    }
+    async bistEndeksi() {
+        const hatalar = [];
+        try {
+            const { data } = await axios_1.default.get('https://query1.finance.yahoo.com/v8/finance/chart/XU100.IS', {
+                params: { range: '5d', interval: '1d' },
+                timeout: 10000,
+                headers: SCRAPE_HEADERS,
+                responseType: 'json',
+            });
+            const meta = data?.chart?.result?.[0]?.meta;
+            const deger = Number(meta?.regularMarketPrice);
+            const onceki = Number(meta?.chartPreviousClose ?? meta?.previousClose);
+            if (Number.isFinite(deger) && deger > 0) {
+                const yuzde = Number.isFinite(onceki) && onceki > 0 ? ((deger - onceki) / onceki) * 100 : 0;
+                return { deger, yuzde };
+            }
+            hatalar.push('yahoo: değer okunamadı');
+        }
+        catch (err) {
+            hatalar.push(`yahoo: ${err?.response?.status ?? err?.code ?? err?.message}`);
+        }
+        try {
+            const html = await this.sayfayiIndir('https://uzmanpara.milliyet.com.tr/canli-borsa/bist-100-endeksi-xu100/', 1);
+            const eslesme = html
+                .replace(/<[^>]+>/g, ' ')
+                .match(/BIST\s?100\s+([\d.]+(?:,\d+)?)\s+(-?[\d,]+)\s?%/i);
+            if (eslesme) {
+                const deger = Number(eslesme[1].replace(/\./g, '').replace(',', '.'));
+                const yuzde = Number(eslesme[2].replace(',', '.'));
+                if (Number.isFinite(deger) && deger > 0) {
+                    return { deger, yuzde: Number.isFinite(yuzde) ? yuzde : 0 };
+                }
+            }
+            hatalar.push('uzmanpara: değer bulunamadı');
+        }
+        catch (err) {
+            hatalar.push(`uzmanpara: ${err?.message ?? err}`);
+        }
+        throw new Error(`BIST 100 alınamadı — ${hatalar.join(' | ')}`);
     }
     async fetchHoroscope(_config) {
         const signs = [
@@ -927,69 +1037,69 @@ let WidgetFeederService = class WidgetFeederService {
         }
         return maclar.slice(0, 12);
     }
-    async fetchPharmacy(config) {
+    async fetchPharmacy(config, prev) {
         const city = config?.city ?? 'Kayseri';
-        const citySlug = (0, slugify_1.default)(city, { lower: true, strict: true, locale: 'tr' });
-        const url = `https://www.eczaneler.gen.tr/nobetci-${citySlug}`;
-        try {
-            const { data: html } = await axios_1.default.get(url, {
-                timeout: 15000,
-                headers: SCRAPE_HEADERS,
-                responseType: 'text',
+        const bugun = new Date().toISOString().split('T')[0];
+        const hatalar = [];
+        for (const kaynak of ECZANE_KAYNAKLARI) {
+            if (!kaynak.sehirUygun(city))
+                continue;
+            const adres = kaynak.adres(city);
+            try {
+                const html = await this.sayfayiIndir(adres);
+                const { pharmacies, scope } = kaynak.ayikla(cheerio.load(html));
+                if (pharmacies.length === 0) {
+                    hatalar.push(`${kaynak.ad}: 0 eczane`);
+                    this.logger.warn(`[pharmacy] ${kaynak.ad} 0 eczane döndürdü — işaretçiler eskimiş olabilir (${kaynak.secici})`);
+                    continue;
+                }
+                this.logger.log(`[pharmacy] ${pharmacies.length} nöbetçi eczane alındı — kaynak: ${kaynak.ad}`);
+                return { city, scope, source: adres, date: bugun, pharmacies };
+            }
+            catch (err) {
+                hatalar.push(`${kaynak.ad}: ${err?.message ?? err}`);
+                this.logger.warn(`[pharmacy] ${kaynak.ad} kaynağı düştü: ${err?.message ?? err}`);
+            }
+        }
+        const sebep = `Nöbetçi eczane alınamadı — ${hatalar.join(' | ')}`;
+        if (prev?.pharmacies?.length) {
+            throw new Error(`${sebep} — önceki ${prev.pharmacies.length} kayıt korundu`);
+        }
+        throw new Error(sebep);
+    }
+    static eczanelerGenTrAyikla($) {
+        const parseTab = (tabId) => {
+            const rows = [];
+            $(`${tabId} table tr`).each((_, tr) => {
+                const $row = $(tr).find('.row').first();
+                if (!$row.length)
+                    return;
+                const name = $row.find('.isim').first().text().trim();
+                if (!name)
+                    return;
+                const $addrCol = $row.find('[class*="col-lg-6"]').first();
+                const district = $addrCol.find('.my-2 span').first().text().trim();
+                const address = $addrCol
+                    .clone()
+                    .find('.my-2')
+                    .remove()
+                    .end()
+                    .text()
+                    .replace(/\s*→[\s\S]*$/, '')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                const phone = $row.find('[class*="col-lg-3"]').last().text().trim();
+                rows.push({ name, address, district, phone });
             });
-            const $ = cheerio.load(html);
-            const parseTab = (tabId) => {
-                const rows = [];
-                $(`${tabId} table tr`).each((_, tr) => {
-                    const $row = $(tr).find('.row').first();
-                    if (!$row.length)
-                        return;
-                    const name = $row.find('.isim').first().text().trim();
-                    if (!name)
-                        return;
-                    const $addrCol = $row.find('[class*="col-lg-6"]').first();
-                    const district = $addrCol.find('.my-2 span').first().text().trim();
-                    const address = $addrCol
-                        .clone()
-                        .find('.my-2')
-                        .remove()
-                        .end()
-                        .text()
-                        .replace(/\s*→[\s\S]*$/, '')
-                        .replace(/\s+/g, ' ')
-                        .trim();
-                    const phone = $row.find('[class*="col-lg-3"]').last().text().trim();
-                    rows.push({ name, address, district, phone });
-                });
-                return rows;
-            };
-            let pharmacies = parseTab('#nav-bugun');
-            let scope = 'today';
-            if (pharmacies.length === 0) {
-                pharmacies = parseTab('#nav-yarin');
-                scope = 'tomorrow';
-            }
-            if (pharmacies.length === 0) {
-                this.logger.warn(`[pharmacy] ${url} scrape returned 0 items — selectors may be outdated`);
-            }
-            return {
-                city,
-                scope,
-                source: url,
-                date: new Date().toISOString().split('T')[0],
-                pharmacies,
-            };
+            return rows;
+        };
+        let pharmacies = parseTab('#nav-bugun');
+        let scope = 'today';
+        if (pharmacies.length === 0) {
+            pharmacies = parseTab('#nav-yarin');
+            scope = 'tomorrow';
         }
-        catch (err) {
-            this.logger.warn(`[pharmacy] fetch failed (${url}): ${err?.message ?? err}`);
-            return {
-                city,
-                scope: 'today',
-                source: url,
-                date: new Date().toISOString().split('T')[0],
-                pharmacies: [],
-            };
-        }
+        return { pharmacies, scope };
     }
 };
 exports.WidgetFeederService = WidgetFeederService;
