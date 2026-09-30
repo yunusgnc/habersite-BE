@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { sayfaliListe } from '../common/pagination/sayfali-liste';
 import { MediaType, Prisma } from '@prisma/client';
@@ -43,6 +43,8 @@ const THUMBNAIL_QUALITY = num(process.env.THUMBNAIL_QUALITY, 72);
 
 @Injectable()
 export class MediaService {
+  private readonly logger = new Logger(MediaService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     @Inject(STORAGE_ADAPTER) private readonly storage: StorageAdapter,
@@ -453,7 +455,13 @@ export class MediaService {
       throw new BadRequestException('Yalnızca görseller yeniden kırpılabilir');
     }
 
-    const yuklenen = await this.dosyayiIsleVeYukle(tenantId, file);
+    let yuklenen: Awaited<ReturnType<typeof this.dosyayiIsleVeYukle>>;
+    try {
+      yuklenen = await this.dosyayiIsleVeYukle(tenantId, file);
+    } catch (err) {
+      this.logger.error(`Kırpma işleme hatası [media=${id}]: ${(err as Error).message}`, (err as Error).stack);
+      throw err;
+    }
 
     return this.prisma.$transaction(async (tx) => {
       const guncel = await tx.media.update({
