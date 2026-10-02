@@ -562,6 +562,7 @@ export class ArticlesService {
     this.revalidation.revalidateTenant(tenantId, ['articles', 'breaking-news', 'most-read']);
 
     if (article.status === ArticleStatus.PUBLISHED) {
+      await this.sonDakikaGuncelle(tenantId, article);
       // Ateşle ve unut — paylaşım hatası yayını asla bloklamaz.
       void this.socialShare.paylas(tenantId, article);
     }
@@ -724,6 +725,9 @@ export class ArticlesService {
       'breaking-news',
       'most-read',
     ]);
+
+    // Son Dakika şeridini breakingLabel ile senkronize et.
+    await this.sonDakikaGuncelle(tenantId, article);
 
     // Sosyal paylaşım yalnızca DURUM GEÇİŞİNDE — yayındaki haberi
     // düzenlemek mükerrer gönderi atmasın.
@@ -1316,5 +1320,42 @@ export class ArticlesService {
     }
 
     return '';
+  }
+
+  /**
+   * Makale formundaki "Son Dakika" kutucuğunu `breaking_news` tablosuyla
+   * senkronize eder. Kutu işaretli + haber yayında → satır oluştur/güncelle.
+   * Kutu boş veya haber yayında değil → varsa otomatik satırı sil.
+   * Manuel eklenen satırlar (articleId = null) dokunulmaz.
+   */
+  private async sonDakikaGuncelle(
+    tenantId: string,
+    article: { id: string; slug: string; title: string; status: string; breakingLabel?: string | null },
+  ): Promise<void> {
+    const aktif =
+      !!article.breakingLabel && article.status === ArticleStatus.PUBLISHED;
+
+    if (aktif) {
+      await this.prisma.breakingNews.upsert({
+        where: { articleId: article.id },
+        create: {
+          tenantId,
+          articleId: article.id,
+          title: article.title,
+          url: `/haber/${article.slug}`,
+          active: true,
+          sortOrder: 0,
+        },
+        update: {
+          title: article.title,
+          url: `/haber/${article.slug}`,
+          active: true,
+        },
+      });
+    } else {
+      await this.prisma.breakingNews.deleteMany({
+        where: { articleId: article.id },
+      });
+    }
   }
 }
