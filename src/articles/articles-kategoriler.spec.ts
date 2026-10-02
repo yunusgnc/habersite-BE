@@ -32,6 +32,10 @@ describe('ArticlesService — çoklu kategori', () => {
       },
       articleRevision: { create: jest.fn() },
       tag: { upsert: jest.fn() },
+      breakingNews: {
+        upsert: jest.fn().mockResolvedValue({}),
+        deleteMany: jest.fn().mockResolvedValue({}),
+      },
       $transaction: jest.fn().mockResolvedValue([{ count: 2 }, { count: 2 }]),
     };
     revalidation = { revalidateTenant: jest.fn() };
