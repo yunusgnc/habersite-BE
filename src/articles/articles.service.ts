@@ -1337,6 +1337,7 @@ export class ArticlesService {
       !!article.breakingLabel && article.status === ArticleStatus.PUBLISHED;
 
     if (aktif) {
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
       await this.prisma.breakingNews.upsert({
         where: { articleId: article.id },
         create: {
@@ -1346,6 +1347,7 @@ export class ArticlesService {
           url: `/haber/${article.slug}`,
           active: true,
           sortOrder: 0,
+          expiresAt,
         },
         update: {
           title: article.title,

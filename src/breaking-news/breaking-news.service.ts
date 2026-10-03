@@ -4,18 +4,29 @@ import { RevalidationService } from '../common/revalidation/revalidation.service
 import { CreateBreakingNewsDto } from './dto/create-breaking-news.dto';
 import { UpdateBreakingNewsDto } from './dto/update-breaking-news.dto';
 
+export const BREAKING_NEWS_LIFETIME_MS = 24 * 60 * 60 * 1000;
+
+export function breakingNewsExpiresAt(from = new Date()): Date {
+  return new Date(from.getTime() + BREAKING_NEWS_LIFETIME_MS);
+}
+
 @Injectable()
 export class BreakingNewsService {
   constructor(private readonly prisma: PrismaService, private readonly revalidation: RevalidationService) {}
 
   async findActive(tenantId: string) {
+    const now = new Date();
+    const legacyCutoff = new Date(now.getTime() - BREAKING_NEWS_LIFETIME_MS);
+
     return this.prisma.breakingNews.findMany({
       where: {
         tenantId,
         active: true,
         OR: [
-          { expiresAt: null },
-          { expiresAt: { gt: new Date() } },
+          { expiresAt: { gt: now } },
+          // Eski kayıtlarda expiresAt boş olabilir. Bu kayıtların da süresiz
+          // kalmasını engelle; oluşturulmalarından 24 saat sonra listeden düşür.
+          { expiresAt: null, createdAt: { gt: legacyCutoff } },
         ],
       },
       orderBy: { sortOrder: 'asc' },
@@ -46,7 +57,10 @@ export class BreakingNewsService {
         title: dto.title,
         url: dto.url,
         sortOrder,
-        expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
+        // Son dakika şeridi için süre istemciden değiştirilemez. Böylece kayıt
+        // panelden, haber formundan veya doğrudan API'den eklense de aynı kural
+        // uygulanır.
+        expiresAt: breakingNewsExpiresAt(),
       },
     });
     this.revalidation.revalidateTenant(tenantId, ['breaking-news']);
@@ -66,7 +80,11 @@ export class BreakingNewsService {
       where: { id },
       data: {
         ...dto,
-        ...(dto.expiresAt && { expiresAt: new Date(dto.expiresAt) }),
+        // Var olan kaydın 24 saatlik penceresi başlık/URL düzenlenince uzamaz.
+        expiresAt:
+          dto.active === true && !item.active
+            ? breakingNewsExpiresAt()
+            : item.expiresAt ?? breakingNewsExpiresAt(item.createdAt),
       },
     });
     this.revalidation.revalidateTenant(tenantId, ['breaking-news']);
