@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { duzMetneCevir } from '../common/plain-text';
 import { SettingsService } from '../settings/settings.service';
 
 /**
@@ -23,6 +24,7 @@ import { SettingsService } from '../settings/settings.service';
 type PaylasilacakHaber = {
   id: string;
   title: string;
+  spot?: string | null;
   slug: string;
   type?: string | null;
   featuredImage?: string | null;
@@ -88,6 +90,17 @@ function xMetni(baslik: string, baglanti: string): string {
   return `${kisaltilmis}\n${baglanti}`;
 }
 
+/** Instagram bağlantıları tıklanabilir yapmadığı için başlık + spot kullanır. */
+function instagramMetni(baslik: string, spot?: string | null): string {
+  const temizBaslik = duzMetneCevir(baslik)?.trim() ?? '';
+  const temizSpot = duzMetneCevir(spot)?.trim() ?? '';
+  const metin = temizSpot ? `${temizBaslik}\n\n${temizSpot}` : temizBaslik;
+
+  // Instagram açıklama sınırı 2.200 karakter. Taşarsa son karakter yerine
+  // üç nokta koyarak API'nin bütün gönderiyi reddetmesini engelle.
+  return metin.length > 2200 ? `${metin.slice(0, 2199).trimEnd()}…` : metin;
+}
+
 @Injectable()
 export class SocialShareService {
   private readonly logger = new Logger(SocialShareService.name);
@@ -137,7 +150,7 @@ export class SocialShareService {
           ? this.facebook(tenantId, ayarlar, haber.title, baglanti, gorsel)
           : Promise.resolve(),
         secili('instagram')
-          ? this.instagram(tenantId, ayarlar, haber.title, baglanti, gorsel)
+          ? this.instagram(tenantId, ayarlar, haber.title, haber.spot, gorsel)
           : Promise.resolve(),
         secili('x')
           ? this.twitter(tenantId, ayarlar, haber.title, baglanti, gorsel)
@@ -498,7 +511,7 @@ export class SocialShareService {
     tenantId: string,
     ayarlar: Record<string, any>,
     baslik: string,
-    baglanti: string,
+    spot: string | null | undefined,
     gorsel: string | null,
   ): Promise<void> {
     if (ayarlar.autoShareInstagram !== 'on') return;
@@ -519,8 +532,7 @@ export class SocialShareService {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
           image_url: gorsel,
-          // IG açıklamasında tıklanabilir bağlantı yok; yine de kaynak belli olsun.
-          caption: `${baslik}\n${baglanti}`,
+          caption: instagramMetni(baslik, spot),
           access_token: token,
         }),
         signal: AbortSignal.timeout(META_YAZMA_ZAMAN_ASIMI_MS),

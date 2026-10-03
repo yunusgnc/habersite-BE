@@ -84,6 +84,7 @@ export class ArticlesService {
         tenantId: true,
         scheduledAt: true,
         title: true,
+        spot: true,
         slug: true,
         type: true,
         featuredImage: true,

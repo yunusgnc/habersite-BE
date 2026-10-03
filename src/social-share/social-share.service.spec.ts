@@ -34,6 +34,7 @@ describe('SocialShareService', () => {
   const HABER = {
     id: 'h1',
     title: 'Örnek Başlık',
+    spot: 'Haberin kısa açıklaması',
     slug: 'ornek-baslik',
     type: 'NEWS',
     featuredImage: 'https://cdn.example.com/kapak.jpg',
@@ -152,6 +153,10 @@ describe('SocialShareService', () => {
       Object.fromEntries((istekler()[0][1].body as URLSearchParams).entries())
         .image_url,
     ).toBe('https://ornek.com/api/social-image/ornek-baslik');
+    expect(
+      Object.fromEntries((istekler()[0][1].body as URLSearchParams).entries())
+        .caption,
+    ).toBe('Örnek Başlık\n\nHaberin kısa açıklaması');
     expect(istekler()[1][0]).toBe(
       'https://graph.facebook.com/v25.0/999/media_publish',
     );
@@ -159,6 +164,26 @@ describe('SocialShareService', () => {
       Object.fromEntries((istekler()[1][1].body as URLSearchParams).entries())
         .creation_id,
     ).toBe('kap-1');
+  });
+
+  it('instagram: eski HTML spotu temizler ve açıklamaya bağlantı koymaz', async () => {
+    settings.getAll.mockResolvedValue({
+      siteUrl: 'https://ornek.com',
+      autoShareInstagram: 'on',
+      instagramUserId: '999',
+    });
+    settings.getSecret.mockResolvedValue('IG_TOKEN');
+
+    await servis.paylas('t1', {
+      ...HABER,
+      spot: '<span style="font-size: 20px">Temiz açıklama</span>',
+    });
+
+    const govde = Object.fromEntries(
+      (istekler()[0][1].body as URLSearchParams).entries(),
+    );
+    expect(govde.caption).toBe('Örnek Başlık\n\nTemiz açıklama');
+    expect(govde.caption).not.toContain('https://');
   });
 
   it('instagram: kapaksız haberde de site tarafından üretilen JPEG kullanılır', async () => {
