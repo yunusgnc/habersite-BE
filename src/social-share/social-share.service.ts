@@ -58,6 +58,11 @@ const AG_AYARLARI: ReadonlyArray<readonly [string, string]> = [
 export type SinamaSonucu = { tamam: boolean; mesaj: string };
 
 const ZAMAN_ASIMI_MS = 10_000;
+// Meta, uzaktaki görseli kendi sunucularına indirip doğruladıktan sonra cevap
+// veriyor. Bu işlem sağlıklı bir JPEG için bile zaman zaman 10 saniyeyi
+// aşabiliyor; kısa okuma kontrollerini yavaşlatmadan yalnızca yazma uçlarına
+// daha geniş süre tanıyoruz.
+const META_YAZMA_ZAMAN_ASIMI_MS = 30_000;
 const X_API = 'https://api.x.com';
 
 function graphApiBase(): string {
@@ -447,7 +452,7 @@ export class SocialShareService {
           link: baglanti,
           access_token: token,
         }),
-        signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+        signal: AbortSignal.timeout(META_YAZMA_ZAMAN_ASIMI_MS),
       });
       if (!yanit.ok) {
         const veri: any = await yanit.json().catch(() => ({}));
@@ -473,7 +478,7 @@ export class SocialShareService {
           caption: `${baslik}\n\n${baglanti}`,
           access_token: token,
         }),
-        signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+        signal: AbortSignal.timeout(META_YAZMA_ZAMAN_ASIMI_MS),
       });
       if (!yanit.ok) {
         const veri: any = await yanit.json().catch(() => ({}));
@@ -518,7 +523,7 @@ export class SocialShareService {
           caption: `${baslik}\n${baglanti}`,
           access_token: token,
         }),
-        signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+        signal: AbortSignal.timeout(META_YAZMA_ZAMAN_ASIMI_MS),
       });
       const kapVerisi: any = await kap.json().catch(() => ({}));
       if (!kap.ok || !kapVerisi.id) {
@@ -534,7 +539,7 @@ export class SocialShareService {
           creation_id: kapVerisi.id,
           access_token: token,
         }),
-        signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+        signal: AbortSignal.timeout(META_YAZMA_ZAMAN_ASIMI_MS),
       });
       if (!yayin.ok) {
         const veri: any = await yayin.json().catch(() => ({}));
