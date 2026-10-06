@@ -1045,6 +1045,12 @@ model OfficialNotice {
   expiresAt   DateTime?  @map("expires_at")
   active      Boolean    @default(true)
   viewCount   Int        @default(0) @map("view_count")
+  /// Opsiyonel site yerleşimi. Doluysa ilan, afiş görseliyle reklam
+  /// slotlarında (künye üstü, banner üstü vb.) banner olarak da gösterilir
+  /// ve ilan detay sayfasına link verir. Boşsa yalnızca /resmi-ilanlar'da.
+  /// Reklam pozisyonlarıyla aynı enum (AdPosition) kullanılıyor ki panelde
+  /// ve sitede tek bir yerleşim listesi olsun.
+  position    AdPosition? @map("position")
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
 
@@ -1054,6 +1060,7 @@ model OfficialNotice {
   @@index([tenantId, active, publishedAt(sort: Desc)])
   @@index([tenantId, noticeType])
   @@index([tenantId, expiresAt])
+  @@index([tenantId, position, active])
   @@map("official_notices")
 }
 

@@ -1,4 +1,4 @@
-import { NoticeType } from '@prisma/client';
+import { AdPosition, NoticeType } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -38,6 +38,15 @@ export class CreateOfficialNoticeDto {
   @IsEnum(NoticeType)
   @IsOptional()
   noticeType?: NoticeType;
+
+  /**
+   * Opsiyonel site yerleşimi — reklam pozisyonlarıyla aynı enum.
+   * Doluysa ilan, afişiyle o slotta banner olarak da gösterilir.
+   * `null` gönderildiğinde yerleşim kaldırılır (IsOptional null'ı atlar).
+   */
+  @IsEnum(AdPosition)
+  @IsOptional()
+  position?: AdPosition | null;
 
   @IsString()
   @MinLength(2)

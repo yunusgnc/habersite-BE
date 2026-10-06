@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { NoticeType, Prisma } from '@prisma/client';
+import { AdPosition, NoticeType, Prisma } from '@prisma/client';
 import slugify from 'slugify';
 import { PrismaService } from '../prisma/prisma.service';
 import { RevalidationService } from '../common/revalidation/revalidation.service';
@@ -102,6 +102,45 @@ export class OfficialNoticesService {
     return notice;
   }
 
+  /**
+   * Belirli bir site pozisyonuna atanmış, yürürlükteki ilanları banner
+   * biçiminde döndürür. Site tarafı bunları reklam slotlarında afişiyle
+   * gösterip ilan detayına link verir (reklamlardan ayrı bir kaynak).
+   *
+   * Yalnızca afişi GÖRSEL olan ilanlar döner: slotta banner olarak
+   * çizilebilmesi için bir resim gerekiyor (PDF-only ilanlar atlanır —
+   * onlar yine /resmi-ilanlar listesinde görünür).
+   */
+  async findByPosition(tenantId: string, position: AdPosition) {
+    const now = new Date();
+    const notices = await this.prisma.officialNotice.findMany({
+      where: {
+        tenantId,
+        position,
+        active: true,
+        publishedAt: { lte: now },
+        OR: [{ expiresAt: null }, { expiresAt: { gte: now } }],
+      },
+      orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
+      select: { id: true, slug: true, title: true, attachments: true },
+    });
+
+    return notices
+      .map((n) => {
+        const imageUrl = ilkGorselEki(n.attachments);
+        return imageUrl
+          ? {
+              id: n.id,
+              slug: n.slug,
+              title: n.title,
+              imageUrl,
+              href: `/resmi-ilanlar/${n.slug}`,
+            }
+          : null;
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null);
+  }
+
   /** Kurum listesi — site tarafındaki filtre açılırı için. */
   async institutions(tenantId: string) {
     const rows = await this.prisma.officialNotice.groupBy({
@@ -190,6 +229,7 @@ export class OfficialNoticesService {
         publishedAt: dto.publishedAt ? new Date(dto.publishedAt) : new Date(),
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
         active: dto.active ?? true,
+        position: dto.position ?? null,
       },
     });
 
@@ -230,6 +270,9 @@ export class OfficialNoticesService {
               : null
             : undefined,
         active: dto.active,
+        // undefined → dokunma, null → yerleşimi kaldır, değer → ata.
+        position:
+          dto.position !== undefined ? (dto.position ?? null) : undefined,
       },
     });
 
@@ -367,4 +410,26 @@ export class OfficialNoticesService {
 
     return clash ? `${base}-${Date.now().toString(36)}` : base;
   }
+}
+
+/** Bir URL görsel mi — banner olarak çizilebilir mi? (PDF vb. değil) */
+function gorselMi(url: string): boolean {
+  return /\.(png|jpe?g|gif|webp|avif|svg)(\?|$)/i.test(url);
+}
+
+/**
+ * İlan eklerinden banner'da kullanılacak İLK görsel ekin URL'ini döndürür.
+ * `attachments` Json sütunu: [{ url, name? }]. Görsel yoksa null.
+ */
+function ilkGorselEki(
+  attachments: Prisma.JsonValue | null | undefined,
+): string | null {
+  if (!Array.isArray(attachments)) return null;
+  for (const ek of attachments) {
+    if (ek && typeof ek === 'object' && !Array.isArray(ek)) {
+      const url = (ek as { url?: unknown }).url;
+      if (typeof url === 'string' && gorselMi(url)) return url;
+    }
+  }
+  return null;
 }

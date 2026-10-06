@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { NoticeType } from '@prisma/client';
+import { AdPosition, NoticeType } from '@prisma/client';
 import { OfficialNoticesService } from './official-notices.service';
 import { CreateOfficialNoticeDto } from './dto/create-official-notice.dto';
 import { UpdateOfficialNoticeDto } from './dto/update-official-notice.dto';
@@ -49,6 +49,21 @@ export class OfficialNoticesController {
   @Get('public/institutions')
   institutions(@CurrentTenant() tenantId: string) {
     return this.service.institutions(tenantId);
+  }
+
+  /**
+   * Belirli bir site pozisyonundaki ilanları banner biçiminde döndürür.
+   * Site, reklam slotlarında reklamların yanında bunları da gösterir.
+   * Geçersiz pozisyonda boş liste döner (hata değil).
+   */
+  @Get('public/by-position/:position')
+  findByPosition(
+    @CurrentTenant() tenantId: string,
+    @Param('position') position: string,
+  ) {
+    const parsed = parseAdPosition(position);
+    if (!parsed) return [];
+    return this.service.findByPosition(tenantId, parsed);
   }
 
   @Get('public/:slug')
@@ -139,5 +154,13 @@ function parseNoticeType(value?: string): NoticeType | undefined {
   if (!value) return undefined;
   return (Object.values(NoticeType) as string[]).includes(value)
     ? (value as NoticeType)
+    : undefined;
+}
+
+/** Geçersiz pozisyonu 400 yerine "eşleşme yok" olarak ele al. */
+function parseAdPosition(value?: string): AdPosition | undefined {
+  if (!value) return undefined;
+  return (Object.values(AdPosition) as string[]).includes(value)
+    ? (value as AdPosition)
     : undefined;
 }
