@@ -1051,6 +1051,9 @@ model OfficialNotice {
   /// Reklam pozisyonlarıyla aynı enum (AdPosition) kullanılıyor ki panelde
   /// ve sitede tek bir yerleşim listesi olsun.
   position    AdPosition? @map("position")
+  /// Banner tıklanınca gidilecek özel link. Boşsa ilan detay sayfasına
+  /// (/resmi-ilanlar/slug) gider; doluysa (genelde dış bir adres) oraya.
+  targetUrl   String?     @map("target_url")
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
 

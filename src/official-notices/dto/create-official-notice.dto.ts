@@ -48,6 +48,15 @@ export class CreateOfficialNoticeDto {
   @IsOptional()
   position?: AdPosition | null;
 
+  /**
+   * Banner tıklanınca gidilecek özel link (genelde dış adres). Boşsa ilan
+   * detay sayfasına gider. `null` gönderildiğinde temizlenir.
+   */
+  @IsString()
+  @IsOptional()
+  @MaxLength(1000)
+  targetUrl?: string | null;
+
   @IsString()
   @MinLength(2)
   @MaxLength(200)

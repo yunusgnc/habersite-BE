@@ -122,21 +122,31 @@ export class OfficialNoticesService {
         OR: [{ expiresAt: null }, { expiresAt: { gte: now } }],
       },
       orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
-      select: { id: true, slug: true, title: true, attachments: true },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        attachments: true,
+        targetUrl: true,
+      },
     });
 
     return notices
       .map((n) => {
         const imageUrl = ilkGorselEki(n.attachments);
-        return imageUrl
-          ? {
-              id: n.id,
-              slug: n.slug,
-              title: n.title,
-              imageUrl,
-              href: `/resmi-ilanlar/${n.slug}`,
-            }
-          : null;
+        if (!imageUrl) return null;
+        // Özel link varsa oraya (genelde dış adres), yoksa ilan detayına.
+        const ozelLink = n.targetUrl?.trim();
+        const href = ozelLink || `/resmi-ilanlar/${n.slug}`;
+        return {
+          id: n.id,
+          slug: n.slug,
+          title: n.title,
+          imageUrl,
+          href,
+          // Dış adresse site yeni sekmede açar.
+          external: /^https?:\/\//i.test(href),
+        };
       })
       .filter((x): x is NonNullable<typeof x> => x !== null);
   }
@@ -230,6 +240,7 @@ export class OfficialNoticesService {
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
         active: dto.active ?? true,
         position: dto.position ?? null,
+        targetUrl: dto.targetUrl?.trim() || null,
       },
     });
 
@@ -273,6 +284,10 @@ export class OfficialNoticesService {
         // undefined → dokunma, null → yerleşimi kaldır, değer → ata.
         position:
           dto.position !== undefined ? (dto.position ?? null) : undefined,
+        targetUrl:
+          dto.targetUrl !== undefined
+            ? dto.targetUrl?.trim() || null
+            : undefined,
       },
     });
 
