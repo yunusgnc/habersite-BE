@@ -227,6 +227,12 @@ export class CreateArticleDto {
   @IsOptional()
   spotTitleWidth?: number;
 
+  /** Spot başlık yazı rengi (CSS renk, genelde #RRGGBB). */
+  @IsString()
+  @MaxLength(32)
+  @IsOptional()
+  spotTitleColor?: string;
+
   @IsInt()
   @Min(12)
   @Max(96)
@@ -283,6 +289,12 @@ export class CreateArticleDto {
   @IsIn(MANSET_FONTLARI)
   @IsOptional()
   headlineFontFamily?: string;
+
+  /** Manşet başlığı yazı rengi (CSS renk, genelde #RRGGBB). */
+  @IsString()
+  @MaxLength(32)
+  @IsOptional()
+  headlineColor?: string;
 
   /**
    * Manşet slider'ında ve öne çıkan haber alanında görselin üzerine başlık +
