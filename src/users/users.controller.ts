@@ -48,7 +48,14 @@ export class UsersController {
   @Post()
   create(
     @CurrentTenant() tenantId: string,
-    @Body() body: { name: string; email: string; password: string; role?: UserRole; active?: boolean },
+    @Body() body: {
+      name: string;
+      email: string;
+      password: string;
+      role?: UserRole;
+      active?: boolean;
+      permissions?: unknown;
+    },
   ) {
     return this.usersService.create(tenantId, body);
   }
@@ -57,7 +64,14 @@ export class UsersController {
   update(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
-    @Body() body: { name?: string; email?: string; password?: string; role?: UserRole; active?: boolean },
+    @Body() body: {
+      name?: string;
+      email?: string;
+      password?: string;
+      role?: UserRole;
+      active?: boolean;
+      permissions?: unknown;
+    },
   ) {
     return this.usersService.update(tenantId, id, body);
   }

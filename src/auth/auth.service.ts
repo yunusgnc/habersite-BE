@@ -12,6 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { RegisterDto } from './dto/register.dto';
 import { normalizeTenantHost, tenantHostMatches } from '../common/tenant-domain';
+import { effectivePermissions } from './permissions';
 
 @Injectable()
 export class AuthService {
@@ -129,6 +130,7 @@ export class AuthService {
       name: string;
       email: string;
       avatar: string | null;
+      permissions?: unknown;
     },
     rememberMe = false,
   ): AuthResponseDto {
@@ -149,6 +151,7 @@ export class AuthService {
         email: user.email,
         role: user.role,
         avatar: user.avatar,
+        permissions: effectivePermissions(user.role, user.permissions),
       },
     };
   }

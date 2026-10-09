@@ -81,6 +81,9 @@ model User {
   avatar       String?
   role         UserRole  @default(REPORTER)
   active       Boolean   @default(true)
+  /// Rolün varsayılan yetkilerinin kullanıcı bazında açılıp kapatılması.
+  /// Örnek: { "COMMENTS_VIEW": true, "COMMENTS_MODERATE": false }
+  permissions  Json?
   lastLoginAt  DateTime? @map("last_login_at")
 
   // Password reset — token hash'i saklıyoruz (rainbow-table önleme)

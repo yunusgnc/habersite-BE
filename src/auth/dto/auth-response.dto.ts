@@ -8,5 +8,6 @@ export class AuthResponseDto {
     email: string;
     role: string;
     avatar: string | null;
+    permissions: Record<string, boolean>;
   };
 }

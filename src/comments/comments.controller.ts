@@ -16,7 +16,10 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { QueryCommentsDto } from './dto/query-comments.dto';
 import { TenantGuard } from '../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard, Roles } from '../auth/guards/roles.guard';
+import {
+  PermissionsGuard,
+  RequirePermissions,
+} from '../auth/guards/permissions.guard';
 import { CurrentTenant } from '../common/decorators/tenant.decorator';
 import { CommentStatus } from '@prisma/client';
 import type { Request } from 'express';
@@ -35,8 +38,8 @@ export class CommentsController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
-  @Roles('ADMIN', 'EDITOR')
+  @UseGuards(JwtAuthGuard, TenantGuard, PermissionsGuard)
+  @RequirePermissions('COMMENTS_VIEW')
   findAll(
     @CurrentTenant() tenantId: string,
     @Query() query: QueryCommentsDto,
@@ -69,8 +72,8 @@ export class CommentsController {
    * "Onayla" diyor ve hiçbiri onaylanmıyordu.
    */
   @Patch('bulk/status')
-  @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
-  @Roles('ADMIN', 'EDITOR')
+  @UseGuards(JwtAuthGuard, TenantGuard, PermissionsGuard)
+  @RequirePermissions('COMMENTS_MODERATE')
   bulkUpdateStatus(
     @CurrentTenant() tenantId: string,
     @Body() dto: { ids: string[]; status: CommentStatus },
@@ -79,8 +82,8 @@ export class CommentsController {
   }
 
   @Patch(':id/status')
-  @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
-  @Roles('ADMIN', 'EDITOR')
+  @UseGuards(JwtAuthGuard, TenantGuard, PermissionsGuard)
+  @RequirePermissions('COMMENTS_MODERATE')
   updateStatus(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
@@ -90,8 +93,8 @@ export class CommentsController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
-  @Roles('EDITOR')
+  @UseGuards(JwtAuthGuard, TenantGuard, PermissionsGuard)
+  @RequirePermissions('COMMENTS_MODERATE')
   remove(@CurrentTenant() tenantId: string, @Param('id') id: string) {
     return this.commentsService.remove(tenantId, id);
   }

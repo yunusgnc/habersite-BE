@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { sayfaliListe } from '../common/pagination/sayfali-liste';
 import { UserRole } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { normalizePermissionOverrides } from '../auth/permissions';
 
 @Injectable()
 export class UsersService {
@@ -15,6 +16,7 @@ export class UsersService {
     role: true,
     avatar: true,
     active: true,
+    permissions: true,
     lastLoginAt: true,
     createdAt: true,
   };
@@ -68,7 +70,14 @@ export class UsersService {
 
   async create(
     tenantId: string,
-    data: { name: string; email: string; password: string; role?: UserRole; active?: boolean },
+    data: {
+      name: string;
+      email: string;
+      password: string;
+      role?: UserRole;
+      active?: boolean;
+      permissions?: unknown;
+    },
   ) {
     // E-posta DAİMA küçük harfle saklanır: giriş kimliği lowercase'e
     // çekildiği için büyük harfle kaydedilen hesap giriş yapamıyordu.
@@ -89,6 +98,7 @@ export class UsersService {
         passwordHash,
         role: data.role ?? 'REPORTER',
         active: data.active ?? true,
+        permissions: normalizePermissionOverrides(data.permissions),
       },
       select: this.selectFields,
     });
@@ -97,7 +107,14 @@ export class UsersService {
   async update(
     tenantId: string,
     id: string,
-    data: { name?: string; email?: string; password?: string; role?: UserRole; active?: boolean },
+    data: {
+      name?: string;
+      email?: string;
+      password?: string;
+      role?: UserRole;
+      active?: boolean;
+      permissions?: unknown;
+    },
   ) {
     await this.findById(tenantId, id);
 
@@ -106,6 +123,9 @@ export class UsersService {
     if (data.email !== undefined) updateData.email = data.email.trim().toLowerCase();
     if (data.role !== undefined) updateData.role = data.role;
     if (data.active !== undefined) updateData.active = data.active;
+    if (data.permissions !== undefined) {
+      updateData.permissions = normalizePermissionOverrides(data.permissions);
+    }
     if (data.password) {
       updateData.passwordHash = await bcrypt.hash(data.password, 10);
     }
