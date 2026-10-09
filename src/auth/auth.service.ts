@@ -25,7 +25,12 @@ export class AuthService {
     const user = await this.prisma.user.findFirst({
       where: {
         tenantId,
-        OR: [{ email: normalized }, { username: normalized }],
+        // Büyük/küçük harf fark etmesin: panelden e-posta büyük harfle
+        // kaydedilmiş olabilir; giriş kimliği lowercase'e çekiliyor.
+        OR: [
+          { email: { equals: normalized, mode: 'insensitive' } },
+          { username: { equals: normalized, mode: 'insensitive' } },
+        ],
       },
     });
 
@@ -69,7 +74,12 @@ export class AuthService {
     const candidates = await this.prisma.user.findMany({
       where: {
         active: true,
-        OR: [{ email: normalized }, { username: normalized }],
+        // Büyük/küçük harf fark etmesin: panelden e-posta büyük harfle
+        // kaydedilmiş olabilir; giriş kimliği lowercase'e çekiliyor.
+        OR: [
+          { email: { equals: normalized, mode: 'insensitive' } },
+          { username: { equals: normalized, mode: 'insensitive' } },
+        ],
         tenant: { active: true },
       },
       include: { tenant: { select: { domain: true, subdomain: true } } },

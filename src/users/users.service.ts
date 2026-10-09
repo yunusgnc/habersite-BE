@@ -70,8 +70,11 @@ export class UsersService {
     tenantId: string,
     data: { name: string; email: string; password: string; role?: UserRole; active?: boolean },
   ) {
+    // E-posta DAİMA küçük harfle saklanır: giriş kimliği lowercase'e
+    // çekildiği için büyük harfle kaydedilen hesap giriş yapamıyordu.
+    const email = data.email.trim().toLowerCase();
     const existing = await this.prisma.user.findFirst({
-      where: { tenantId, email: data.email },
+      where: { tenantId, email: { equals: email, mode: 'insensitive' } },
     });
     if (existing) {
       throw new ConflictException('Bu e-posta adresi zaten kullanılıyor');
@@ -82,7 +85,7 @@ export class UsersService {
       data: {
         tenantId,
         name: data.name,
-        email: data.email,
+        email,
         passwordHash,
         role: data.role ?? 'REPORTER',
         active: data.active ?? true,
@@ -100,7 +103,7 @@ export class UsersService {
 
     const updateData: Record<string, any> = {};
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.email !== undefined) updateData.email = data.email;
+    if (data.email !== undefined) updateData.email = data.email.trim().toLowerCase();
     if (data.role !== undefined) updateData.role = data.role;
     if (data.active !== undefined) updateData.active = data.active;
     if (data.password) {
