@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { sayfaliListe } from '../common/pagination/sayfali-liste';
 import { UserRole } from '@prisma/client';
@@ -20,6 +25,25 @@ export class UsersService {
     lastLoginAt: true,
     createdAt: true,
   };
+
+  private async actorRole(actorId: string): Promise<UserRole> {
+    const actor = await this.prisma.user.findUnique({
+      where: { id: actorId },
+      select: { role: true, active: true },
+    });
+    if (!actor?.active) {
+      throw new ForbiddenException('Kullanıcı yönetimi için yetkiniz bulunmuyor');
+    }
+    return actor.role;
+  }
+
+  private superAdminKoruması(actorRole: UserRole, targetRole?: UserRole) {
+    if (targetRole === 'SUPER_ADMIN' && actorRole !== 'SUPER_ADMIN') {
+      throw new ForbiddenException(
+        'Süper Admin hesabını yalnızca başka bir Süper Admin yönetebilir',
+      );
+    }
+  }
 
   async findAll(
     tenantId: string,
@@ -78,7 +102,10 @@ export class UsersService {
       active?: boolean;
       permissions?: unknown;
     },
+    actorId: string,
   ) {
+    const actorRole = await this.actorRole(actorId);
+    this.superAdminKoruması(actorRole, data.role);
     // E-posta DAİMA küçük harfle saklanır: giriş kimliği lowercase'e
     // çekildiği için büyük harfle kaydedilen hesap giriş yapamıyordu.
     const email = data.email.trim().toLowerCase();
@@ -115,8 +142,16 @@ export class UsersService {
       active?: boolean;
       permissions?: unknown;
     },
+    actorId: string,
   ) {
-    await this.findById(tenantId, id);
+    const [target, actorRole] = await Promise.all([
+      this.findById(tenantId, id),
+      this.actorRole(actorId),
+    ]);
+    // Admin, mevcut Süper Adminin parolasını/e-postasını da değiştiremez;
+    // yalnızca rol alanını korumak hesap ele geçirmeyi engellemezdi.
+    this.superAdminKoruması(actorRole, target.role);
+    this.superAdminKoruması(actorRole, data.role);
 
     const updateData: Record<string, any> = {};
     if (data.name !== undefined) updateData.name = data.name;
@@ -137,8 +172,13 @@ export class UsersService {
     });
   }
 
-  async updateRole(tenantId: string, id: string, role: UserRole) {
-    await this.findById(tenantId, id);
+  async updateRole(tenantId: string, id: string, role: UserRole, actorId: string) {
+    const [target, actorRole] = await Promise.all([
+      this.findById(tenantId, id),
+      this.actorRole(actorId),
+    ]);
+    this.superAdminKoruması(actorRole, target.role);
+    this.superAdminKoruması(actorRole, role);
     return this.prisma.user.update({
       where: { id },
       data: { role },
@@ -146,9 +186,10 @@ export class UsersService {
     });
   }
 
-  async toggleActive(tenantId: string, id: string) {
+  async toggleActive(tenantId: string, id: string, actorId: string) {
     const user = await this.prisma.user.findFirst({ where: { id, tenantId } });
     if (!user) throw new NotFoundException('User not found');
+    this.superAdminKoruması(await this.actorRole(actorId), user.role);
     return this.prisma.user.update({
       where: { id },
       data: { active: !user.active },
@@ -156,8 +197,12 @@ export class UsersService {
     });
   }
 
-  async remove(tenantId: string, id: string) {
-    await this.findById(tenantId, id);
+  async remove(tenantId: string, id: string, actorId: string) {
+    const [target, actorRole] = await Promise.all([
+      this.findById(tenantId, id),
+      this.actorRole(actorId),
+    ]);
+    this.superAdminKoruması(actorRole, target.role);
     return this.prisma.user.delete({ where: { id } });
   }
 }

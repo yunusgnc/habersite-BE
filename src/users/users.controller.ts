@@ -7,6 +7,7 @@ import {
   Param,
   Query,
   Body,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -48,6 +49,7 @@ export class UsersController {
   @Post()
   create(
     @CurrentTenant() tenantId: string,
+    @Req() req: any,
     @Body() body: {
       name: string;
       email: string;
@@ -57,13 +59,14 @@ export class UsersController {
       permissions?: unknown;
     },
   ) {
-    return this.usersService.create(tenantId, body);
+    return this.usersService.create(tenantId, body, req.user.userId);
   }
 
   @Patch(':id')
   update(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
+    @Req() req: any,
     @Body() body: {
       name?: string;
       email?: string;
@@ -73,25 +76,34 @@ export class UsersController {
       permissions?: unknown;
     },
   ) {
-    return this.usersService.update(tenantId, id, body);
+    return this.usersService.update(tenantId, id, body, req.user.userId);
   }
 
   @Patch(':id/role')
   updateRole(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
+    @Req() req: any,
     @Body() body: { role: UserRole },
   ) {
-    return this.usersService.updateRole(tenantId, id, body.role);
+    return this.usersService.updateRole(tenantId, id, body.role, req.user.userId);
   }
 
   @Patch(':id/toggle-active')
-  toggleActive(@CurrentTenant() tenantId: string, @Param('id') id: string) {
-    return this.usersService.toggleActive(tenantId, id);
+  toggleActive(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    return this.usersService.toggleActive(tenantId, id, req.user.userId);
   }
 
   @Delete(':id')
-  remove(@CurrentTenant() tenantId: string, @Param('id') id: string) {
-    return this.usersService.remove(tenantId, id);
+  remove(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    return this.usersService.remove(tenantId, id, req.user.userId);
   }
 }
