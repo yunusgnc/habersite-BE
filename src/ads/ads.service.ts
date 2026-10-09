@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RevalidationService } from '../common/revalidation/revalidation.service';
 import { CreateAdDto } from './dto/create-ad.dto';
@@ -23,18 +23,16 @@ export class AdsService {
     return this.prisma.ad.findMany({
       where: {
         tenantId,
-        position,
         active: true,
-        OR: [
-          { startsAt: null },
-          { startsAt: { lte: todayEnd } },
-        ],
+        // Reklam bu pozisyonda mı: tekil `position` eşleşsin VEYA çoklu
+        // `positions` dizisi bu pozisyonu içersin. Tarih koşulları AND içinde.
+        OR: [{ position }, { positions: { has: position } }],
         AND: [
           {
-            OR: [
-              { endsAt: null },
-              { endsAt: { gte: todayStart } },
-            ],
+            OR: [{ startsAt: null }, { startsAt: { lte: todayEnd } }],
+          },
+          {
+            OR: [{ endsAt: null }, { endsAt: { gte: todayStart } }],
           },
         ],
       },
@@ -50,11 +48,24 @@ export class AdsService {
   }
 
   async create(tenantId: string, dto: CreateAdDto) {
+    // Çoklu pozisyon: `positions` doluysa onu kullan; değilse eski `position`.
+    // En az bir pozisyon şart. `position` birincil = positions[0].
+    const positions =
+      dto.positions && dto.positions.length > 0
+        ? dto.positions
+        : dto.position
+          ? [dto.position]
+          : [];
+    if (positions.length === 0) {
+      throw new BadRequestException('En az bir reklam pozisyonu seçilmeli.');
+    }
     const result = await this.prisma.ad.create({
       data: {
         tenantId,
         name: dto.name,
-        position: dto.position,
+        position: positions[0],
+        positions,
+        sliderSeconds: dto.sliderSeconds ?? null,
         code: dto.code,
         imageUrl: dto.imageUrl,
         mobileImageUrl: dto.mobileImageUrl,
@@ -78,12 +89,20 @@ export class AdsService {
       throw new NotFoundException('Ad not found');
     }
 
+    const { positions: dtoPositions, position: dtoPosition, startsAt, endsAt, ...rest } = dto;
     const result = await this.prisma.ad.update({
       where: { id },
       data: {
-        ...dto,
-        ...(dto.startsAt && { startsAt: new Date(dto.startsAt) }),
-        ...(dto.endsAt && { endsAt: new Date(dto.endsAt) }),
+        ...rest,
+        ...(startsAt && { startsAt: new Date(startsAt) }),
+        ...(endsAt && { endsAt: new Date(endsAt) }),
+        // Pozisyonlar verildiyse hem çoklu diziyi hem birincil (position[0])
+        // senkron güncelle; verilmediyse dokunma.
+        ...(dtoPositions && dtoPositions.length > 0
+          ? { positions: dtoPositions, position: dtoPositions[0] }
+          : dtoPosition
+            ? { positions: [dtoPosition], position: dtoPosition }
+            : {}),
       },
     });
     this.revalidation.revalidateTenant(tenantId, ['ads']);

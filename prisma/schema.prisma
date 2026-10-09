@@ -537,7 +537,17 @@ model Ad {
   id             String     @id @default(cuid())
   tenantId       String     @map("tenant_id")
   name           String
+  /// Geriye dönük uyumluluk için TEKİL birincil pozisyon (positions[0]).
+  /// Eski kayıtlar ve eski istemciler bunu kullanıyor.
   position       AdPosition
+  /// Reklamın gösterileceği TÜM pozisyonlar. Bir reklam birden çok slotta
+  /// (ör. künye üstü + üst banner) gösterilebilsin diye. Boşsa `position`
+  /// kullanılır. Eski kayıtlarda boş kalır; sorgu ikisine de bakar.
+  positions      AdPosition[] @default([])
+  /// Bu reklam bir slider içinde dönerken kaç saniye görünsün. Yalnızca
+  /// künye üstü / üst banner gibi çok reklamlı slot'larda anlamlı. Boşsa
+  /// site varsayılanı (5 sn).
+  sliderSeconds  Int?       @map("slider_seconds")
   code           String?
   imageUrl       String?    @map("image_url")
   mobileImageUrl String?    @map("mobile_image_url")
