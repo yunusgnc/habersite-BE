@@ -235,7 +235,10 @@ model Article {
   /// Doluysa site haber detayında gövdenin üstünde oynatıcı çiziliyor.
   /// Ham adres saklanıyor (watch / youtu.be / shorts fark etmez); gömme
   /// adresine çevirme sunum katmanının işi.
+  /// TEKİL alan geriye dönük uyumluluk için duruyor (videoUrls[0]).
   videoUrl            String?       @map("video_url")
+  /// Habere eklenen BİRDEN ÇOK YouTube videosu. Boşsa `videoUrl` kullanılır.
+  videoUrls           String[]      @default([]) @map("video_urls")
   /// Bu haber hangi sosyal ağlara gönderilsin — haber bazında seçim.
   /// null  → ayarlarda AÇIK olan bütün ağlar (varsayılan davranış, RSS
   ///          içe aktarımı gibi seçim yapmayan yollar için)

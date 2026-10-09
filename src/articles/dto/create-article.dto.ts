@@ -113,6 +113,12 @@ export class CreateArticleDto {
   @IsOptional()
   videoUrl?: string;
 
+  /** Birden çok YouTube video adresi (çoklu video desteği). */
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  videoUrls?: string[];
+
   /**
    * Bu haber hangi sosyal ağlara gönderilsin.
    *
