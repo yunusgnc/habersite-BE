@@ -42,6 +42,14 @@ export class CommentsService {
       bul: (args) =>
         this.prisma.comment.findMany({
           where,
+          // Panelde yorumun hangi habere ait olduğu başlıkla gösterilir.
+          // Tam Article nesnesini taşımak (içerik, SEO alanları vb.) gereksiz;
+          // yalnızca bağlantı için gereken küçük özet dönülür.
+          include: {
+            article: {
+              select: { id: true, title: true, slug: true },
+            },
+          },
           // id tiebreaker: createdAt unique degil, deterministik siralama sart.
           orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
           ...args,
@@ -50,9 +58,9 @@ export class CommentsService {
   }
 
   async create(tenantId: string, dto: CreateCommentDto, ipAddress: string) {
-    // Spam heuristik: skor >= 3 ise otomatik SPAM olarak işaretle; 1-2 arası
-    // PENDING (elle onay); 0 ise PENDING (yayına almadan önce yine editör
-    // onaylıyor ama admin liste "Onaylanmaya hazır" chip'i gösterebilir).
+    // Temiz yorumlar dâhil hiçbir yorum otomatik yayımlanmaz. Spam skoru
+    // yalnızca açıkça spam olanı SPAM'e ayırır; geri kalanların tamamı
+    // editör onayına PENDING olarak düşer.
     const score = this.spamScore(dto.content, dto.name, dto.email);
     const status = score >= 3 ? CommentStatus.SPAM : CommentStatus.PENDING;
 
@@ -92,7 +100,11 @@ export class CommentsService {
     });
   }
 
-  async bulkUpdateStatus(tenantId: string, ids: string[], status: CommentStatus) {
+  async bulkUpdateStatus(
+    tenantId: string,
+    ids: string[],
+    status: CommentStatus,
+  ) {
     return this.prisma.comment.updateMany({
       where: { id: { in: ids }, tenantId },
       data: { status },
