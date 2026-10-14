@@ -58,6 +58,45 @@ export const ISTATISTIKLI_WIDGETLAR = [
   'standings',
 ] as const;
 
+/**
+ * İstatistiği tutulan anasayfa bölümleri. Kayıtta `section:` öneki ile
+ * saklanır; aynı adı taşıyan widget ile karışmasın (ör. `horoscope` widget'ı
+ * ile onu barındıran `section:horoscope` bölümü ayrı ölçülür).
+ */
+export const ISTATISTIKLI_BOLUMLER = [
+  'hero',
+  'headline-grid',
+  'headline-slider',
+  'category',
+  'category-pair',
+  'latest-list',
+  'latest-columns',
+  'cartoons',
+  'social-strip',
+  'video-gallery',
+  'photo-gallery',
+  'newsletter',
+  'ad',
+  'breaking-news',
+  'info-strip',
+  'horoscope',
+  'sport',
+  'news-carousel',
+  'newspapers',
+  'authors',
+] as const;
+
+export const BOLUM_ONEKI = 'section:';
+
+/** Sayacın kabul ettiği tüm anahtarlar. */
+function izinliMi(type: string): boolean {
+  if ((ISTATISTIKLI_WIDGETLAR as readonly string[]).includes(type)) return true;
+  if (!type.startsWith(BOLUM_ONEKI)) return false;
+  return (ISTATISTIKLI_BOLUMLER as readonly string[]).includes(
+    type.slice(BOLUM_ONEKI.length),
+  );
+}
+
 export type WidgetOlayi = 'view' | 'click';
 
 /** Günlük kova anahtarı: UTC gece yarısı. */
@@ -136,7 +175,7 @@ export class WidgetsService {
    * ziyaretçiye hata döndürmenin bir anlamı yok, sayfa çalışmaya devam etmeli.
    */
   async track(tenantId: string, type: string, olay: WidgetOlayi) {
-    if (!(ISTATISTIKLI_WIDGETLAR as readonly string[]).includes(type)) {
+    if (!izinliMi(type)) {
       return { ok: false };
     }
     const day = gunKovasi();
@@ -183,24 +222,37 @@ export class WidgetsService {
       gunluk.set(anahtar, g);
     }
 
-    const widgets = (ISTATISTIKLI_WIDGETLAR as readonly string[]).map((type) => {
-      const t = toplamlar.get(type) ?? { impressions: 0, clicks: 0 };
+    // Tıklama oranı: gösterim yoksa 0, bölme hatası olmasın.
+    const satir = (type: string, anahtar: string) => {
+      const t = toplamlar.get(anahtar) ?? { impressions: 0, clicks: 0 };
       return {
         type,
         impressions: t.impressions,
         clicks: t.clicks,
-        // Tıklama oranı: gösterim yoksa 0, bölme hatası olmasın.
         ctr: t.impressions > 0 ? t.clicks / t.impressions : 0,
       };
+    };
+    const enCoktan = (a: { impressions: number }, b: { impressions: number }) =>
+      b.impressions - a.impressions;
+
+    const widgets = (ISTATISTIKLI_WIDGETLAR as readonly string[])
+      .map((type) => satir(type, type))
+      .sort(enCoktan);
+    const sections = (ISTATISTIKLI_BOLUMLER as readonly string[])
+      .map((type) => satir(type, BOLUM_ONEKI + type))
+      .sort(enCoktan);
+
+    const topla = (liste: { impressions: number; clicks: number }[]) => ({
+      impressions: liste.reduce((a, w) => a + w.impressions, 0),
+      clicks: liste.reduce((a, w) => a + w.clicks, 0),
     });
 
     return {
       range: gun,
-      widgets: widgets.sort((a, b) => b.impressions - a.impressions),
-      totals: {
-        impressions: widgets.reduce((a, w) => a + w.impressions, 0),
-        clicks: widgets.reduce((a, w) => a + w.clicks, 0),
-      },
+      widgets,
+      sections,
+      totals: topla(widgets),
+      sectionTotals: topla(sections),
       series: [...gunluk.entries()].map(([day, v]) => ({ day, ...v })),
     };
   }
