@@ -50,6 +50,7 @@ model Tenant {
   rssSources          RssSource[]
   readers             Reader[]
   widgets             Widget[]
+  widgetStats         WidgetStat[]
   pages               Page[]
   galleries           Gallery[]
   videos              Video[]
@@ -841,6 +842,29 @@ model Widget {
 
   @@unique([tenantId, type])
   @@map("widgets")
+}
+
+/// Widget görüntülenme/tıklanma sayaçları — GÜNLÜK kovalar.
+///
+/// Reklamlardaki gibi tek bir toplam sayaç tutmuyoruz: panel "son 7 gün",
+/// "son 30 gün" gibi aralıklar gösteriyor ve tek sayaçla eğilim çıkmıyor.
+/// Gün başına tek satır, kiracı ve widget türü başına: 7 tür x 365 gün,
+/// yılda ~2.500 satır. Tür sunucuda beyaz listeye karşı doğrulanır, bu
+/// yüzden uç herkese açık olsa da satır sayısı sınırlıdır.
+model WidgetStat {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id")
+  widgetType  String   @map("widget_type")
+  /// Günün UTC gece yarısı — tarih kovası.
+  day         DateTime @db.Date
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, widgetType, day])
+  @@index([tenantId, day])
+  @@map("widget_stats")
 }
 
 // ─── PAGE (Statik Sayfalar: Künye, İletişim, vb.) ───

@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { WidgetsService } from './widgets.service';
@@ -40,6 +41,35 @@ export class WidgetsController {
   @Roles('ADMIN')
   findAll(@CurrentTenant() tenantId: string) {
     return this.widgetsService.findAll(tenantId);
+  }
+
+  /**
+   * Ziyaretçi sayacı — oturum istemez, reklam sayaçlarıyla aynı desen.
+   * Tür beyaz listede değilse servis sessizce yok sayar.
+   */
+  @Post(':type/track')
+  track(
+    @CurrentTenant() tenantId: string,
+    @Param('type') type: string,
+    @Body() body: { event?: string },
+  ) {
+    const olay = body?.event === 'click' ? 'click' : 'view';
+    return this.widgetsService.track(tenantId, type, olay);
+  }
+
+  /** Panel raporu. `:type` eşleşmesinden ÖNCE tanımlı olmalı. */
+  @Get('stats')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  stats(
+    @CurrentTenant() tenantId: string,
+    @Query('days') days?: string,
+  ) {
+    const gun = Number(days);
+    return this.widgetsService.stats(
+      tenantId,
+      Number.isFinite(gun) && gun >= 0 ? gun : 30,
+    );
   }
 
   @Get(':type')
