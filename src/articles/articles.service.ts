@@ -560,10 +560,15 @@ export class ArticlesService {
       changes: { title: article.title, status: article.status },
     });
 
+    // Şerit satırı önce yazılır, etiket SONRA boşaltılır. Ters sırada site
+    // eski (boş) listeyi yeniden önbelleğe alabiliyordu.
+    if (article.status === ArticleStatus.PUBLISHED) {
+      await this.sonDakikaGuncelle(tenantId, article);
+    }
+
     this.revalidation.revalidateTenant(tenantId, ['articles', 'breaking-news', 'most-read']);
 
     if (article.status === ArticleStatus.PUBLISHED) {
-      await this.sonDakikaGuncelle(tenantId, article);
       // Ateşle ve unut — paylaşım hatası yayını asla bloklamaz.
       void this.socialShare.paylas(tenantId, article);
     }
@@ -720,15 +725,17 @@ export class ArticlesService {
       changes: { title: article.title, status: article.status },
     });
 
+    // Son Dakika şeridini breakingLabel ile senkronize et. Önbellek etiketi
+    // SONRA boşaltılır, yoksa site satır yazılmadan önce eski listeyi
+    // yeniden önbelleğe alabiliyor.
+    await this.sonDakikaGuncelle(tenantId, article);
+
     this.revalidation.revalidateTenant(tenantId, [
       'articles',
       `article-${article.slug}`,
       'breaking-news',
       'most-read',
     ]);
-
-    // Son Dakika şeridini breakingLabel ile senkronize et.
-    await this.sonDakikaGuncelle(tenantId, article);
 
     // Sosyal paylaşım yalnızca DURUM GEÇİŞİNDE — yayındaki haberi
     // düzenlemek mükerrer gönderi atmasın.
