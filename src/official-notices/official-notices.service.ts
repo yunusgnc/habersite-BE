@@ -75,6 +75,7 @@ export class OfficialNoticesService {
         referenceNo: true,
         summary: true,
         attachments: true,
+        position: true,
         publishedAt: true,
         expiresAt: true,
         viewCount: true,
