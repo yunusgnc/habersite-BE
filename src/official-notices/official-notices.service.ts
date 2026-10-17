@@ -13,6 +13,8 @@ export type PublicNoticeQuery = {
   noticeType?: NoticeType;
   institution?: string;
   search?: string;
+  /** Yayın tarihi filtresi (YYYY-MM-DD). O gün yayımlanan ilanlar. */
+  date?: string;
   /** true → süresi geçmiş ilanlar (arşiv), false/undefined → yürürlükte olanlar. */
   archived?: boolean;
 };
@@ -44,6 +46,17 @@ export class OfficialNoticesService {
     if (query.noticeType) where.noticeType = query.noticeType;
     if (query.institution?.trim()) {
       where.institution = { contains: query.institution.trim(), mode: 'insensitive' };
+    }
+    // Tarih filtresi: o gün yayımlanan ilanlar. Üst sınır `now` ile
+    // birleştirilir, yoksa seçilen gün bugünse henüz yayına girmemiş
+    // (publishedAt gelecekte) ilanlar da görünürdü. Geçersiz tarih (NaN)
+    // sessizce yok sayılır — filtre uygulanmaz.
+    if (query.date?.trim()) {
+      const gunBasi = new Date(`${query.date.trim()}T00:00:00.000`);
+      if (!Number.isNaN(gunBasi.getTime())) {
+        const ertesiGun = new Date(gunBasi.getTime() + 24 * 60 * 60 * 1000);
+        where.publishedAt = { gte: gunBasi, lte: ertesiGun < now ? ertesiGun : now };
+      }
     }
     if (query.search?.trim()) {
       const q = query.search.trim();

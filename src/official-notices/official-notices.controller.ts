@@ -34,6 +34,7 @@ export class OfficialNoticesController {
     @Query('noticeType') noticeType?: string,
     @Query('institution') institution?: string,
     @Query('search') search?: string,
+    @Query('date') date?: string,
     @Query('archived') archived?: string,
   ) {
     return this.service.findPublic(tenantId, {
@@ -42,6 +43,7 @@ export class OfficialNoticesController {
       noticeType: parseNoticeType(noticeType),
       institution,
       search,
+      date,
       archived: archived === 'true',
     });
   }
