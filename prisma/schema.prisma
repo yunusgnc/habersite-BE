@@ -258,6 +258,9 @@ model Article {
   /// Spot başlığın kendi yazı tipi / boyutu — manşet başlığınınkinden bağımsız.
   spotTitleFontFamily String?       @map("spot_title_font_family")
   spotTitleFontSize   Int?          @map("spot_title_font_size")
+  /// Spot başlığın mobil (dar ekran) boyutu. Boşsa site kendi mobil
+  /// varsayılanını kullanır; masaüstü boyutu mobilde taşıyordu.
+  spotTitleFontSizeMobile Int?      @map("spot_title_font_size_mobile")
   /// Spot başlığın manşet görselindeki yüzde tabanlı yerleşimi. Null olan eski
   /// kayıtlarda site merkezdeki varsayılan konumu kullanır.
   spotTitleX          Float?        @map("spot_title_x")
@@ -267,6 +270,8 @@ model Article {
   /// varsayılan beyazı kullanır.
   spotTitleColor      String?       @map("spot_title_color")
   headlineFontSize    Int?          @map("headline_font_size")
+  /// Manşet başlığının mobil (dar ekran) boyutu. Boşsa site varsayılanı.
+  headlineFontSizeMobile Int?       @map("headline_font_size_mobile")
   headlineFontFamily  String?       @map("headline_font_family")
   /// Manşet başlığının yazı rengi (CSS renk). Boşsa site varsayılanı (beyaz).
   headlineColor       String?       @map("headline_color")

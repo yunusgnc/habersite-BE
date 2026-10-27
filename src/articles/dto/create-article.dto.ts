@@ -214,6 +214,13 @@ export class CreateArticleDto {
   @IsOptional()
   spotTitleFontSize?: number;
 
+  /** Spot başlığın mobil boyutu; masaüstü boyutundan bağımsız. */
+  @IsInt()
+  @Min(10)
+  @Max(48)
+  @IsOptional()
+  spotTitleFontSizeMobile?: number;
+
   /** Manşet görseli içinde yüzde tabanlı spot başlık merkezi ve kutu genişliği. */
   @IsNumber()
   @Min(0)
@@ -244,6 +251,13 @@ export class CreateArticleDto {
   @Max(96)
   @IsOptional()
   headlineFontSize?: number;
+
+  /** Manşet başlığının mobil boyutu; masaüstü boyutundan bağımsız. */
+  @IsInt()
+  @Min(10)
+  @Max(48)
+  @IsOptional()
+  headlineFontSizeMobile?: number;
 
   /** Manşet başlığının görsel içindeki yüzde tabanlı merkezi ve kutu genişliği. */
   @IsNumber()

@@ -70,8 +70,19 @@ describe('Manşet alanları doğrulaması', () => {
         spotTitleX: null,
         spotTitleY: null,
         spotTitleWidth: null,
+        headlineFontSizeMobile: null,
+        spotTitleFontSizeMobile: null,
       }),
     ).toEqual([]);
+  });
+
+  it('mobil yazı boyutları masaüstünden bağımsız sınırlanır', async () => {
+    expect(
+      await hatalar({ headlineFontSizeMobile: 18, spotTitleFontSizeMobile: 16 }),
+    ).toEqual([]);
+    expect(
+      await hatalar({ headlineFontSizeMobile: 64, spotTitleFontSizeMobile: 8 }),
+    ).toEqual(['spotTitleFontSizeMobile', 'headlineFontSizeMobile']);
   });
 
   it('yeni haberde de aynı kurallar geçerli', async () => {
