@@ -41,6 +41,12 @@ describe('kullanıcı yetkileri', () => {
     expect(effectivePermissions('EDITOR', { COMMENTS_MODERATE: false })).toEqual({
       COMMENTS_VIEW: true,
       COMMENTS_MODERATE: false,
+      SOCIAL_SHARE: true,
     });
+  });
+
+  it('sosyal paylaşım varsayılan açık, kişi bazında kapatılabilir', () => {
+    expect(hasPermission('EDITOR', {}, 'SOCIAL_SHARE')).toBe(true);
+    expect(hasPermission('ADMIN', { SOCIAL_SHARE: false }, 'SOCIAL_SHARE')).toBe(false);
   });
 });

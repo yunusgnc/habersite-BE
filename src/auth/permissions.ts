@@ -1,6 +1,7 @@
 export const USER_PERMISSIONS = [
   'COMMENTS_VIEW',
   'COMMENTS_MODERATE',
+  'SOCIAL_SHARE',
 ] as const;
 
 export type UserPermission = (typeof USER_PERMISSIONS)[number];
@@ -25,6 +26,10 @@ export function defaultPermission(role: string, permission: UserPermission): boo
     case 'COMMENTS_VIEW':
     case 'COMMENTS_MODERATE':
       return level >= ROLE_LEVEL.EDITOR;
+    case 'SOCIAL_SHARE':
+      // Yetki eklenmeden önce yayınlayan herkes paylaşabiliyordu; varsayılan
+      // açık kalır, admin kişi bazında kapatır.
+      return true;
   }
 }
 

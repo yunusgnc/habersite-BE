@@ -16,6 +16,7 @@ describe('ArticlesService — çoklu kategori', () => {
   beforeEach(() => {
     prisma = {
       category: { count: jest.fn() },
+      user: { findUnique: jest.fn().mockResolvedValue(null) },
       article: {
         findMany: jest.fn(),
         findFirst: jest.fn(),

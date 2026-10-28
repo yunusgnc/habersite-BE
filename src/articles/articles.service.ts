@@ -15,6 +15,7 @@ import { QueryArticlesDto } from './dto/query-articles.dto';
 import { AuditService } from '../common/audit/audit.service';
 import { RevalidationService } from '../common/revalidation/revalidation.service';
 import { SocialShareService } from '../social-share/social-share.service';
+import { hasPermission } from '../auth/permissions';
 
 // Yayınlama yetkisi olan roller — REPORTER/COLUMNIST DRAFT'a kilitlenir.
 function canPublishArticle(role: string): boolean {
@@ -66,6 +67,20 @@ export class ArticlesService {
     private readonly revalidation: RevalidationService,
     private readonly socialShare: SocialShareService,
   ) {}
+
+  /**
+   * Kullanıcının sosyal medyaya paylaşım yetkisi. Kullanıcısız (sistem içi)
+   * çağrılar ve bulunamayan hesaplar eski davranışı korur.
+   */
+  private async paylasimYetkisi(userId?: string): Promise<boolean> {
+    if (!userId) return true;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true, permissions: true },
+    });
+    if (!user) return true;
+    return hasPermission(user.role, user.permissions, 'SOCIAL_SHARE');
+  }
 
   /**
    * Dakikada bir çalışır: scheduledAt zamanı geçmiş fakat hâlâ DRAFT olan
@@ -482,6 +497,17 @@ export class ArticlesService {
       data.status = ArticleStatus.DRAFT;
     }
 
+    // Paylaşım yetkisi kapalı kullanıcının yayınladığı veya zamanladığı
+    // haber hiçbir ağa gitmez. Boş dizi "hiçbir ağ" demek; zamanlanmış
+    // yayın da bu seçimi okur. Taslakta seçim yayınlayana bırakılır.
+    const paylasabilir = await this.paylasimYetkisi(userId);
+    if (
+      !paylasabilir &&
+      (data.status === ArticleStatus.PUBLISHED || data.scheduledAt)
+    ) {
+      data.shareTargets = [];
+    }
+
     // Elle yazılmış slug varsa onu kullan, yoksa başlıktan türet.
     const { slug: istenenSlug, ...alanlar } = data as typeof data & {
       slug?: string;
@@ -568,7 +594,7 @@ export class ArticlesService {
 
     this.revalidation.revalidateTenant(tenantId, ['articles', 'breaking-news', 'most-read']);
 
-    if (article.status === ArticleStatus.PUBLISHED) {
+    if (article.status === ArticleStatus.PUBLISHED && paylasabilir) {
       // Ateşle ve unut — paylaşım hatası yayını asla bloklamaz.
       void this.socialShare.paylas(tenantId, article);
     }
@@ -658,6 +684,19 @@ export class ArticlesService {
       updateData.scheduledAt = scheduledAt;
     }
 
+    // Paylaşım yetkisi kapalı kullanıcı haberi yayına alıyor veya
+    // zamanlıyorsa ağ seçimi boşaltılır (bkz. create).
+    const paylasabilir = await this.paylasimYetkisi(userId);
+    const yayinaGeciyor =
+      rest.status === ArticleStatus.PUBLISHED &&
+      existing.status !== ArticleStatus.PUBLISHED;
+    const zamanlaniyor =
+      (rest.status ?? existing.status) === ArticleStatus.DRAFT &&
+      !!(scheduledAt ?? existing.scheduledAt);
+    if (!paylasabilir && (yayinaGeciyor || zamanlaniyor)) {
+      updateData.shareTargets = [];
+    }
+
     if (rest.content) {
       updateData.readingTime = this.calculateReadingTime(rest.content);
     }
@@ -741,7 +780,8 @@ export class ArticlesService {
     // düzenlemek mükerrer gönderi atmasın.
     if (
       article.status === ArticleStatus.PUBLISHED &&
-      existing.status !== ArticleStatus.PUBLISHED
+      existing.status !== ArticleStatus.PUBLISHED &&
+      paylasabilir
     ) {
       void this.socialShare.paylas(tenantId, article);
     }
