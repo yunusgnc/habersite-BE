@@ -560,6 +560,12 @@ model Ad {
   /// künye üstü / üst banner gibi çok reklamlı slot'larda anlamlı. Boşsa
   /// site varsayılanı (5 sn).
   sliderSeconds  Int?       @map("slider_seconds")
+  /// HOME_SLIDER_INSIDE reklamının hangi boşluğa düşeceği — manşet slider'ında
+  /// her 5 haberden sonra bir reklam boşluğu açılıyor: 1 → 5. haberden sonra,
+  /// 2 → 10., 3 → 15., 4 → 20. Böylece editör "yalnız 10'a reklam", "5 ve 15'e"
+  /// gibi tek tek seçebiliyor. Boşsa ESKİ davranış: reklam havuzu boşlukları
+  /// sırayla doldurur. Diğer pozisyonlarda anlamsız.
+  sliderSlot     Int?       @map("slider_slot")
   code           String?
   imageUrl       String?    @map("image_url")
   mobileImageUrl String?    @map("mobile_image_url")

@@ -8,6 +8,8 @@ import {
   IsArray,
   ArrayMinSize,
   Min,
+  Max,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { AdPosition } from '@prisma/client';
@@ -37,6 +39,19 @@ export class CreateAdDto {
   @Min(1)
   @IsOptional()
   sliderSeconds?: number;
+
+  /**
+   * HOME_SLIDER_INSIDE reklamının düşeceği boşluk: 1 → 5. haberden sonra,
+   * 2 → 10., 3 → 15., 4 → 20. null/boş → reklam havuzu boşlukları sırayla
+   * doldurur (eski davranış). null gönderilebilsin ki "Otomatik"e dönülebilsin.
+   */
+  @ValidateIf((o) => o.sliderSlot !== null && o.sliderSlot !== undefined)
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(4)
+  @IsOptional()
+  sliderSlot?: number | null;
 
   @IsString()
   @IsOptional()

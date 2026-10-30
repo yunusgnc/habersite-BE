@@ -66,6 +66,7 @@ export class AdsService {
         position: positions[0],
         positions,
         sliderSeconds: dto.sliderSeconds ?? null,
+        sliderSlot: dto.sliderSlot ?? null,
         code: dto.code,
         imageUrl: dto.imageUrl,
         mobileImageUrl: dto.mobileImageUrl,
