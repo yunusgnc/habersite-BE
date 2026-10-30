@@ -20,6 +20,8 @@ describe('ArticlesService — çoklu kategori', () => {
       article: {
         findMany: jest.fn(),
         findFirst: jest.fn(),
+        // Haber numarası atanırken en büyük numara okunuyor.
+        aggregate: jest.fn().mockResolvedValue({ _max: { articleNo: 0 } }),
         create: jest
           .fn()
           .mockResolvedValue({ id: 'h1', title: 'T', status: 'DRAFT' }),

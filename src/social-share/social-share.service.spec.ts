@@ -7,6 +7,14 @@ import { SocialShareService } from './social-share.service';
  * (paylaşım yayını bloklayamaz — servisin bir numaralı kuralı).
  */
 
+/**
+ * Paylaşım kaydı tablosunun yerine geçer. Testlerin derdi ağa ne gönderildiği;
+ * kaydın kendisi ayrı sınanıyor, burada yalnızca çağrıyı yutması yeterli.
+ */
+function prismaSahte() {
+  return { socialShareLog: { createMany: jest.fn().mockResolvedValue({ count: 0 }) } };
+}
+
 /** Görsel yoklamasının (HEAD) "evet, bu bir görsel" yanıtı. */
 const GORSEL_YANITI = {
   ok: true,
@@ -53,7 +61,7 @@ describe('SocialShareService', () => {
   beforeEach(() => {
     delete process.env.META_GRAPH_VERSION;
     settings = { getAll: jest.fn(), getSecret: jest.fn(), upsert: jest.fn() };
-    servis = new SocialShareService(settings as any);
+    servis = new SocialShareService(settings as any, prismaSahte() as any);
     fetchMock = varsayilanFetch();
     global.fetch = fetchMock as any;
     jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
@@ -385,7 +393,7 @@ describe('SocialShareService — görsel bulunamadığında', () => {
 
   beforeEach(() => {
     settings = { getAll: jest.fn(), getSecret: jest.fn() };
-    servis = new SocialShareService(settings as any);
+    servis = new SocialShareService(settings as any, prismaSahte() as any);
     settings.getSecret.mockResolvedValue('TOKEN');
     jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
@@ -547,7 +555,7 @@ describe('SocialShareService — haber bazında ağ seçimi', () => {
 
   beforeEach(() => {
     settings = { getAll: jest.fn(), getSecret: jest.fn() };
-    servis = new SocialShareService(settings as any);
+    servis = new SocialShareService(settings as any, prismaSahte() as any);
     fetchMock = varsayilanFetch();
     global.fetch = fetchMock as any;
     jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);

@@ -41,6 +41,7 @@ model Tenant {
   menus               Menu[]
   redirects           Redirect[]
   auditLogs           AuditLog[]
+  socialShareLogs     SocialShareLog[]
   personProfiles      PersonProfile[]
   announcements       Announcement[]
   contactMessages     ContactMessage[]
@@ -100,6 +101,7 @@ model User {
   assigned  Article[]         @relation("ArticleAssignee")
   revised   ArticleRevision[] @relation("ArticleReviser")
   auditLogs AuditLog[]
+  socialShareLogs SocialShareLog[]
 
   @@unique([tenantId, email])
   @@unique([tenantId, username])
@@ -206,6 +208,12 @@ enum ArticleType {
 model Article {
   id                  String        @id @default(cuid())
   tenantId            String        @map("tenant_id")
+  /// Panelde gösterilen KALICI haber numarası: kiracı içinde oluşturma
+  /// sırasına göre 1'den başlar ve her yeni haberde artar. Filtre, arama ya da
+  /// sıralama değişse de numara aynı kalır — satır sırası değil haberin kimliği.
+  /// Eski kayıtlarda null; tek seferlik dolum script'i doldurur
+  /// (scripts/haber-numaralarini-doldur.ts).
+  articleNo           Int?          @map("article_no")
   type                ArticleType   @default(NEWS)
   title               String
   slug                String
@@ -313,6 +321,7 @@ model Article {
   breakingNews BreakingNews?
 
   @@unique([tenantId, slug])
+  @@unique([tenantId, articleNo])
   @@index([tenantId, status, publishedAt(sort: Desc)])
   @@index([tenantId, type])
   @@index([tenantId, featured])
@@ -1027,6 +1036,34 @@ model AuditLog {
   @@index([tenantId, createdAt(sort: Desc)])
   @@index([tenantId, entity, entityId])
   @@map("audit_logs")
+}
+
+// ─── SOCIAL SHARE LOG (Hangi kullanıcı hangi ağa kaç gönderi yaptı) ───
+
+/// Her sosyal ağ gönderimi için BİR satır. Paylaşım "ateşle ve unut" olduğu
+/// için sonuçlar yalnızca sunucu günlüğüne düşüyordu; panelde kullanıcı bazlı
+/// sayım istenince kalıcı kayıt gerekti. `success=false` satırları da tutulur,
+/// yoksa "gönderdim ama ağa düşmedi" durumu görünmezdi.
+model SocialShareLog {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  /// Gönderimi tetikleyen kullanıcı. Hesap silinirse sayım satırı kalır.
+  userId    String?  @map("user_id")
+  /// Haber silinse de sayım bozulmasın diye ilişki değil, düz kimlik.
+  articleId String?  @map("article_id")
+  /// 'telegram' | 'facebook' | 'instagram' | 'x' (bkz. SOCIAL_NETWORKS).
+  network   String
+  success   Boolean  @default(true)
+  /// Başarısızlıkta kısa hata metni; panelde gösterilmiyor, tanı için.
+  error     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, userId, createdAt(sort: Desc)])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@map("social_share_logs")
 }
 
 // ─── CONTACT MESSAGE (İletişim formundan gelen mesajlar) ───

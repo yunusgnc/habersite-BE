@@ -1,4 +1,5 @@
 import {
+  allowedSocialNetworks,
   defaultPermission,
   effectivePermissions,
   hasPermission,
@@ -42,11 +43,47 @@ describe('kullanıcı yetkileri', () => {
       COMMENTS_VIEW: true,
       COMMENTS_MODERATE: false,
       SOCIAL_SHARE: true,
+      SOCIAL_SHARE_TELEGRAM: true,
+      SOCIAL_SHARE_FACEBOOK: true,
+      SOCIAL_SHARE_INSTAGRAM: true,
+      SOCIAL_SHARE_X: true,
     });
   });
 
   it('sosyal paylaşım varsayılan açık, kişi bazında kapatılabilir', () => {
     expect(hasPermission('EDITOR', {}, 'SOCIAL_SHARE')).toBe(true);
     expect(hasPermission('ADMIN', { SOCIAL_SHARE: false }, 'SOCIAL_SHARE')).toBe(false);
+  });
+
+  describe('izinli sosyal ağlar', () => {
+    it('varsayılanda dört ağ da açık — yetki eklenmesi paylaşımı kesmez', () => {
+      expect(allowedSocialNetworks('EDITOR', {})).toEqual([
+        'telegram',
+        'facebook',
+        'instagram',
+        'x',
+      ]);
+    });
+
+    it('kapatılan ağ listeden düşer', () => {
+      expect(
+        allowedSocialNetworks('EDITOR', { SOCIAL_SHARE_INSTAGRAM: false }),
+      ).toEqual(['telegram', 'facebook', 'x']);
+    });
+
+    it('ana anahtar kapalıysa hiçbir ağ dönmez', () => {
+      expect(
+        allowedSocialNetworks('EDITOR', {
+          SOCIAL_SHARE: false,
+          SOCIAL_SHARE_TELEGRAM: true,
+        }),
+      ).toEqual([]);
+    });
+
+    it('süper admin her ağa paylaşır', () => {
+      expect(
+        allowedSocialNetworks('SUPER_ADMIN', { SOCIAL_SHARE: false }),
+      ).toHaveLength(4);
+    });
   });
 });

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { duzMetneCevir } from '../common/plain-text';
+import { PrismaService } from '../prisma/prisma.service';
 import { SettingsService } from '../settings/settings.service';
 
 /**
@@ -101,17 +102,46 @@ function instagramMetni(baslik: string, spot?: string | null): string {
   return metin.length > 2200 ? `${metin.slice(0, 2199).trimEnd()}…` : metin;
 }
 
+/**
+ * Bir ağa gönderim sonucu.
+ *
+ * `atlandi` = ağ ayarlarda kapalı ya da kurulum eksik; hiç denenmedi, bu
+ * yüzden sayıma da girmez. `basarisiz` kaydı tutulur: "gönderdim ama ağa
+ * düşmedi" durumu panelde görünmezdi.
+ */
+type GonderimSonucu =
+  | { durum: 'gonderildi' }
+  | { durum: 'basarisiz'; hata: string }
+  | { durum: 'atlandi' };
+
+const GONDERILDI: GonderimSonucu = { durum: 'gonderildi' };
+const ATLANDI: GonderimSonucu = { durum: 'atlandi' };
+const basarisiz = (hata: string): GonderimSonucu => ({
+  durum: 'basarisiz',
+  hata,
+});
+
 @Injectable()
 export class SocialShareService {
   private readonly logger = new Logger(SocialShareService.name);
 
-  constructor(private readonly settings: SettingsService) {}
+  constructor(
+    private readonly settings: SettingsService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   /**
    * Ateşle ve unut — çağıran await ETMEMELİ (void ile çağır). İçerideki her
    * ağ kendi hatasını yakalar; buradan hata çıkmaz.
+   *
+   * `userId` gönderimi tetikleyen kullanıcı: kullanıcı başına paylaşım sayımı
+   * (panelde Kullanıcılar ekranı) bu kayıttan besleniyor.
    */
-  async paylas(tenantId: string, haber: PaylasilacakHaber): Promise<void> {
+  async paylas(
+    tenantId: string,
+    haber: PaylasilacakHaber,
+    userId?: string | null,
+  ): Promise<void> {
     try {
       const ayarlar = await this.settings.getAll(tenantId);
       const siteKoku = String(ayarlar.siteUrl ?? '')
@@ -142,23 +172,77 @@ export class SocialShareService {
       // sıralama ham kapağa, o da olmazsa metin gönderisine düşer.
       const gorsel = await this.gorselAdresi(siteKoku, haber);
 
-      await Promise.allSettled([
-        secili('telegram')
-          ? this.telegram(tenantId, ayarlar, haber.title, baglanti, gorsel)
-          : Promise.resolve(),
-        secili('facebook')
-          ? this.facebook(tenantId, ayarlar, haber.title, baglanti, gorsel)
-          : Promise.resolve(),
-        secili('instagram')
-          ? this.instagram(tenantId, ayarlar, haber.title, haber.spot, gorsel)
-          : Promise.resolve(),
-        secili('x')
-          ? this.twitter(tenantId, ayarlar, haber.title, baglanti, gorsel)
-          : Promise.resolve(),
-      ]);
+      // Ağ → gönderim. Seçilmeyen ağ hiç çağrılmaz (atlandı sayılır).
+      const gonderimler: ReadonlyArray<
+        readonly [string, () => Promise<GonderimSonucu>]
+      > = [
+        [
+          'telegram',
+          () => this.telegram(tenantId, ayarlar, haber.title, baglanti, gorsel),
+        ],
+        [
+          'facebook',
+          () => this.facebook(tenantId, ayarlar, haber.title, baglanti, gorsel),
+        ],
+        [
+          'instagram',
+          () =>
+            this.instagram(tenantId, ayarlar, haber.title, haber.spot, gorsel),
+        ],
+        [
+          'x',
+          () => this.twitter(tenantId, ayarlar, haber.title, baglanti, gorsel),
+        ],
+      ];
+
+      const sonuclar = await Promise.all(
+        gonderimler.map(async ([ag, calistir]) => {
+          if (!secili(ag)) return [ag, ATLANDI] as const;
+          try {
+            return [ag, await calistir()] as const;
+          } catch (err) {
+            // Gönderici kendi hatasını yutuyor; buraya düşmesi beklenmez.
+            return [ag, basarisiz((err as Error).message)] as const;
+          }
+        }),
+      );
+
+      await this.gonderimleriKaydet(tenantId, haber.id, userId, sonuclar);
     } catch (err) {
       this.logger.warn(
         `Sosyal paylaşım atlandı (${tenantId}): ${(err as Error).message}`,
+      );
+    }
+  }
+
+  /**
+   * Gönderim sonuçlarını kalıcı kaydeder. `atlandi` satır üretmez: ağ kapalıysa
+   * ya da kurulum eksikse paylaşım hiç denenmedi, sayımı şişirmemeli.
+   *
+   * Kayıt paylaşımı bloklamaz: tablo yazımı patlasa bile haber yayında kalır.
+   */
+  private async gonderimleriKaydet(
+    tenantId: string,
+    articleId: string,
+    userId: string | null | undefined,
+    sonuclar: ReadonlyArray<readonly [string, GonderimSonucu]>,
+  ): Promise<void> {
+    const satirlar = sonuclar
+      .filter(([, s]) => s.durum !== 'atlandi')
+      .map(([ag, s]) => ({
+        tenantId,
+        userId: userId ?? null,
+        articleId,
+        network: ag,
+        success: s.durum === 'gonderildi',
+        error: s.durum === 'basarisiz' ? s.hata.slice(0, 500) : null,
+      }));
+    if (satirlar.length === 0) return;
+    try {
+      await this.prisma.socialShareLog.createMany({ data: satirlar });
+    } catch (err) {
+      this.logger.warn(
+        `Paylaşım kaydı yazılamadı (${tenantId}): ${(err as Error).message}`,
       );
     }
   }
@@ -396,11 +480,11 @@ export class SocialShareService {
     baslik: string,
     baglanti: string,
     gorsel: string | null,
-  ): Promise<void> {
-    if (ayarlar.autoShareTelegram !== 'on') return;
+  ): Promise<GonderimSonucu> {
+    if (ayarlar.autoShareTelegram !== 'on') return ATLANDI;
     const kanal = String(ayarlar.telegramChatId ?? '').trim();
     const token = await this.settings.getSecret(tenantId, 'telegramBotToken');
-    if (!kanal || !token) return;
+    if (!kanal || !token) return ATLANDI;
 
     const metin = `${baslik}\n${baglanti}`;
     const cagir = async (uc: string, govde: Record<string, unknown>) => {
@@ -424,7 +508,7 @@ export class SocialShareService {
           photo: gorsel,
           caption: metin,
         });
-        if (foto.tamam) return;
+        if (foto.tamam) return GONDERILDI;
         // Fotoğrafı yutup sessiz kalmayız: düz metin gönderisi Telegram'ın
         // kendi bağlantı önizlemesiyle kanala yine de düşer.
         this.logger.warn(
@@ -436,11 +520,14 @@ export class SocialShareService {
         this.logger.warn(
           `Telegram paylaşımı reddedildi (${tenantId}): ${yazi.hata}`,
         );
+        return basarisiz(yazi.hata);
       }
+      return GONDERILDI;
     } catch (err) {
       this.logger.warn(
         `Telegram paylaşım hatası (${tenantId}): ${(err as Error).message}`,
       );
+      return basarisiz((err as Error).message);
     }
   }
 
@@ -450,13 +537,13 @@ export class SocialShareService {
     baslik: string,
     baglanti: string,
     gorsel: string | null,
-  ): Promise<void> {
-    if (ayarlar.autoShareFacebook !== 'on') return;
+  ): Promise<GonderimSonucu> {
+    if (ayarlar.autoShareFacebook !== 'on') return ATLANDI;
     const sayfa = String(ayarlar.facebookPageId ?? '').trim();
     const token = await this.settings.getSecret(tenantId, 'facebookPageToken');
-    if (!sayfa || !token) return;
+    if (!sayfa || !token) return ATLANDI;
 
-    const baglantiGonderisi = async () => {
+    const baglantiGonderisi = async (): Promise<GonderimSonucu> => {
       const yanit = await fetch(`${graphApiBase()}/${sayfa}/feed`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -469,10 +556,13 @@ export class SocialShareService {
       });
       if (!yanit.ok) {
         const veri: any = await yanit.json().catch(() => ({}));
+        const hata = hataMesaji(veri, yanit.status);
         this.logger.warn(
-          `Facebook paylaşımı reddedildi (${tenantId}): ${hataMesaji(veri, yanit.status)}`,
+          `Facebook paylaşımı reddedildi (${tenantId}): ${hata}`,
         );
+        return basarisiz(hata);
       }
+      return GONDERILDI;
     };
 
     try {
@@ -480,8 +570,7 @@ export class SocialShareService {
       // doğrudan Facebook'a alınır, haber bağlantısı açıklamada yer alır.
       // Görsel yoksa ya da reddedilirse bağlantı gönderisine düşeriz.
       if (!gorsel) {
-        await baglantiGonderisi();
-        return;
+        return await baglantiGonderisi();
       }
       const yanit = await fetch(`${graphApiBase()}/${sayfa}/photos`, {
         method: 'POST',
@@ -498,12 +587,14 @@ export class SocialShareService {
         this.logger.warn(
           `Facebook fotoğraflı gönderi reddedildi (${tenantId}), bağlantı olarak deneniyor: ${hataMesaji(veri, yanit.status)}`,
         );
-        await baglantiGonderisi();
+        return await baglantiGonderisi();
       }
+      return GONDERILDI;
     } catch (err) {
       this.logger.warn(
         `Facebook paylaşım hatası (${tenantId}): ${(err as Error).message}`,
       );
+      return basarisiz((err as Error).message);
     }
   }
 
@@ -513,17 +604,18 @@ export class SocialShareService {
     baslik: string,
     spot: string | null | undefined,
     gorsel: string | null,
-  ): Promise<void> {
-    if (ayarlar.autoShareInstagram !== 'on') return;
+  ): Promise<GonderimSonucu> {
+    if (ayarlar.autoShareInstagram !== 'on') return ATLANDI;
     const hesap = String(ayarlar.instagramUserId ?? '').trim();
     const token = await this.settings.getSecret(tenantId, 'instagramToken');
-    if (!hesap || !token) return;
+    if (!hesap || !token) return ATLANDI;
     if (!gorsel) {
-      // Instagram görselsiz gönderi kabul etmez — metne düşemeyiz.
+      // Instagram görselsiz gönderi kabul etmez — metne düşemeyiz. Ağ seçili
+      // ve açık olduğu için bu bir başarısızlık, atlama değil.
       this.logger.warn(
         `Instagram paylaşımı atlandı (${tenantId}): paylaşılabilir görsel yok`,
       );
-      return;
+      return basarisiz('paylaşılabilir görsel yok');
     }
     try {
       // İki aşama: önce medya kabı, sonra yayınlama (IG Graph akışı).
@@ -539,10 +631,11 @@ export class SocialShareService {
       });
       const kapVerisi: any = await kap.json().catch(() => ({}));
       if (!kap.ok || !kapVerisi.id) {
+        const hata = hataMesaji(kapVerisi, kap.status);
         this.logger.warn(
-          `Instagram medya kabı reddedildi (${tenantId}): ${hataMesaji(kapVerisi, kap.status)}`,
+          `Instagram medya kabı reddedildi (${tenantId}): ${hata}`,
         );
-        return;
+        return basarisiz(hata);
       }
       const yayin = await fetch(`${graphApiBase()}/${hesap}/media_publish`, {
         method: 'POST',
@@ -555,14 +648,18 @@ export class SocialShareService {
       });
       if (!yayin.ok) {
         const veri: any = await yayin.json().catch(() => ({}));
+        const hata = hataMesaji(veri, yayin.status);
         this.logger.warn(
-          `Instagram yayınlama reddedildi (${tenantId}): ${hataMesaji(veri, yayin.status)}`,
+          `Instagram yayınlama reddedildi (${tenantId}): ${hata}`,
         );
+        return basarisiz(hata);
       }
+      return GONDERILDI;
     } catch (err) {
       this.logger.warn(
         `Instagram paylaşım hatası (${tenantId}): ${(err as Error).message}`,
       );
+      return basarisiz((err as Error).message);
     }
   }
 
@@ -572,10 +669,10 @@ export class SocialShareService {
     baslik: string,
     baglanti: string,
     gorsel: string | null,
-  ): Promise<void> {
-    if (ayarlar.autoShareTwitter !== 'on') return;
+  ): Promise<GonderimSonucu> {
+    if (ayarlar.autoShareTwitter !== 'on') return ATLANDI;
     const token = await this.twitterToken(tenantId);
-    if (!token) return;
+    if (!token) return ATLANDI;
 
     try {
       let medyaId: string | null = null;
@@ -638,14 +735,16 @@ export class SocialShareService {
       });
       if (!yanit.ok) {
         const veri: any = await yanit.json().catch(() => ({}));
-        this.logger.warn(
-          `X paylaşımı reddedildi (${tenantId}): ${hataMesaji(veri, yanit.status)}`,
-        );
+        const hata = hataMesaji(veri, yanit.status);
+        this.logger.warn(`X paylaşımı reddedildi (${tenantId}): ${hata}`);
+        return basarisiz(hata);
       }
+      return GONDERILDI;
     } catch (err) {
       this.logger.warn(
         `X paylaşım hatası (${tenantId}): ${(err as Error).message}`,
       );
+      return basarisiz((err as Error).message);
     }
   }
 

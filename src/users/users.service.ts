@@ -53,6 +53,8 @@ export class UsersService {
       limit?: number;
       search?: string;
       role?: string;
+      /** Paylaşım sayımı penceresi (gün). Verilmezse son 30 gün. */
+      shareDays?: number;
     } = {},
   ) {
     const limit = Math.min(100, opts.limit ?? 30);
@@ -67,7 +69,7 @@ export class UsersService {
     }
     if (opts.role) where.role = opts.role;
 
-    return sayfaliListe({
+    const sonuc = await sayfaliListe({
       limit,
       page: opts.page,
       cursor: opts.cursor,
@@ -81,6 +83,60 @@ export class UsersService {
           ...args,
         }),
     });
+
+    // Paylaşım sayıları yalnızca GÖSTERİLEN sayfa için hesaplanır; tüm
+    // kullanıcıları taramak gereksiz. Uç zaten ADMIN korumalı (controller).
+    const shareDays = this.paylasimPenceresi(opts.shareDays);
+    const sayimlar = await this.paylasimSayilari(
+      tenantId,
+      sonuc.items.map((u) => u.id),
+      shareDays,
+    );
+
+    return {
+      ...sonuc,
+      shareDays,
+      items: sonuc.items.map((u) => ({
+        ...u,
+        shareCount: sayimlar.get(u.id) ?? 0,
+      })),
+    };
+  }
+
+  /** Paylaşım sayımı için gün penceresi: 1–365 arası, varsayılan 30. */
+  private paylasimPenceresi(gun?: number): number {
+    if (!gun || !Number.isFinite(gun)) return 30;
+    return Math.min(365, Math.max(1, Math.trunc(gun)));
+  }
+
+  /**
+   * Kullanıcı başına BAŞARILI sosyal paylaşım sayısı. Her ağ gönderimi bir
+   * satır; üç ağa giden bir haber üç paylaşım sayılır. Başarısız gönderimler
+   * sayıma girmez — "kaç paylaşım yaptı" sorusunun yanıtı gerçekten düşen
+   * gönderilerdir.
+   */
+  private async paylasimSayilari(
+    tenantId: string,
+    userIds: string[],
+    gun: number,
+  ): Promise<Map<string, number>> {
+    if (userIds.length === 0) return new Map();
+    const baslangic = new Date(Date.now() - gun * 24 * 60 * 60 * 1000);
+    const satirlar = await this.prisma.socialShareLog.groupBy({
+      by: ['userId'],
+      where: {
+        tenantId,
+        userId: { in: userIds },
+        success: true,
+        createdAt: { gte: baslangic },
+      },
+      _count: { _all: true },
+    });
+    return new Map(
+      satirlar
+        .filter((s): s is typeof s & { userId: string } => s.userId !== null)
+        .map((s) => [s.userId, s._count._all]),
+    );
   }
 
   async findById(tenantId: string, id: string) {

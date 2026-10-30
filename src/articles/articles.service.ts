@@ -15,7 +15,11 @@ import { QueryArticlesDto } from './dto/query-articles.dto';
 import { AuditService } from '../common/audit/audit.service';
 import { RevalidationService } from '../common/revalidation/revalidation.service';
 import { SocialShareService } from '../social-share/social-share.service';
-import { hasPermission } from '../auth/permissions';
+import {
+  allowedSocialNetworks,
+  SOCIAL_NETWORKS,
+  type SocialNetwork,
+} from '../auth/permissions';
 
 // Yayınlama yetkisi olan roller — REPORTER/COLUMNIST DRAFT'a kilitlenir.
 function canPublishArticle(role: string): boolean {
@@ -69,17 +73,79 @@ export class ArticlesService {
   ) {}
 
   /**
-   * Kullanıcının sosyal medyaya paylaşım yetkisi. Kullanıcısız (sistem içi)
-   * çağrılar ve bulunamayan hesaplar eski davranışı korur.
+   * KALICI haber numarası atar ve kaydı oluşturur.
+   *
+   * Numara kiracı içinde 1'den başlar ve her yeni haberde artar; panelde
+   * "kaçıncı haber" olarak gösteriliyor. Satır sırası değil haberin kimliği
+   * olduğu için filtre/arama/sıralama değişse de sabit kalır.
+   *
+   * Eşzamanlı iki kayıt aynı numarayı okuyabilir; `@@unique([tenantId,
+   * articleNo])` ikincisini reddeder ve numarayı yeniden okuyup deniyoruz.
+   * Sayaç tablosu yerine bu yol seçildi: fazladan yazma kilidi getirmiyor ve
+   * çakışma pratikte nadirdir.
    */
-  private async paylasimYetkisi(userId?: string): Promise<boolean> {
-    if (!userId) return true;
+  private async numarayiAtaVeOlustur<T>(
+    tenantId: string,
+    olustur: (articleNo: number) => Promise<T>,
+  ): Promise<T> {
+    const EN_FAZLA_DENEME = 5;
+    for (let deneme = 1; ; deneme++) {
+      const enBuyuk = await this.prisma.article.aggregate({
+        where: { tenantId },
+        _max: { articleNo: true },
+      });
+      try {
+        return await olustur((enBuyuk._max.articleNo ?? 0) + 1);
+      } catch (err) {
+        const cakisma =
+          (err as { code?: string }).code === 'P2002' &&
+          JSON.stringify(
+            (err as { meta?: { target?: unknown } }).meta?.target ?? '',
+          ).includes('article_no');
+        if (!cakisma || deneme >= EN_FAZLA_DENEME) throw err;
+        this.logger.warn(
+          `Haber numarası çakıştı (${tenantId}), yeniden deneniyor (${deneme}/${EN_FAZLA_DENEME}).`,
+        );
+      }
+    }
+  }
+
+  /**
+   * Kullanıcının gönderim yapabileceği ağlar. `null` = kısıt yok (sistem içi
+   * çağrı ya da bulunamayan hesap — eski davranış korunur). Boş dizi = hiçbir
+   * ağ. Ana anahtar açık olsa da ağ anahtarı kapalı olan ağ listeye girmez.
+   */
+  private async izinliAglar(userId?: string): Promise<SocialNetwork[] | null> {
+    if (!userId) return null;
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { role: true, permissions: true },
     });
-    if (!user) return true;
-    return hasPermission(user.role, user.permissions, 'SOCIAL_SHARE');
+    if (!user) return null;
+    return allowedSocialNetworks(user.role, user.permissions);
+  }
+
+  /**
+   * Haberin ağ seçimini kullanıcının yetkisiyle kesiştirir.
+   *
+   * Seçim yapılmamışsa (null) haber "ayarlarda açık olan her ağ" demektir;
+   * kısıtlı kullanıcıda bunu açıkça izinli ağ listesine çeviriyoruz, yoksa
+   * paylaşım katmanı yetkisi olmayan ağa da gönderirdi.
+   */
+  private static agSecimiKisitla(
+    secim: unknown,
+    izinli: SocialNetwork[],
+  ): string[] | undefined {
+    // Her ağa yetkisi olan kullanıcıda seçime DOKUNMA: `null` ("ayarlarda açık
+    // olan her ağ") anlamını koruyoruz, yoksa kısıt getirmeyen bir kesişim
+    // yüzünden kayıt gereksizce dolduruluyordu.
+    const kisitsiz = izinli.length === SOCIAL_NETWORKS.length;
+    if (kisitsiz && !Array.isArray(secim)) return undefined;
+
+    const istenen = Array.isArray(secim)
+      ? secim.map((x) => String(x))
+      : [...SOCIAL_NETWORKS];
+    return istenen.filter((ag) => (izinli as string[]).includes(ag));
   }
 
   /**
@@ -105,6 +171,9 @@ export class ArticlesService {
         featuredImage: true,
         // Zamanlanmış yayında da haberin kendi ağ seçimi geçerli.
         shareTargets: true,
+        // Paylaşım sayımı habere kimin oluşturduğuna yazılır: zamanlanmış
+        // yayını tetikleyen bir kullanıcı değil, cron.
+        createdById: true,
       },
       take: 100,
     });
@@ -128,7 +197,7 @@ export class ArticlesService {
             entityId: a.id,
             changes: { title: a.title, source: 'scheduled' },
           });
-          void this.socialShare.paylas(a.tenantId, a);
+          void this.socialShare.paylas(a.tenantId, a, a.createdById);
         } catch (err) {
           this.logger.warn(
             `Zamanlanmış yayın başarısız (${a.id}): ${(err as Error).message}`,
@@ -497,15 +566,19 @@ export class ArticlesService {
       data.status = ArticleStatus.DRAFT;
     }
 
-    // Paylaşım yetkisi kapalı kullanıcının yayınladığı veya zamanladığı
-    // haber hiçbir ağa gitmez. Boş dizi "hiçbir ağ" demek; zamanlanmış
-    // yayın da bu seçimi okur. Taslakta seçim yayınlayana bırakılır.
-    const paylasabilir = await this.paylasimYetkisi(userId);
+    // Ağ seçimi kullanıcının yetkisiyle kesiştirilir: yetkisi hiç yoksa boş
+    // dizi ("hiçbir ağ"), bazı ağlarda yetkisi varsa yalnız o ağlar kalır.
+    // Zamanlanmış yayın da bu seçimi okur. Taslakta seçim yayınlayana bırakılır.
+    const izinli = await this.izinliAglar(userId);
+    const paylasabilir = izinli === null || izinli.length > 0;
     if (
-      !paylasabilir &&
+      izinli !== null &&
       (data.status === ArticleStatus.PUBLISHED || data.scheduledAt)
     ) {
-      data.shareTargets = [];
+      data.shareTargets = ArticlesService.agSecimiKisitla(
+        data.shareTargets,
+        izinli,
+      );
     }
 
     // Elle yazılmış slug varsa onu kullan, yoksa başlıktan türet.
@@ -529,53 +602,58 @@ export class ArticlesService {
       ? new Date(data.scheduledAt)
       : undefined;
 
-    const article = await this.prisma.article.create({
-      data: {
-        ...alanlar,
-        tenantId,
-        slug,
-        readingTime,
-        createdById: userId,
-        publishedAt,
-        scheduledAt,
-        categories: categoryIds?.length
-          ? {
-              create: categoryIds.map((categoryId, index) => ({
-                categoryId,
-                primary: index === 0,
-              })),
-            }
-          : undefined,
-        tags: tagNames?.length
-          ? {
-              create: await Promise.all(
-                tagNames.map(async (name) => {
-                  const tagSlug = slugify(name, {
-                    lower: true,
-                    strict: true,
-                    locale: 'tr',
-                  });
-                  const tag = await this.prisma.tag.upsert({
-                    where: { tenantId_slug: { tenantId, slug: tagSlug } },
-                    update: {},
-                    create: { tenantId, name, slug: tagSlug },
-                  });
-                  return { tagId: tag.id };
-                }),
-              ),
-            }
-          : undefined,
-        images: istenenGorseller?.length
-          ? { create: this.gorselSatirlari(istenenGorseller) }
-          : undefined,
-      },
-      include: {
-        categories: { include: { category: true } },
-        tags: { include: { tag: true } },
-        author: true,
-        images: { orderBy: { sortOrder: 'asc' } },
-      },
-    });
+    // Etiketler numara denemelerinden ÖNCE hazırlanır: yeniden denemede
+    // `tag.upsert` çağrılarını boşuna tekrarlamayalım.
+    const etiketSatirlari = tagNames?.length
+      ? await Promise.all(
+          tagNames.map(async (name) => {
+            const tagSlug = slugify(name, {
+              lower: true,
+              strict: true,
+              locale: 'tr',
+            });
+            const tag = await this.prisma.tag.upsert({
+              where: { tenantId_slug: { tenantId, slug: tagSlug } },
+              update: {},
+              create: { tenantId, name, slug: tagSlug },
+            });
+            return { tagId: tag.id };
+          }),
+        )
+      : undefined;
+
+    const article = await this.numarayiAtaVeOlustur(tenantId, (articleNo) =>
+      this.prisma.article.create({
+        data: {
+          ...alanlar,
+          tenantId,
+          articleNo,
+          slug,
+          readingTime,
+          createdById: userId,
+          publishedAt,
+          scheduledAt,
+          categories: categoryIds?.length
+            ? {
+                create: categoryIds.map((categoryId, index) => ({
+                  categoryId,
+                  primary: index === 0,
+                })),
+              }
+            : undefined,
+          tags: etiketSatirlari ? { create: etiketSatirlari } : undefined,
+          images: istenenGorseller?.length
+            ? { create: this.gorselSatirlari(istenenGorseller) }
+            : undefined,
+        },
+        include: {
+          categories: { include: { category: true } },
+          tags: { include: { tag: true } },
+          author: true,
+          images: { orderBy: { sortOrder: 'asc' } },
+        },
+      }),
+    );
 
     void this.audit.log({
       tenantId,
@@ -596,7 +674,7 @@ export class ArticlesService {
 
     if (article.status === ArticleStatus.PUBLISHED && paylasabilir) {
       // Ateşle ve unut — paylaşım hatası yayını asla bloklamaz.
-      void this.socialShare.paylas(tenantId, article);
+      void this.socialShare.paylas(tenantId, article, userId);
     }
     return article;
   }
@@ -684,17 +762,22 @@ export class ArticlesService {
       updateData.scheduledAt = scheduledAt;
     }
 
-    // Paylaşım yetkisi kapalı kullanıcı haberi yayına alıyor veya
-    // zamanlıyorsa ağ seçimi boşaltılır (bkz. create).
-    const paylasabilir = await this.paylasimYetkisi(userId);
+    // Kullanıcı haberi yayına alıyor veya zamanlıyorsa ağ seçimi yetkisiyle
+    // kesiştirilir (bkz. create).
+    const izinli = await this.izinliAglar(userId);
+    const paylasabilir = izinli === null || izinli.length > 0;
     const yayinaGeciyor =
       rest.status === ArticleStatus.PUBLISHED &&
       existing.status !== ArticleStatus.PUBLISHED;
     const zamanlaniyor =
       (rest.status ?? existing.status) === ArticleStatus.DRAFT &&
       !!(scheduledAt ?? existing.scheduledAt);
-    if (!paylasabilir && (yayinaGeciyor || zamanlaniyor)) {
-      updateData.shareTargets = [];
+    if (izinli !== null && (yayinaGeciyor || zamanlaniyor)) {
+      // Gönderilmeyen seçim mevcut kaydın seçimidir.
+      updateData.shareTargets = ArticlesService.agSecimiKisitla(
+        updateData.shareTargets ?? existing.shareTargets,
+        izinli,
+      );
     }
 
     if (rest.content) {
@@ -783,7 +866,7 @@ export class ArticlesService {
       existing.status !== ArticleStatus.PUBLISHED &&
       paylasabilir
     ) {
-      void this.socialShare.paylas(tenantId, article);
+      void this.socialShare.paylas(tenantId, article, userId);
     }
     return article;
   }

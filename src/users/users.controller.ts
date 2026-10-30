@@ -31,6 +31,7 @@ export class UsersController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('role') role?: string,
+    @Query('shareDays') shareDays?: string,
   ) {
     return this.usersService.findAll(tenantId, {
       cursor,
@@ -38,6 +39,7 @@ export class UsersController {
       limit: limit ? Number(limit) : undefined,
       search,
       role,
+      shareDays: shareDays ? Number(shareDays) : undefined,
     });
   }
 
