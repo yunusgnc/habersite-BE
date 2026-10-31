@@ -74,14 +74,11 @@ export class ArticlesService implements OnModuleInit {
   ) {}
 
   /**
-   * Haber numarası kolonu sonradan eklendi; eski kayıtlarda boş. Panelde
-   * listenin yarısının "—" görünmemesi için dolum AÇILIŞTA kendiliğinden
-   * yapılıyor — elle script çalıştırmayı beklemek numaraların aylarca eksik
-   * kalması demekti.
+   * Haber numaralarını AÇILIŞTA oluşturma sırasına oturtur — elle script
+   * çalıştırmayı beklemek numaraların aylarca eksik kalması demekti.
    *
    * Boot'u bloklamaz: kısa bir gecikmeyle arka planda başlar ve hata hâlinde
-   * yalnızca günlüğe yazar. Doldurulacak kayıt yoksa tek ucuz sorguyla çıkar,
-   * yani her açılışta tekrar çalışması sorun değil.
+   * yalnızca günlüğe yazar. Numaralama zaten doğruysa hiçbir satır yazılmaz.
    */
   onModuleInit(): void {
     setTimeout(() => {
@@ -90,53 +87,79 @@ export class ArticlesService implements OnModuleInit {
   }
 
   /**
-   * Numarası olmayan haberleri kiracı bazında, oluşturma sırasına göre
-   * numaralar. Mevcut en büyük numaranın üstünden devam eder; kısmen dolu
-   * tabloda da çakışmaz ve zaten numarası olan kayda dokunmaz.
+   * Bütün haberleri kiracı bazında, oluşturma sırasına göre numaralar: en eski
+   * 1, en yeni toplam haber sayısı.
+   *
+   * NEDEN SADECE BOŞLARI DOLDURMUYOR: kolon eklendikten sonra, dolum
+   * yazılmadan önce girilen haberler `MAX+1` ile numara aldı. Tablo o an
+   * neredeyse tamamen boştu, bu yüzden en YENİ haberler 1'den başlayan küçük
+   * numaraları kaptı. Sonraki dolum "mevcut numaralar doğrudur" varsayıp
+   * onların üstünden devam edince sıra tersine döndü. Doğrusu numaralamayı
+   * tek kaynaktan — oluşturma sırasından — türetmek.
+   *
+   * Sıra `created_at` (eşitlikte `id`) ile belirleniyor, `published_at` ile
+   * değil: RSS ile aktarılan eski tarihli haberler listenin başına geçmesin,
+   * numara "kaçıncı eklendi" sorusunu yanıtlasın.
    *
    * Tek SQL deyimi: 44 binden fazla satır için tek tek `update` atmak
    * dakikalar sürerdi.
    */
   async haberNumaralariniDoldur(): Promise<void> {
     try {
-      const eksik = await this.prisma.article.count({
-        where: { articleNo: null },
-      });
-      if (eksik === 0) return;
-
-      this.logger.log(`${eksik} haberin numarası yok, dolum başlıyor.`);
       const kiracilar = await this.prisma.tenant.findMany({
         select: { id: true },
       });
-
+      let toplam = 0;
       for (const { id: tenantId } of kiracilar) {
-        const yazilan = await this.prisma.$executeRaw`
-          WITH mevcut AS (
-            SELECT COALESCE(MAX(article_no), 0) AS enb
-            FROM articles
-            WHERE tenant_id = ${tenantId}
-          ), sirali AS (
-            SELECT id,
-                   ROW_NUMBER() OVER (ORDER BY created_at ASC, id ASC) AS sira
-            FROM articles
-            WHERE tenant_id = ${tenantId} AND article_no IS NULL
-          )
-          UPDATE articles a
-          SET article_no = s.sira + m.enb
-          FROM sirali s, mevcut m
-          WHERE a.id = s.id
-        `;
-        if (yazilan > 0) {
-          this.logger.log(`  ${tenantId}: ${yazilan} habere numara yazıldı.`);
-        }
+        toplam += await this.kiraciNumaralariniDuzelt(tenantId);
       }
-      this.logger.log('Haber numarası dolumu bitti.');
+      if (toplam > 0) {
+        this.logger.log(`Haber numarası düzeltmesi bitti: ${toplam} satır.`);
+      }
     } catch (err) {
-      // Dolum başarısız olsa da panel çalışır; numarasız satırlar "—" görünür.
+      // Başarısız olsa da panel çalışır; numarasız satırlar "—" görünür.
       this.logger.warn(
-        `Haber numarası dolumu başarısız: ${(err as Error).message}`,
+        `Haber numarası düzeltmesi başarısız: ${(err as Error).message}`,
       );
     }
+  }
+
+  /**
+   * Tek kiracının numaralarını oluşturma sırasına oturtur ve yazılan satır
+   * sayısını döner.
+   *
+   * İKİ FAZ, çünkü `@@unique([tenantId, articleNo])` ertelenebilir değil:
+   * numaraları tek deyimde kaydırmak sıra ortasında "duplicate key" verir.
+   * Önce hedef numaranın NEGATİFİ yazılıyor (pozitiflerle çakışmaz), sonra
+   * işaret çevriliyor. İkisi tek işlemde; yarım kalmış negatif numara kalmaz.
+   *
+   * Yalnızca numarası HATALI satırlar yazılıyor. Numaralama zaten doğruysa
+   * hiçbir satıra dokunulmaz, yani her açılışta çalışması tabloyu şişirmez.
+   */
+  private async kiraciNumaralariniDuzelt(tenantId: string): Promise<number> {
+    const [yazilan] = await this.prisma.$transaction([
+      this.prisma.$executeRaw`
+        WITH sirali AS (
+          SELECT id,
+                 ROW_NUMBER() OVER (ORDER BY created_at ASC, id ASC) AS sira
+          FROM articles
+          WHERE tenant_id = ${tenantId}
+        )
+        UPDATE articles a
+        SET article_no = -s.sira
+        FROM sirali s
+        WHERE a.id = s.id AND a.article_no IS DISTINCT FROM s.sira
+      `,
+      this.prisma.$executeRaw`
+        UPDATE articles
+        SET article_no = -article_no
+        WHERE tenant_id = ${tenantId} AND article_no < 0
+      `,
+    ]);
+    if (yazilan > 0) {
+      this.logger.log(`  ${tenantId}: ${yazilan} haberin numarası düzeltildi.`);
+    }
+    return yazilan;
   }
 
   /**
