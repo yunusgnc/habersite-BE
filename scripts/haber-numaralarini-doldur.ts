@@ -5,10 +5,16 @@ import 'dotenv/config';
 /**
  * Mevcut haberlere KALICI haber numarası (`articleNo`) yazar.
  *
+ * ÖNCE ŞUNU BİL: dolum artık API AÇILIŞINDA kendiliğinden yapılıyor
+ * (ArticlesService.haberNumaralariniDoldur). Normal şartlarda bu script'i
+ * çalıştırmana gerek yok. Elde duruyor çünkü tek kiracıyı hedeflemek, ne
+ * olacağını önce görmek ya da otomatik dolum hata verdiyse elle sürmek
+ * gerekebiliyor.
+ *
  * NEDEN GEREKİYOR: numara kolonu sonradan eklendi, eski kayıtlarda null. Panel
  * haber listesinde "kaçıncı haber" bu numaradan okunuyor. Yeni haberler
  * numarayı oluşturulurken alıyor (bkz. ArticlesService.numarayiAtaVeOlustur);
- * bu script yalnızca GEÇMİŞİ doldurur ve bir kez çalıştırılır.
+ * bu script yalnızca GEÇMİŞİ doldurur.
  *
  * SIRA: `createdAt` artan, eşitlikte `id` artan. Yani en eski haber 1,
  * en yeni haber toplam haber sayısı. Sıra deterministik: script yeniden

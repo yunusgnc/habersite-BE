@@ -4,6 +4,7 @@ import {
   NotFoundException,
   ForbiddenException,
   Logger,
+  OnModuleInit,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import slugify from 'slugify';
@@ -62,7 +63,7 @@ function buildDateRange(
 }
 
 @Injectable()
-export class ArticlesService {
+export class ArticlesService implements OnModuleInit {
   private readonly logger = new Logger(ArticlesService.name);
 
   constructor(
@@ -71,6 +72,72 @@ export class ArticlesService {
     private readonly revalidation: RevalidationService,
     private readonly socialShare: SocialShareService,
   ) {}
+
+  /**
+   * Haber numarası kolonu sonradan eklendi; eski kayıtlarda boş. Panelde
+   * listenin yarısının "—" görünmemesi için dolum AÇILIŞTA kendiliğinden
+   * yapılıyor — elle script çalıştırmayı beklemek numaraların aylarca eksik
+   * kalması demekti.
+   *
+   * Boot'u bloklamaz: kısa bir gecikmeyle arka planda başlar ve hata hâlinde
+   * yalnızca günlüğe yazar. Doldurulacak kayıt yoksa tek ucuz sorguyla çıkar,
+   * yani her açılışta tekrar çalışması sorun değil.
+   */
+  onModuleInit(): void {
+    setTimeout(() => {
+      void this.haberNumaralariniDoldur();
+    }, 5000);
+  }
+
+  /**
+   * Numarası olmayan haberleri kiracı bazında, oluşturma sırasına göre
+   * numaralar. Mevcut en büyük numaranın üstünden devam eder; kısmen dolu
+   * tabloda da çakışmaz ve zaten numarası olan kayda dokunmaz.
+   *
+   * Tek SQL deyimi: 44 binden fazla satır için tek tek `update` atmak
+   * dakikalar sürerdi.
+   */
+  async haberNumaralariniDoldur(): Promise<void> {
+    try {
+      const eksik = await this.prisma.article.count({
+        where: { articleNo: null },
+      });
+      if (eksik === 0) return;
+
+      this.logger.log(`${eksik} haberin numarası yok, dolum başlıyor.`);
+      const kiracilar = await this.prisma.tenant.findMany({
+        select: { id: true },
+      });
+
+      for (const { id: tenantId } of kiracilar) {
+        const yazilan = await this.prisma.$executeRaw`
+          WITH mevcut AS (
+            SELECT COALESCE(MAX(article_no), 0) AS enb
+            FROM articles
+            WHERE tenant_id = ${tenantId}
+          ), sirali AS (
+            SELECT id,
+                   ROW_NUMBER() OVER (ORDER BY created_at ASC, id ASC) AS sira
+            FROM articles
+            WHERE tenant_id = ${tenantId} AND article_no IS NULL
+          )
+          UPDATE articles a
+          SET article_no = s.sira + m.enb
+          FROM sirali s, mevcut m
+          WHERE a.id = s.id
+        `;
+        if (yazilan > 0) {
+          this.logger.log(`  ${tenantId}: ${yazilan} habere numara yazıldı.`);
+        }
+      }
+      this.logger.log('Haber numarası dolumu bitti.');
+    } catch (err) {
+      // Dolum başarısız olsa da panel çalışır; numarasız satırlar "—" görünür.
+      this.logger.warn(
+        `Haber numarası dolumu başarısız: ${(err as Error).message}`,
+      );
+    }
+  }
 
   /**
    * KALICI haber numarası atar ve kaydı oluşturur.

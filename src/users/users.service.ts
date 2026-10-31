@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { sayfaliListe } from '../common/pagination/sayfali-liste';
-import { UserRole } from '@prisma/client';
+import { ArticleStatus, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { normalizePermissionOverrides } from '../auth/permissions';
 
@@ -110,10 +110,20 @@ export class UsersService {
   }
 
   /**
-   * Kullanıcı başına BAŞARILI sosyal paylaşım sayısı. Her ağ gönderimi bir
-   * satır; üç ağa giden bir haber üç paylaşım sayılır. Başarısız gönderimler
-   * sayıma girmez — "kaç paylaşım yaptı" sorusunun yanıtı gerçekten düşen
-   * gönderilerdir.
+   * Kullanıcı başına PAYLAŞILAN HABER sayısı.
+   *
+   * Sayım `social_share_logs` tablosundan DEĞİL haberlerden yapılıyor. İki
+   * sebebi var:
+   *
+   * 1. Soru "kaç haber paylaştı" — üç ağa giden bir haber tek paylaşımdır.
+   *    Gönderim kaydı ağ başına satır tuttuğu için aynı haberi üçe katlıyordu.
+   * 2. Gönderim kaydı sonradan eklendi ve boş başladı; ondan saymak bütün
+   *    geçmişi sıfır gösteriyordu. Haberler ise ilk günden beri duruyor.
+   *
+   * Sayılan: kullanıcının o aralıkta YAYINLANAN ve en az bir ağa işaretli
+   * haberi. Ağ seçimi boş dizi olan haber editörün bilinçli olarak paylaşımı
+   * kapattığı haberdir, sayılmaz; seçim yoksa (null) "ayarlarda açık olan her
+   * ağ" demektir ve sayılır.
    */
   private async paylasimSayilari(
     tenantId: string,
@@ -122,20 +132,38 @@ export class UsersService {
   ): Promise<Map<string, number>> {
     if (userIds.length === 0) return new Map();
     const baslangic = new Date(Date.now() - gun * 24 * 60 * 60 * 1000);
-    const satirlar = await this.prisma.socialShareLog.groupBy({
-      by: ['userId'],
-      where: {
-        tenantId,
-        userId: { in: userIds },
-        success: true,
-        createdAt: { gte: baslangic },
-      },
-      _count: { _all: true },
-    });
+    const kosul = {
+      tenantId,
+      createdById: { in: userIds },
+      status: ArticleStatus.PUBLISHED,
+      publishedAt: { gte: baslangic },
+    };
+
+    // "En az bir ağa işaretli" koşulu JSON sütununda doğrudan ifade edilemiyor.
+    // Ham SQL yerine iki sayım çıkarıp farkını alıyoruz: toplam yayın eksi
+    // ağ seçimi BOŞ DİZİ olanlar. Boş dizi editörün paylaşımı bilinçli olarak
+    // kapattığı haberdir; seçim yoksa (null) "her ağ" demek ve sayılır.
+    const [toplam, paylasimsiz] = await Promise.all([
+      this.prisma.article.groupBy({
+        by: ['createdById'],
+        where: kosul,
+        _count: { _all: true },
+      }),
+      this.prisma.article.groupBy({
+        by: ['createdById'],
+        where: { ...kosul, shareTargets: { equals: [] } },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const dusulecek = new Map(
+      paylasimsiz.map((s) => [s.createdById, s._count._all]),
+    );
     return new Map(
-      satirlar
-        .filter((s): s is typeof s & { userId: string } => s.userId !== null)
-        .map((s) => [s.userId, s._count._all]),
+      toplam.map((s) => [
+        s.createdById,
+        s._count._all - (dusulecek.get(s.createdById) ?? 0),
+      ]),
     );
   }
 
