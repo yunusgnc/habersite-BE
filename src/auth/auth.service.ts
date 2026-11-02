@@ -36,12 +36,12 @@ export class AuthService {
     });
 
     if (!user || !user.active) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('E-posta/kullanıcı adı veya şifre hatalı');
     }
 
     const passwordValid = await bcrypt.compare(password, user.passwordHash);
     if (!passwordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('E-posta/kullanıcı adı veya şifre hatalı');
     }
 
     // Update last login timestamp
@@ -83,7 +83,9 @@ export class AuthService {
         ],
         tenant: { active: true },
       },
-      include: { tenant: { select: { domain: true, subdomain: true } } },
+      include: {
+        tenant: { select: { name: true, domain: true, subdomain: true } },
+      },
     });
 
     const verified: typeof candidates = [];
@@ -106,11 +108,27 @@ export class AuthService {
     }
 
     if (!user) {
-      throw new UnauthorizedException(
-        verified.length > 1
-          ? 'Birden fazla hesap eşleşti — lütfen size verilen panel adresinden giriş yapın'
-          : 'Invalid credentials',
-      );
+      if (verified.length > 1) {
+        // Kimlik birden çok kiracıda doğrulandı ve Host ayrıştıramadı.
+        //
+        // Host ayrıştırması ORTAK PANELDE hiçbir zaman tutmuyor: istek API'nin
+        // kendi alan adına (api.…) gidiyor, kiracının alan adına değil. Eskiden
+        // bu durumda giriş tümden reddediliyordu; iki sitede de hesabı olan
+        // editör paneline HİÇ giremiyordu.
+        //
+        // Çözüm: kiracıları panele bildir, kullanıcı hangi siteye gireceğini
+        // seçsin. Şifre zaten doğrulandı; listelenen kiracılar bu kimliğin
+        // sahibi olduğu hesaplar, dışarıya bilgi sızdırmıyor.
+        throw new ConflictException({
+          code: 'TENANT_SECIMI_GEREKLI',
+          message: 'Birden fazla sitede hesabınız var. Hangisine gireceğinizi seçin.',
+          tenants: verified.map((u) => ({
+            id: u.tenantId,
+            name: u.tenant.name,
+          })),
+        });
+      }
+      throw new UnauthorizedException('E-posta/kullanıcı adı veya şifre hatalı');
     }
 
     await this.prisma.user.update({
