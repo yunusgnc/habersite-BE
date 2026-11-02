@@ -16,6 +16,7 @@ import { QueryArticlesDto } from './dto/query-articles.dto';
 import { AuditService } from '../common/audit/audit.service';
 import { RevalidationService } from '../common/revalidation/revalidation.service';
 import { SocialShareService } from '../social-share/social-share.service';
+import { haberNumarasiylaOlustur } from './haber-numarasi';
 import {
   allowedSocialNetworks,
   SOCIAL_NETWORKS,
@@ -162,42 +163,12 @@ export class ArticlesService implements OnModuleInit {
     return yazilan;
   }
 
-  /**
-   * KALICI haber numarası atar ve kaydı oluşturur.
-   *
-   * Numara kiracı içinde 1'den başlar ve her yeni haberde artar; panelde
-   * "kaçıncı haber" olarak gösteriliyor. Satır sırası değil haberin kimliği
-   * olduğu için filtre/arama/sıralama değişse de sabit kalır.
-   *
-   * Eşzamanlı iki kayıt aynı numarayı okuyabilir; `@@unique([tenantId,
-   * articleNo])` ikincisini reddeder ve numarayı yeniden okuyup deniyoruz.
-   * Sayaç tablosu yerine bu yol seçildi: fazladan yazma kilidi getirmiyor ve
-   * çakışma pratikte nadirdir.
-   */
-  private async numarayiAtaVeOlustur<T>(
+  /** Kalıcı haber numarası atayıp oluşturur — bkz. `haberNumarasiylaOlustur`. */
+  private numarayiAtaVeOlustur<T>(
     tenantId: string,
     olustur: (articleNo: number) => Promise<T>,
   ): Promise<T> {
-    const EN_FAZLA_DENEME = 5;
-    for (let deneme = 1; ; deneme++) {
-      const enBuyuk = await this.prisma.article.aggregate({
-        where: { tenantId },
-        _max: { articleNo: true },
-      });
-      try {
-        return await olustur((enBuyuk._max.articleNo ?? 0) + 1);
-      } catch (err) {
-        const cakisma =
-          (err as { code?: string }).code === 'P2002' &&
-          JSON.stringify(
-            (err as { meta?: { target?: unknown } }).meta?.target ?? '',
-          ).includes('article_no');
-        if (!cakisma || deneme >= EN_FAZLA_DENEME) throw err;
-        this.logger.warn(
-          `Haber numarası çakıştı (${tenantId}), yeniden deneniyor (${deneme}/${EN_FAZLA_DENEME}).`,
-        );
-      }
-    }
+    return haberNumarasiylaOlustur(this.prisma, tenantId, olustur, this.logger);
   }
 
   /**
@@ -382,6 +353,16 @@ export class ArticlesService implements OnModuleInit {
     // baskalarinin tamamen atlanmasina yol aciyor — hem cursor hem offset icin.
     let orderBy: Prisma.ArticleOrderByWithRelationInput[];
     switch (sort) {
+      // Panelin haber listesi: eklenme sırası. Numara oluşturma sırasından
+      // türetildiği (bkz. kiraciNumaralariniDuzelt) için bu, "No" sütununun
+      // kesintisiz azalan görünmesini sağlıyor. Yayın tarihine göre sıralamak
+      // (varsayılan) taslaktan geç yayınlanan ya da zamanlanan her haberde
+      // numaraları karıştırıyordu. `@@unique([tenantId, articleNo])` index'i
+      // geriye taranarak kullanılır; PostgreSQL'de DESC varsayılanı NULLS
+      // FIRST olduğundan henüz numarası düzeltilmemiş satır en üstte görünür.
+      case 'number':
+        orderBy = [{ articleNo: 'desc' }, { id: 'desc' }];
+        break;
       case 'oldest':
         orderBy = [{ publishedAt: 'asc' }, { id: 'asc' }];
         break;

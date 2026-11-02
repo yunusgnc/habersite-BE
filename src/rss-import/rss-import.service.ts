@@ -7,6 +7,7 @@ import {
 import { Cron, CronExpression } from '@nestjs/schedule';
 import slugify from 'slugify';
 import { PrismaService } from '../prisma/prisma.service';
+import { haberNumarasiylaOlustur } from '../articles/haber-numarasi';
 import { parseFeed, FeedItem } from './rss-parser';
 import {
   CreateRssSourceDto,
@@ -255,35 +256,44 @@ export class RssImportService {
         .trim();
 
       try {
-        const article = await this.prisma.article.create({
-          data: {
-            tenantId,
-            title: item.title.slice(0, 300),
-            slug,
-            spot: bodyText ? bodyText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300) : null,
-            content: {
-              type: 'doc',
-              content: bodyText
-                ? [
-                    {
-                      type: 'paragraph',
-                      content: [{ type: 'text', text: bodyText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() }],
-                    },
-                  ]
-                : [{ type: 'paragraph' }],
-            } as unknown as any,
-            featuredImage: item.imageUrl,
-            status: 'DRAFT',
-            authorId,
-            createdById: admin.id,
-            source: source.name,
-            sourceUrl: item.link,
-            publishedAt: item.publishedAt,
-            categories: categoryId
-              ? { create: [{ categoryId }] }
-              : undefined,
-          },
-        });
+        // Numara burada da atanmalı: numarasız haber panelde "—" görünür ve
+        // eklenme sırasına göre sıralanan listede yerini kaybeder.
+        const article = await haberNumarasiylaOlustur(
+          this.prisma,
+          tenantId,
+          (articleNo) =>
+            this.prisma.article.create({
+              data: {
+                tenantId,
+                articleNo,
+                title: item.title.slice(0, 300),
+                slug,
+                spot: bodyText ? bodyText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300) : null,
+                content: {
+                  type: 'doc',
+                  content: bodyText
+                    ? [
+                        {
+                          type: 'paragraph',
+                          content: [{ type: 'text', text: bodyText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() }],
+                        },
+                      ]
+                    : [{ type: 'paragraph' }],
+                } as unknown as any,
+                featuredImage: item.imageUrl,
+                status: 'DRAFT',
+                authorId,
+                createdById: admin.id,
+                source: source.name,
+                sourceUrl: item.link,
+                publishedAt: item.publishedAt,
+                categories: categoryId
+                  ? { create: [{ categoryId }] }
+                  : undefined,
+              },
+            }),
+          this.logger,
+        );
 
         await this.prisma.rssImportedItem.create({
           data: {
