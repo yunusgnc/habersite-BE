@@ -316,6 +316,7 @@ model Article {
   images       ArticleImage[]
   persons      ArticlePerson[]
   revisions    ArticleRevision[]
+  slugHistory  ArticleSlugHistory[]
   bookmarks    Bookmark[]
   reactions    ArticleReaction[]
   breakingNews BreakingNews?
@@ -328,6 +329,25 @@ model Article {
   /// Yazar sayfası, yazar başına son yazı ve yazar başına yazı sayısı.
   @@index([authorId, status, publishedAt(sort: Desc)])
   @@map("articles")
+}
+
+/// Haberin eski adres parçaları. Slug değişince eskisi buraya yazılır ve
+/// site onu 301 ile yenisine yönlendirir. Google'da indeksli adres
+/// ölmesin diye: haber adresi 6 yıllık arşivde en değerli SEO varlığı.
+model ArticleSlugHistory {
+  id        String   @id @default(cuid())
+  articleId String   @map("article_id")
+  tenantId  String   @map("tenant_id")
+  slug      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  // Bir slug kiracı içinde tek bir habere ait olabilir; aynı eski adresi iki
+  // haber sahiplenirse hangisine yönlendireceğimiz belirsiz olurdu.
+  @@unique([tenantId, slug])
+  @@index([articleId, createdAt(sort: Desc)])
+  @@map("article_slug_history")
 }
 
 model ArticleRevision {

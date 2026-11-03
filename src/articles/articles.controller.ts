@@ -8,6 +8,7 @@ import {
   Query,
   Body,
   UseGuards,
+  NotFoundException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ArticlesService } from './articles.service';
@@ -159,6 +160,22 @@ export class ArticlesController {
     @Query('limit') limit?: number,
   ) {
     return this.articlesService.getRelated(tenantId, id, limit ? +limit : 5);
+  }
+
+  /**
+   * Eski adres parçasının güncel karşılığı. Site, haberi bulamadığında 404
+   * vermeden önce buraya sorar ve dönen slug'a 301 yapar.
+   *
+   * `:slug` rotasından ÖNCE tanımlı olmalı; Nest rotaları sırayla eşliyor.
+   */
+  @Get('eski-slug/:slug')
+  async eskiSlug(
+    @CurrentTenant() tenantId: string,
+    @Param('slug') slug: string,
+  ) {
+    const guncel = await this.articlesService.guncelSlugBul(tenantId, slug);
+    if (!guncel) throw new NotFoundException('Bu adres için kayıt yok');
+    return { slug: guncel };
   }
 
   @Get(':slug')

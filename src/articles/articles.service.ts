@@ -772,6 +772,7 @@ export class ArticlesService implements OnModuleInit {
       images: istenenGorseller,
       publishedAt: publishedAtStr,
       scheduledAt: scheduledAtStr,
+      slug: istenenSlug,
       ...rest
     } = dto;
     const categoryIds = await this.kategorileriDogrula(
@@ -813,6 +814,16 @@ export class ArticlesService implements OnModuleInit {
     }
 
     const updateData: Record<string, any> = { ...rest };
+
+    // Adres parçası: panelden gelen değer ham geliyordu ve doğrudan yazılsaydı
+    // boşluklu/Türkçe karakterli ya da başka haberde kullanılan bir slug
+    // kaydedilebilirdi. Temizlikten geçir, çakışmayı çöz, eskisini tarihe yaz.
+    const yeniSlug =
+      istenenSlug !== undefined && istenenSlug.trim() !== ''
+        ? await this.generateUniqueSlug(tenantId, istenenSlug, existing.id)
+        : undefined;
+    const slugDegisti = yeniSlug !== undefined && yeniSlug !== existing.slug;
+    if (slugDegisti) updateData.slug = yeniSlug;
 
     const publishedAt = publishedAtStr ? new Date(publishedAtStr) : undefined;
     const scheduledAt = scheduledAtStr ? new Date(scheduledAtStr) : undefined;
@@ -902,6 +913,10 @@ export class ArticlesService implements OnModuleInit {
       },
     });
 
+    if (slugDegisti) {
+      await this.eskiSlugiKaydet(tenantId, existing.id, existing.slug, article.slug);
+    }
+
     void this.audit.log({
       tenantId,
       userId,
@@ -926,6 +941,9 @@ export class ArticlesService implements OnModuleInit {
     this.revalidation.revalidateTenant(tenantId, [
       'articles',
       `article-${article.slug}`,
+      // Slug değiştiyse eski adresin önbelleği de düşmeli; yoksa eski sayfa
+      // yönlendirme yerine bir süre daha eski içeriği göstermeye devam eder.
+      ...(slugDegisti ? [`article-${existing.slug}`] : []),
       'breaking-news',
       'most-read',
     ]);
@@ -1487,6 +1505,10 @@ export class ArticlesService implements OnModuleInit {
   private async generateUniqueSlug(
     tenantId: string,
     kaynak: string,
+    // Güncellemede haberin KENDİ slug'ı çakışma sayılmamalı; yoksa editör
+    // slug'a dokunmadan kaydettiğinde adres her seferinde `-1762…` ekiyle
+    // uzayıp giderdi.
+    haricTutulanId?: string,
   ): Promise<string> {
     let slug = slugify(kaynak, { lower: true, strict: true, locale: 'tr' });
 
@@ -1494,11 +1516,63 @@ export class ArticlesService implements OnModuleInit {
       where: { tenantId_slug: { tenantId, slug } },
     });
 
-    if (existing) {
+    if (existing && existing.id !== haricTutulanId) {
       slug = `${slug}-${Date.now()}`;
     }
 
     return slug;
+  }
+
+  /**
+   * Eski adresi tarihe yazar — site onu 301 ile yenisine yönlendirir.
+   *
+   * İki ayrıntı önemli: haber daha önce kullandığı bir slug'a GERİ dönerse o
+   * satır silinir (yoksa adres kendi kendine yönlendirirdi), ve kayıt
+   * başarısız olursa güncelleme iptal edilmez — editörün kaydı, yönlendirme
+   * kaydından önce gelir.
+   */
+  private async eskiSlugiKaydet(
+    tenantId: string,
+    articleId: string,
+    eskiSlug: string,
+    yeniSlug: string,
+  ): Promise<void> {
+    try {
+      await this.prisma.$transaction([
+        this.prisma.articleSlugHistory.deleteMany({
+          where: { tenantId, slug: yeniSlug },
+        }),
+        this.prisma.articleSlugHistory.upsert({
+          where: { tenantId_slug: { tenantId, slug: eskiSlug } },
+          update: { articleId },
+          create: { tenantId, articleId, slug: eskiSlug },
+        }),
+      ]);
+    } catch (hata) {
+      this.logger.warn(
+        `Eski slug kaydedilemedi (${eskiSlug} -> ${yeniSlug}): ${
+          hata instanceof Error ? hata.message : String(hata)
+        }`,
+      );
+    }
+  }
+
+  /**
+   * Eski adres parçasından haberin GÜNCEL slug'ını bulur; site 404 vermeden
+   * önce buraya bakar. Haber silinmiş ya da taslağa çekilmişse null döner —
+   * yayında olmayan habere yönlendirme yapılmaz.
+   */
+  async guncelSlugBul(tenantId: string, eskiSlug: string): Promise<string | null> {
+    const kayit = await this.prisma.articleSlugHistory.findUnique({
+      where: { tenantId_slug: { tenantId, slug: eskiSlug } },
+      include: { article: { select: { slug: true, status: true } } },
+    });
+
+    if (!kayit?.article) return null;
+    if (kayit.article.status !== ArticleStatus.PUBLISHED) return null;
+    if (kayit.article.slug === eskiSlug) return null;
+
+    return kayit.article.slug;
   }
 
   private calculateReadingTime(content: Record<string, any>): number {
