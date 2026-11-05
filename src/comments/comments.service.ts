@@ -47,7 +47,9 @@ export class CommentsService {
           // yalnızca bağlantı için gereken küçük özet dönülür.
           include: {
             article: {
-              select: { id: true, title: true, slug: true },
+              // type: panel "habere git" bağlantısını kurarken köşe yazısını
+              // /makale, haberi /haber yoluna göndermek zorunda.
+              select: { id: true, title: true, slug: true, type: true },
             },
           },
           // id tiebreaker: createdAt unique degil, deterministik siralama sart.

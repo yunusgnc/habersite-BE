@@ -50,7 +50,9 @@ describe('CommentsService moderasyon akışı', () => {
       expect.objectContaining({
         include: {
           article: {
-            select: { id: true, title: true, slug: true },
+            // type olmadan panel bağlantıyı kuramaz: köşe yazısı /makale,
+            // galeri /foto-galeri yolunda yayınlanıyor.
+            select: { id: true, title: true, slug: true, type: true },
           },
         },
       }),
