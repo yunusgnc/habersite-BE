@@ -67,6 +67,9 @@ const ZAMAN_ASIMI_MS = 10_000;
 // daha geniş süre tanıyoruz.
 const META_YAZMA_ZAMAN_ASIMI_MS = 30_000;
 const X_API = 'https://api.x.com';
+// Instagram medya kabı görseli arka planda işliyor; hazır olmadan yayınlama
+// isteği reddediliyor. En çok 15 yoklama, aralarında 2 saniye.
+const IG_KAP_YOKLAMA_SAYISI = 15;
 
 function graphApiBase(): string {
   const surum = (process.env.META_GRAPH_VERSION ?? 'v25.0').trim();
@@ -124,6 +127,8 @@ const basarisiz = (hata: string): GonderimSonucu => ({
 @Injectable()
 export class SocialShareService {
   private readonly logger = new Logger(SocialShareService.name);
+  /** Yoklamalar arası bekleme; testler sıfırlıyor. */
+  private igKapBeklemeMs = 2_000;
 
   constructor(
     private readonly settings: SettingsService,
@@ -391,12 +396,49 @@ export class SocialShareService {
       { signal: AbortSignal.timeout(ZAMAN_ASIMI_MS) },
     );
     const veri: any = await yanit.json().catch(() => ({}));
-    return yanit.ok && veri?.username
-      ? { tamam: true, mesaj: `Hazır — @${veri.username} hesabına bağlanıldı.` }
-      : {
-          tamam: false,
-          mesaj: `Hesaba erişilemedi (${hataMesaji(veri, yanit.status)}). Hesabın İşletme/İçerik Üretici olduğundan ve bir Facebook sayfasına bağlı olduğundan emin olun.`,
-        };
+    if (!yanit.ok || !veri?.username) {
+      return {
+        tamam: false,
+        mesaj: `Hesaba erişilemedi (${hataMesaji(veri, yanit.status)}). Hesabın İşletme/İçerik Üretici olduğundan ve bir Facebook sayfasına bağlı olduğundan emin olun.`,
+      };
+    }
+
+    // Kullanıcı adını okumak yayınlama iznini kanıtlamıyor: anahtarda
+    // instagram_content_publish yoksa sınama yeşil yanıp gönderim düşmüyordu.
+    const limit = await fetch(
+      `${graphApiBase()}/${hesap}/content_publishing_limit?access_token=${encodeURIComponent(token)}`,
+      { signal: AbortSignal.timeout(ZAMAN_ASIMI_MS) },
+    );
+    if (!limit.ok) {
+      const limitVerisi: any = await limit.json().catch(() => ({}));
+      return {
+        tamam: false,
+        mesaj: `@${veri.username} okunuyor ama yayınlama izni doğrulanamadı (${hataMesaji(limitVerisi, limit.status)}). Anahtarı instagram_content_publish izniyle yenileyin.`,
+      };
+    }
+
+    // Asıl neden çoğu zaman son gönderimde yazıyor; panelden görünsün.
+    const son = await this.prisma.socialShareLog
+      .findFirst({
+        where: { tenantId, network: 'instagram' },
+        orderBy: { createdAt: 'desc' },
+        select: { success: true, error: true, createdAt: true },
+      })
+      .catch(() => null);
+    const hazir = `Hazır — @${veri.username} hesabına bağlanıldı.`;
+    if (!son) {
+      return {
+        tamam: true,
+        mesaj: `${hazir} Henüz gönderim kaydı yok: Instagram'a hiç deneme yapılmamış.`,
+      };
+    }
+    if (!son.success) {
+      return {
+        tamam: false,
+        mesaj: `Bağlantı var ama son gönderim başarısız (${son.createdAt.toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })}): ${son.error ?? 'hata metni yok'}`,
+      };
+    }
+    return { tamam: true, mesaj: `${hazir} Son gönderim başarılı.` };
   }
 
   private async xiSina(tenantId: string): Promise<SinamaSonucu> {
@@ -637,6 +679,13 @@ export class SocialShareService {
         );
         return basarisiz(hata);
       }
+      const kapHatasi = await this.igKabiniBekle(kapVerisi.id, token);
+      if (kapHatasi) {
+        this.logger.warn(
+          `Instagram medya kabı işlenemedi (${tenantId}): ${kapHatasi}`,
+        );
+        return basarisiz(kapHatasi);
+      }
       const yayin = await fetch(`${graphApiBase()}/${hesap}/media_publish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -661,6 +710,34 @@ export class SocialShareService {
       );
       return basarisiz((err as Error).message);
     }
+  }
+
+  /**
+   * Medya kabı hazır olana dek bekler; kalıcı hata varsa metnini döner.
+   *
+   * Kap oluşturulur oluşturulmaz yayınlamak "Media ID is not available" ile
+   * reddedilebiliyor. Yoklama yanıt vermezse ya da süre dolarsa yayınlama yine
+   * denenir: gerçek hatayı Meta'nın yayınlama yanıtı söyler.
+   */
+  private async igKabiniBekle(
+    kapId: string,
+    token: string,
+  ): Promise<string | null> {
+    for (let deneme = 0; deneme < IG_KAP_YOKLAMA_SAYISI; deneme++) {
+      if (deneme > 0) {
+        await new Promise((coz) => setTimeout(coz, this.igKapBeklemeMs));
+      }
+      const yanit = await fetch(
+        `${graphApiBase()}/${kapId}?fields=status_code,status&access_token=${encodeURIComponent(token)}`,
+        { signal: AbortSignal.timeout(ZAMAN_ASIMI_MS) },
+      ).catch(() => null);
+      const veri: any = (await yanit?.json().catch(() => null)) ?? {};
+      if (veri.status_code === 'FINISHED') return null;
+      if (veri.status_code === 'ERROR' || veri.status_code === 'EXPIRED') {
+        return `Instagram görseli işleyemedi (${veri.status_code}): ${veri.status ?? 'ayrıntı yok'}`;
+      }
+    }
+    return null;
   }
 
   private async twitter(

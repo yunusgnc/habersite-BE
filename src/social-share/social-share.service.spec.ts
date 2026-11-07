@@ -12,7 +12,12 @@ import { SocialShareService } from './social-share.service';
  * kaydın kendisi ayrı sınanıyor, burada yalnızca çağrıyı yutması yeterli.
  */
 function prismaSahte() {
-  return { socialShareLog: { createMany: jest.fn().mockResolvedValue({ count: 0 }) } };
+  return {
+    socialShareLog: {
+      createMany: jest.fn().mockResolvedValue({ count: 0 }),
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
+  };
 }
 
 /** Görsel yoklamasının (HEAD) "evet, bu bir görsel" yanıtı. */
@@ -25,14 +30,17 @@ const GORSEL_YANITI = {
 
 /** Yoklamaya görsel, diğer her şeye başarılı JSON dönen varsayılan mock. */
 function varsayilanFetch(): jest.Mock {
-  return jest.fn().mockImplementation((_adres: string, secenekler?: any) =>
+  return jest.fn().mockImplementation((adres: string, secenekler?: any) =>
     Promise.resolve(
       secenekler?.method === 'HEAD'
         ? { ...GORSEL_YANITI }
         : {
             ok: true,
             status: 200,
-            json: async () => ({ ok: true, id: 'kap-1' }),
+            json: async () =>
+              adres.includes('fields=status_code')
+                ? { status_code: 'FINISHED' }
+                : { ok: true, id: 'kap-1' },
           },
     ),
   );
@@ -145,7 +153,7 @@ describe('SocialShareService', () => {
     expect(govde.access_token).toBe('FB_TOKEN');
   });
 
-  it('instagram: iki aşama — önce medya kabı, sonra yayınlama', async () => {
+  it('instagram: üç aşama — medya kabı, hazır yoklaması, yayınlama', async () => {
     settings.getAll.mockResolvedValue({
       siteUrl: 'https://ornek.com',
       autoShareInstagram: 'on',
@@ -155,7 +163,7 @@ describe('SocialShareService', () => {
 
     await servis.paylas('t1', HABER);
 
-    expect(istekler()).toHaveLength(2);
+    expect(istekler()).toHaveLength(3);
     expect(istekler()[0][0]).toBe('https://graph.facebook.com/v25.0/999/media');
     expect(
       Object.fromEntries((istekler()[0][1].body as URLSearchParams).entries())
@@ -165,13 +173,159 @@ describe('SocialShareService', () => {
       Object.fromEntries((istekler()[0][1].body as URLSearchParams).entries())
         .caption,
     ).toBe('Örnek Başlık\n\nHaberin kısa açıklaması');
-    expect(istekler()[1][0]).toBe(
+    expect(istekler()[1][0]).toContain('/kap-1?fields=status_code,status');
+    expect(istekler()[2][0]).toBe(
       'https://graph.facebook.com/v25.0/999/media_publish',
     );
     expect(
-      Object.fromEntries((istekler()[1][1].body as URLSearchParams).entries())
+      Object.fromEntries((istekler()[2][1].body as URLSearchParams).entries())
         .creation_id,
     ).toBe('kap-1');
+  });
+
+  describe('instagram medya kabı', () => {
+    const IG = {
+      siteUrl: 'https://ornek.com',
+      autoShareInstagram: 'on',
+      instagramUserId: '999',
+    };
+
+    /** Kap yoklamasına sırayla verilecek durumlar. */
+    const kapDurumlari = (...durumlar: Record<string, unknown>[]) => {
+      const varsayilan = varsayilanFetch();
+      fetchMock.mockImplementation((adres: string, secenekler?: any) =>
+        adres.includes('fields=status_code')
+          ? Promise.resolve({
+              ok: true,
+              status: 200,
+              json: async () => durumlar.shift() ?? {},
+            })
+          : varsayilan(adres, secenekler),
+      );
+    };
+
+    const yayinlandi = () =>
+      istekler().some(([adres]) => String(adres).endsWith('/media_publish'));
+
+    beforeEach(() => {
+      (servis as any).igKapBeklemeMs = 0;
+      settings.getAll.mockResolvedValue(IG);
+      settings.getSecret.mockResolvedValue('IG_TOKEN');
+    });
+
+    it('kap işlenirken yayınlamaz, hazır olunca yayınlar', async () => {
+      kapDurumlari(
+        { status_code: 'IN_PROGRESS' },
+        { status_code: 'IN_PROGRESS' },
+        { status_code: 'FINISHED' },
+      );
+
+      await servis.paylas('t1', HABER);
+
+      const adresler = istekler().map(([adres]) => String(adres));
+      expect(
+        adresler.filter((a) => a.includes('fields=status_code')),
+      ).toHaveLength(3);
+      expect(adresler.at(-1)).toMatch(/\/media_publish$/);
+    });
+
+    it('kap hata verirse yayınlamaz ve hatayı kaydeder', async () => {
+      const prisma = prismaSahte();
+      servis = new SocialShareService(settings as any, prisma as any);
+      (servis as any).igKapBeklemeMs = 0;
+      kapDurumlari({ status_code: 'ERROR', status: 'görsel indirilemedi' });
+
+      await servis.paylas('t1', HABER);
+
+      expect(yayinlandi()).toBe(false);
+      expect(prisma.socialShareLog.createMany.mock.calls[0][0].data[0]).toEqual(
+        expect.objectContaining({
+          network: 'instagram',
+          success: false,
+          error: expect.stringContaining('görsel indirilemedi'),
+        }),
+      );
+    });
+
+    it('yoklama hiç sonuç vermezse yayınlama yine denenir', async () => {
+      kapDurumlari();
+
+      await servis.paylas('t1', HABER);
+
+      expect(yayinlandi()).toBe(true);
+    });
+  });
+
+  describe('instagram sınaması', () => {
+    let prisma: ReturnType<typeof prismaSahte>;
+
+    /** Hesap okunur; yayınlama izni ucu verilen yanıtı döner. */
+    const yanitlar = (limitTamam = true) =>
+      fetchMock.mockImplementation((adres: string) =>
+        Promise.resolve(
+          adres.includes('content_publishing_limit')
+            ? {
+                ok: limitTamam,
+                status: limitTamam ? 200 : 403,
+                json: async () =>
+                  limitTamam
+                    ? { data: [] }
+                    : { error: { message: 'izin yok' } },
+              }
+            : {
+                ok: true,
+                status: 200,
+                json: async () => ({ username: 'kayseritimes' }),
+              },
+        ),
+      );
+
+    beforeEach(() => {
+      prisma = prismaSahte();
+      servis = new SocialShareService(settings as any, prisma as any);
+      settings.getAll.mockResolvedValue({ instagramUserId: '999' });
+      settings.getSecret.mockResolvedValue('IG_TOKEN');
+    });
+
+    it('yayınlama izni yoksa kullanıcı adı okunsa da yeşil yanmaz', async () => {
+      yanitlar(false);
+      const sonuc = await servis.baglantiyiSina('t1', 'instagram');
+      expect(sonuc.tamam).toBe(false);
+      expect(sonuc.mesaj).toContain('instagram_content_publish');
+    });
+
+    it('son gönderim başarısızsa Meta hatasını gösterir', async () => {
+      yanitlar();
+      prisma.socialShareLog.findFirst.mockResolvedValue({
+        success: false,
+        error: 'Media ID is not available',
+        createdAt: new Date('2026-11-06T18:46:00Z'),
+      });
+      const sonuc = await servis.baglantiyiSina('t1', 'instagram');
+      expect(sonuc.tamam).toBe(false);
+      expect(sonuc.mesaj).toContain('Media ID is not available');
+    });
+
+    it('hiç kayıt yoksa deneme yapılmadığını söyler', async () => {
+      yanitlar();
+      const sonuc = await servis.baglantiyiSina('t1', 'instagram');
+      expect(sonuc.tamam).toBe(true);
+      expect(sonuc.mesaj).toContain('hiç deneme yapılmamış');
+    });
+
+    it('son gönderim başarılıysa yeşil kalır', async () => {
+      yanitlar();
+      prisma.socialShareLog.findFirst.mockResolvedValue({
+        success: true,
+        error: null,
+        createdAt: new Date(),
+      });
+      const sonuc = await servis.baglantiyiSina('t1', 'instagram');
+      expect(sonuc).toEqual({
+        tamam: true,
+        mesaj: 'Hazır — @kayseritimes hesabına bağlanıldı. Son gönderim başarılı.',
+      });
+    });
   });
 
   it('instagram: eski HTML spotu temizler ve açıklamaya bağlantı koymaz', async () => {
@@ -203,7 +357,7 @@ describe('SocialShareService', () => {
     settings.getSecret.mockResolvedValue('IG_TOKEN');
 
     await servis.paylas('t1', { ...HABER, featuredImage: null });
-    expect(istekler()).toHaveLength(2);
+    expect(istekler()).toHaveLength(3);
     const govde = Object.fromEntries(
       (istekler()[0][1].body as URLSearchParams).entries(),
     );
